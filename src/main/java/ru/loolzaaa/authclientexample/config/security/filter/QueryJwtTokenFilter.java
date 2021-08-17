@@ -31,7 +31,6 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
         }
 
         String queryToken = request.getParameter("token");
-        //TODO: decode token
         if (queryToken != null) {
             Cookie cookie = new Cookie("_t_access", queryToken);
             cookie.setHttpOnly(true);
