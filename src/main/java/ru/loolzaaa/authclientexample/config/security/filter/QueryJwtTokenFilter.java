@@ -27,7 +27,7 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
                 //TODO: log it
                 serverTime = System.currentTimeMillis();
             }
-            JwtTokenFilter.setServerSkew(System.currentTimeMillis() - serverTime);
+            JwtTokenFilter.setServerSkew(serverTime - System.currentTimeMillis());
         }
 
         String queryToken = request.getParameter("token");
