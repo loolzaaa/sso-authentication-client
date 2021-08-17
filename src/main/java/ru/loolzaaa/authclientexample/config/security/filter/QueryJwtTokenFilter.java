@@ -23,8 +23,8 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
             long serverTime;
             try {
                 serverTime = Long.parseLong(queryServerTime);
-            } catch (Exception ignored) {
-                //TODO: log it
+            } catch (Exception e) {
+                logger.warn("Cannot parse server time from authentication server", e);
                 serverTime = System.currentTimeMillis();
             }
             JwtTokenFilter.setServerSkew(serverTime - System.currentTimeMillis());
@@ -47,9 +47,12 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
 
             String acceptHeader = request.getHeader("Accept");
             if (acceptHeader != null && acceptHeader.toLowerCase().contains("application/json")) {
-                //TODO: log it
+                logger.debug("Ajax request detected. Not need to redirect for param clean");
+
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
+                logger.debug("Browser request detected. Need to redirect for param clean");
+
                 response.sendRedirect(uriBuilder.toUriString());
             }
         } else {
