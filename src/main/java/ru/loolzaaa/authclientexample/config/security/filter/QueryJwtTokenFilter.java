@@ -35,7 +35,7 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
             Cookie cookie = new Cookie("_t_access", queryToken);
             cookie.setHttpOnly(true);
             cookie.setSecure(req.isSecure());
-            cookie.setPath("/");
+            cookie.setPath(request.getContextPath() + "/");
             response.addCookie(cookie);
 
             UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(request.getRequestURL().toString());
