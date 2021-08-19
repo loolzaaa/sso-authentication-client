@@ -4,17 +4,20 @@
     <meta charset="UTF-8">
     <script th:src="@{/webjars/axios/0.21.1/dist/axios.min.js}"></script>
     <script th:src="@{/js/fingerprint2.min.js}"></script>
-    <link th:href="@{/favicon.ico}" rel="icon">
+    <link rel="icon" th:href="@{/favicon.ico}">
     <title>Application</title>
 </head>
 <body>
 <h1>TEST INDEX</h1>
-<input type="button" id="get_api_test_btn" value="TEST GET" onclick="testGetAPI()">
-<input type="button" id="post_api_test_btn" value="TEST POST" onclick="testPostAPI()">
+<input id="get_api_test_btn" onclick="testGetAPI()" type="button" value="TEST GET">
+<input id="post_api_test_btn" onclick="testPostAPI()" type="button" value="TEST POST">
+<form action="#" id="form_post_api" method="post" th:action="@{/api/post/test/36}">
+    <input type="submit" value="FORM TEST POST">
+</form>
 <form action="#" id="logout_form" method="post" th:action="@{/do_logout}">
     <input type="submit" value="Logout"/>
 </form>
-<input type="text" id="result_text" value="">
+<input id="result_text" type="text" value="">
 <script>
     const CSRF_TOKEN = document.cookie.match(new RegExp(`XSRF-TOKEN=([^;]+)`));
     if (CSRF_TOKEN !== undefined && CSRF_TOKEN !== null ) {
