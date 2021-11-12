@@ -75,13 +75,13 @@ class JwtTokenFilterTest {
         when(context.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(context);
         when(SecurityContextHolder.getContext().getAuthentication()).thenReturn(authentication);
-        when(userService.getUserByUsername(login)).thenReturn(userDetails);
+        when(userService.getUserFromServerByUsername(login)).thenReturn(userDetails);
         String continueParamValue = UrlUtils.buildFullRequestUrl(req);
         byte[] bytes = Base64.getUrlEncoder().encode(continueParamValue.getBytes(StandardCharsets.UTF_8));
 
         jwtTokenFilter.doFilterInternal(req, resp, chain);
 
-        verify(userService).saveUserInSystem(userDetails);
+        verify(userService).saveUserInApplication(userDetails);
     }
 
     @Test

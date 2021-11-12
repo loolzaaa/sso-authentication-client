@@ -74,7 +74,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 logger.trace("Update SecurityContext");
 
-                UserPrincipal userDetails = userService.getUserByUsername(login);
+                UserPrincipal userDetails = userService.getUserFromServerByUsername(login);
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails,
@@ -85,7 +85,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                userService.saveUserInSystem(userDetails);
+                userService.saveUserInApplication(userDetails);
             }
 
             chain.doFilter(req, resp);
