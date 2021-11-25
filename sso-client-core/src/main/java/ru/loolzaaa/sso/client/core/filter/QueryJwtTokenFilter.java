@@ -46,13 +46,6 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
             cookie.setPath(request.getContextPath() + "/");
             response.addCookie(cookie);
 
-            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(request.getRequestURL().toString());
-            request.getParameterNames().asIterator().forEachRemaining(param -> {
-                if (!"token".equals(param) && !"serverTime".equals(param)) {
-                    uriBuilder.queryParam(param, req.getParameter(param));
-                }
-            });
-
             String acceptHeader = request.getHeader("Accept");
             if (acceptHeader != null && acceptHeader.toLowerCase().contains("application/json")) {
                 logger.debug("Ajax request detected. Not need to redirect for param clean");
@@ -60,6 +53,13 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 logger.debug("Browser request detected. Need to redirect for param clean");
+
+                UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(request.getRequestURL().toString());
+                request.getParameterNames().asIterator().forEachRemaining(param -> {
+                    if (!"token".equals(param) && !"serverTime".equals(param)) {
+                        uriBuilder.queryParam(param, req.getParameter(param));
+                    }
+                });
 
                 response.sendRedirect(uriBuilder.toUriString());
             }
