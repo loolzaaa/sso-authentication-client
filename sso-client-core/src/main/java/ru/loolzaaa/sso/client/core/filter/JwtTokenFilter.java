@@ -92,6 +92,14 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         } else {
             logger.debug("Invalid access token, try to refresh it");
 
+            logger.trace("Remove invalid access token cookie");
+            Cookie c = new Cookie("_t_access", null);
+            c.setHttpOnly(true);
+            c.setSecure(req.isSecure());
+            c.setPath(req.getContextPath() + "/");
+            c.setMaxAge(0);
+            resp.addCookie(c);
+
             String acceptHeader = req.getHeader("Accept");
             if (acceptHeader != null && acceptHeader.toLowerCase().contains("application/json")) {
                 logger.debug("Ajax request detected. Refresh via Auth Server API");
