@@ -48,7 +48,7 @@ public class UserService {
         this.jwtUtils = jwtUtils;
     }
 
-    public UserPrincipal getUserByUsername(String username) {
+    public UserPrincipal getUserFromServerByUsername(String username) {
         byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
 
         HttpHeaders headers = new HttpHeaders();
@@ -72,48 +72,7 @@ public class UserService {
         }
     }
 
-    public void saveUserInSystem(UserPrincipal user) {
-        User newUser = user.getUser();
-
-        if (newUser == null) {
-            throw new NoSuchElementException("Can't find user");
-        }
-
-        List<String> authorities = user.getAuthorities().stream()
-                .filter(authority -> !applicationName.equals(authority.getAuthority()))
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
-
-        newUser.setAuthorities(authorities);
-        userStore.getUsers().put(newUser.getLogin(), newUser);
-    }
-
-    public void removeUserFromSystem(UserPrincipal user) {
-        if (user != null) {
-            userStore.getUsers().remove(user.getUser().getLogin());
-        } else {
-            //TODO: log it
-        }
-    }
-
-    public User getUserByToken(String token) {
-        String login;
-
-        if (token == null) {
-            throw new NoSuchElementException("Can't find _t_access token");
-        }
-
-        try {
-            Jws<Claims> claims = jwtUtils.parserEnforceAccessToken(token);
-            login = (String) claims.getBody().get("login");
-        } catch (ClaimJwtException e) {
-            login = (String) e.getClaims().get("login");
-        }
-
-        return userStore.getUsers().get(login);
-    }
-
-    public UserPrincipal[] getUsersByRole(String role) {
+    public UserPrincipal[] getUsersFromServerByRole(String role) {
         byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
 
         HttpHeaders headers = new HttpHeaders();
@@ -135,5 +94,56 @@ public class UserService {
         } else {
             return userEntity.getBody();
         }
+    }
+
+    public void saveUserInApplication(UserPrincipal user) {
+        User newUser = user.getUser();
+
+        if (newUser == null) {
+            throw new NoSuchElementException("Can't find user");
+        }
+
+        List<String> authorities = user.getAuthorities().stream()
+                .filter(authority -> !applicationName.equals(authority.getAuthority()))
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        newUser.setAuthorities(authorities);
+        userStore.getUsers().put(newUser.getLogin(), newUser);
+    }
+
+    public void removeUserFromApplication(UserPrincipal user) {
+        if (user != null) {
+            userStore.getUsers().remove(user.getUser().getLogin());
+        } else {
+            //TODO: log it
+        }
+    }
+
+    public User getUserFromApplicationByToken(String token) {
+        String login = getLoginByToken(token);
+
+        return userStore.getUsers().get(login);
+    }
+
+    public void removeUserFromApplicationByToken(String token) {
+        String login = getLoginByToken(token);
+
+        userStore.getUsers().remove(login);
+    }
+
+    private String getLoginByToken(String token) {
+        String login;
+
+        if (token == null) throw new NullPointerException("Token must be not null");
+
+        try {
+            Jws<Claims> claims = jwtUtils.parserEnforceAccessToken(token);
+            login = (String) claims.getBody().get("login");
+        } catch (ClaimJwtException e) {
+            login = (String) e.getClaims().get("login");
+        }
+
+        return login;
     }
 }
