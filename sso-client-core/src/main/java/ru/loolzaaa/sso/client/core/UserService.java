@@ -65,10 +65,11 @@ public class UserService {
                 applicationName
         );
 
-        if (userEntity.getBody() == null) {
+        UserPrincipal body = userEntity.getBody();
+        if (body == null) {
             throw new UsernameNotFoundException(String.format("User with login=%s not found", username));
         } else {
-            return userEntity.getBody();
+            return body;
         }
     }
 

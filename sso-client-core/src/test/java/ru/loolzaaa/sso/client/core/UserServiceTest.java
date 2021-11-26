@@ -40,8 +40,6 @@ public class UserServiceTest {
     @Mock
     JWTUtils jwtUtils;
     @Mock
-    UserToUserDTOConverter converter;
-    @Mock
     RestTemplate restTemplate;
     @Mock
     ResponseEntity<UserPrincipal> userEntity;
@@ -66,21 +64,21 @@ public class UserServiceTest {
         when(restTemplate.exchange(anyString(), any(), httpEntityArgumentCaptor.capture(), eq(UserPrincipal.class), any(), any())).thenReturn(userEntity);
         when(userEntity.getBody()).thenReturn(userPrincipal);
 
-        userService.getUserByUsername(basicLogin);
+        userService.getUserFromServerByUsername(basicLogin);
 
         HttpHeaders headers = httpEntityArgumentCaptor.getValue().getHeaders();
         assertThat(headers)
                 .containsKey(HttpHeaders.AUTHORIZATION)
                 .containsValue(List.of("Basic " + new String(encodedBytes)));
-
+        verify(userEntity).getBody();
     }
 
     @Test
-    void shouldReturnUserPrincipalIfUserEntityBodyNull() {
+    void shouldThrowExceptionIfUserEntityBodyNull() {
         when(restTemplate.exchange(anyString(), any(), any(), eq(UserPrincipal.class), any(), any())).thenReturn(userEntity);
         when(userEntity.getBody()).thenReturn(null);
 
-        assertThatThrownBy(() -> userService.getUserByUsername(basicLogin))
+        assertThatThrownBy(() -> userService.getUserFromServerByUsername(basicLogin))
                 .isInstanceOf(UsernameNotFoundException.class);
     }
 
@@ -88,14 +86,12 @@ public class UserServiceTest {
     void shouldThrowExceptionIfUserIsNull() {
         when(userPrincipal.getUser()).thenReturn(null);
 
-        assertThatThrownBy(() -> userService.saveUserInSystem(userPrincipal))
+        assertThatThrownBy(() -> userService.saveUserInApplication(userPrincipal))
                 .isInstanceOf(NoSuchElementException.class);
     }
 
     @Test
-    void shouldSaveUserInSystem() {
-        ReflectionTestUtils.setField(userService, "applicationName", applicationName);
-
+    void shouldSaveUserInApplication() {
         List<String> authorities = List.of(
                 "privilege1",
                 "privilege2"
@@ -116,32 +112,11 @@ public class UserServiceTest {
         doReturn(grantedAuthorities).when(userPrincipal).getAuthorities();
         when(userStore.getUsers()).thenReturn(users);
 
-        userService.saveUserInSystem(userPrincipal);
+        userService.saveUserInApplication(userPrincipal);
 
         assertThat(userStore.getUsers()).containsValue(userPrincipal.getUser());
         assertThat(userPrincipal.getUser().getAuthorities()).isEqualTo(authorities);
     }
-
-//    @Test
-//    void shouldReturnUserByToken() {
-//        final String LOGIN = "LOGIN";
-//
-//        User user = new User();
-//        user.setLogin(LOGIN);
-//
-//        UserDTO userDTO = new UserDTO();
-//        userDTO.setLogin(LOGIN);
-//
-//        when(userStore.getUsers()).thenReturn(users);
-//        when(users.get(LOGIN)).thenReturn(user);
-//        when(converter.convert(user)).thenReturn(userDTO);
-//
-//        userService.getUserDTOByLogin(LOGIN);
-//
-//        assertThat(user).usingRecursiveComparison()
-//                .ignoringFields("id", "enabled", "isActive")
-//                .isEqualTo(userDTO);
-//    }
 
     @Test
     void shouldRemoveUserFromSystem () {
@@ -153,60 +128,8 @@ public class UserServiceTest {
         when(userPrincipal.getUser()).thenReturn(user);
         when(user.getLogin()).thenReturn(LOGIN);
 
-        userService.removeUserFromSystem(userPrincipal);
+        userService.removeUserFromApplication(userPrincipal);
 
         verify(users).remove(LOGIN);
-    }
-
-    static class UserDTO {
-        private String login;
-        private JsonNode config;
-        private String name;
-        private List<String> authorities;
-
-        public String getLogin() {
-            return login;
-        }
-
-        public void setLogin(String login) {
-            this.login = login;
-        }
-
-        public JsonNode getConfig() {
-            return config;
-        }
-
-        public void setConfig(JsonNode config) {
-            this.config = config;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public List<String> getAuthorities() {
-            return authorities;
-        }
-
-        public void setAuthorities(List<String> authorities) {
-            this.authorities = authorities;
-        }
-    }
-
-    static class UserToUserDTOConverter {
-        public UserDTO convert(User user) {
-            UserDTO userDTO = new UserDTO();
-
-            userDTO.setAuthorities(user.getAuthorities());
-            userDTO.setConfig(user.getConfig());
-            userDTO.setLogin(user.getLogin());
-            userDTO.setName(user.getName());
-
-            return userDTO;
-        }
     }
 }
