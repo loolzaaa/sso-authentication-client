@@ -2,9 +2,10 @@ package ru.loolzaaa.sso.client.autoconfigure;
 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.NullSecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import ru.loolzaaa.sso.client.core.bean.DefaultSsoClientAuthenticationEntryPoint;
 import ru.loolzaaa.sso.client.core.bean.DefaultSsoClientLogoutSuccessHandler;
@@ -40,8 +41,11 @@ public class SsoClientHttpConfigurer extends AbstractHttpConfigurer<SsoClientHtt
                 .and()
                 .cors()
                 .and()
-                    .sessionManagement()
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .securityContext()
+                        .securityContextRepository(new NullSecurityContextRepository())
+                .and()
+                    .requestCache()
+                        .requestCache(new NullRequestCache())
                 .and()
                     .authorizeRequests()
                         .anyRequest()
