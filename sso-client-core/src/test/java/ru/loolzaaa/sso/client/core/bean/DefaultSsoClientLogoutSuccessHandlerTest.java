@@ -1,6 +1,7 @@
 package ru.loolzaaa.sso.client.core.bean;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -10,8 +11,12 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.util.UrlUtils;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 import ru.loolzaaa.sso.client.core.UserService;
 
 import javax.servlet.ServletException;
@@ -20,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
@@ -32,7 +36,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class DefaultSsoClientLogoutSuccessHandlerTest {
 
-    private String entryPoint = "entryPoint";
+    private String entryPoint = "http://host.com";
     private String basicLogin = "login";
     private String basicPassword = "pass";
 
@@ -59,52 +63,108 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
     }
 
     @Test
-    void shouldLogoutSuccessIfCookiesNotNull() throws IOException, ServletException {
-        String[] resettableCookies = new String[]{"c1=v1", "c2=v2"};
-        ArgumentCaptor<String> resettableCookiesCaptor = ArgumentCaptor.forClass(String.class);
+    void shouldLogoutSuccessIfCookiesIsNull() throws IOException, ServletException {
+        when(request.getCookies()).thenReturn(null);
 
-        Cookie[] cookies = new Cookie[2];
+        logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
+    }
+
+    @Test
+    void shouldLogoutSuccessIfAccessTokenNotExist() throws IOException, ServletException {
+        Cookie[] cookies = new Cookie[1];
         cookies[0] = new Cookie("c1", "v1");
-        cookies[1] = new Cookie("c2", "v2");
 
-        ReflectionTestUtils.setField(logoutSuccessHandler, "basicLogin", basicLogin);
-        ReflectionTestUtils.setField(logoutSuccessHandler, "basicPassword", basicPassword);
+        when(request.getCookies()).thenReturn(cookies);
+
+        logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
+    }
+
+    @Test
+    void shouldRedirectForTokenRevokeIfAjaxAndAccessTokenNotNull() throws IOException, ServletException {
+        final String TOKEN = "TOKEN";
+        Cookie[] cookies = new Cookie[1];
+        cookies[0] = new Cookie("_t_access", TOKEN);
 
         byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
 
         ArgumentCaptor<HttpEntity<Void>> httpEntityArgumentCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        when(restTemplate.postForEntity(anyString(), httpEntityArgumentCaptor.capture(), eq(Void.class))).thenReturn(userEntity);
-        when(userEntity.getHeaders()).thenReturn(httpHeaders);
-        when(httpHeaders.get("Set-Cookie")).thenReturn(Arrays.asList(resettableCookies));
-        when(request.getHeader("Accept")).thenReturn("application/json");
+        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
         when(request.getCookies()).thenReturn(cookies);
-        doNothing().when(response).addHeader(eq(HttpHeaders.SET_COOKIE), resettableCookiesCaptor.capture());
+        when(restTemplate.exchange(anyString(), any(), httpEntityArgumentCaptor.capture(), eq(Void.class))).thenReturn(null);
+        when(request.getHeader("Accept")).thenReturn("application/json");
+        doNothing().when(response).sendRedirect(redirectCaptor.capture());
 
         logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
 
-        verify(response).setStatus(HttpServletResponse.SC_OK);
-        verifyNoMoreInteractions(response);
+        verify(userService).removeUserFromApplicationByToken(TOKEN);
         HttpHeaders headers = httpEntityArgumentCaptor.getValue().getHeaders();
         assertThat(headers)
                 .containsKey(HttpHeaders.AUTHORIZATION)
                 .containsValue(List.of("Basic " + new String(encodedBytes)))
-                .containsKey(HttpHeaders.COOKIE)
-                .extractingByKey(HttpHeaders.COOKIE)
-                .matches(strings -> strings.stream().allMatch(s -> s.matches("(\\w+=\\w+;?\\s?)+\\w$")));
-        assertThat(resettableCookiesCaptor.getAllValues())
-                .containsExactly(resettableCookies);
+                .containsKey("Revoke-Token")
+                .extractingByKey("Revoke-Token")
+                .matches(strings -> strings.stream().allMatch(s -> s.matches(TOKEN)));
+        String redirect = redirectCaptor.getValue();
+        assertThat(redirect)
+                .isEqualTo(String.format(entryPoint + "/api/logout?token=%s", TOKEN));
+        verifyNoMoreInteractions(response);
     }
 
     @Test
-    void shouldLogoutSuccessIfCookiesIsNull() throws IOException, ServletException {
+    void shouldRedirectForTokenRevokeIfBrowserAndAccessTokenNotNull() throws IOException, ServletException {
+        final String TOKEN = "TOKEN";
+        Cookie[] cookies = new Cookie[1];
+        cookies[0] = new Cookie("_t_access", TOKEN);
+
+        byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
+
         ArgumentCaptor<HttpEntity<Void>> httpEntityArgumentCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        when(restTemplate.postForEntity(anyString(), httpEntityArgumentCaptor.capture(), eq(Void.class))).thenReturn(userEntity);
-        when(request.getCookies()).thenReturn(null);
-        when(userEntity.getHeaders()).thenReturn(httpHeaders);
-        when(httpHeaders.get("Set-Cookie")).thenReturn(null);
-        when(request.getHeader("Accept")).thenReturn(null);
+        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
+        when(request.getScheme()).thenReturn("http");
+        when(request.getServerName()).thenReturn("host.com");
+        when(request.getServerPort()).thenReturn(9999);
+        when(request.getRequestURI()).thenReturn("");
+        when(request.getQueryString()).thenReturn("");
+        when(request.getCookies()).thenReturn(cookies);
+        when(restTemplate.exchange(anyString(), any(), httpEntityArgumentCaptor.capture(), eq(Void.class))).thenReturn(null);
+        when(request.getHeader("Accept")).thenReturn("text/html");
+        doNothing().when(response).sendRedirect(redirectCaptor.capture());
 
         logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
+
+        String continueParamValue = UrlUtils.buildFullRequestUrl(request).replace("/do_logout", "");
+        byte[] bytes = Base64.getUrlEncoder().encode(continueParamValue.getBytes(StandardCharsets.UTF_8));
+        UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(entryPoint + "/api/logout")
+                .queryParam("token", TOKEN)
+                .queryParam("continue", new String(bytes))
+                .build();
+        verify(userService).removeUserFromApplicationByToken(TOKEN);
+        HttpHeaders headers = httpEntityArgumentCaptor.getValue().getHeaders();
+        assertThat(headers)
+                .containsKey(HttpHeaders.AUTHORIZATION)
+                .containsValue(List.of("Basic " + new String(encodedBytes)))
+                .containsKey("Revoke-Token")
+                .extractingByKey("Revoke-Token")
+                .matches(strings -> strings.stream().allMatch(s -> s.matches(TOKEN)));
+        String redirect = redirectCaptor.getValue();
+        assertThat(redirect)
+                .isEqualTo(continueUri.toString());
+        verifyNoMoreInteractions(response);
     }
 
+    @Test
+    void shouldReturnBadRequestIfErrorWhenTokenRevoke() throws IOException, ServletException {
+        final String TOKEN = "TOKEN";
+        Cookie[] cookies = new Cookie[1];
+        cookies[0] = new Cookie("_t_access", TOKEN);
+
+        when(request.getCookies()).thenReturn(cookies);
+        doThrow(new RestClientException("")).when(restTemplate).exchange(anyString(), any(), any(), eq(Void.class));
+
+        logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
+
+        verify(userService).removeUserFromApplicationByToken(TOKEN);
+        verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        verifyNoMoreInteractions(response);
+    }
 }
