@@ -61,7 +61,7 @@ public class SsoClientHttpConfigurer extends AbstractHttpConfigurer<SsoClientHtt
                     .logout()
                         .logoutRequestMatcher(new AntPathRequestMatcher("/do_logout", "POST"))
                         .logoutSuccessHandler(logoutSuccessHandler)
-                        .deleteCookies("JSESSIONID", "_t_access", "_t_refresh", "_t_rfid")
+                        .deleteCookies("JSESSIONID", "_t_access", "_t_rfid")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .permitAll()
