@@ -43,7 +43,7 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
             Cookie cookie = new Cookie("_t_access", queryToken);
             cookie.setHttpOnly(true);
             cookie.setSecure(req.isSecure());
-            cookie.setPath(request.getContextPath() + "/");
+            cookie.setPath(request.getContextPath().length() > 0 ? request.getContextPath() : "/");
             response.addCookie(cookie);
 
             String acceptHeader = request.getHeader("Accept");

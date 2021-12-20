@@ -96,7 +96,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             Cookie c = new Cookie("_t_access", null);
             c.setHttpOnly(true);
             c.setSecure(req.isSecure());
-            c.setPath(req.getContextPath() + "/");
+            c.setPath(req.getContextPath().length() > 0 ? req.getContextPath() : "/");
             c.setMaxAge(0);
             resp.addCookie(c);
 
