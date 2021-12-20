@@ -14,7 +14,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>11</java.version>
-        <spring.boot.version>2.5.2</spring.boot.version>
+        <spring.boot.version>2.6.0</spring.boot.version>
         <jjwt.version>0.9.1</jjwt.version>
         <jakarta.xml.bind-api.version>2.3.3</jakarta.xml.bind-api.version>
     </properties>
