@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core.bean;
+package ru.loolzaaa.sso.client.core.security;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

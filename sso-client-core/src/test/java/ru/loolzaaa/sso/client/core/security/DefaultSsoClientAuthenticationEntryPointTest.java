@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core.bean;
+package ru.loolzaaa.sso.client.core.security;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
