@@ -5,19 +5,15 @@
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
 
+    <parent>
+        <groupId>ru.loolzaaa</groupId>
+        <artifactId>sso-client</artifactId>
+        <version>0.1.1</version>
+    </parent>
+
     <name>Single Sign-On Authentication Server Client :: SSO Client Core</name>
 
-    <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-core</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>11</java.version>
-        <spring.boot.version>2.6.0</spring.boot.version>
-        <jjwt.version>0.9.1</jjwt.version>
-        <jakarta.xml.bind-api.version>2.3.3</jakarta.xml.bind-api.version>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -53,19 +49,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>
