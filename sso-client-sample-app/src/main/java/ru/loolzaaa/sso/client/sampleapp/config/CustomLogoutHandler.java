@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.sampleapp.config.security;
+package ru.loolzaaa.sso.client.sampleapp.config;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;

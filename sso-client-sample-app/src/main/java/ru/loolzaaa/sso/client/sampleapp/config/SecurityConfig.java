@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.sampleapp.config.security;
+package ru.loolzaaa.sso.client.sampleapp.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
