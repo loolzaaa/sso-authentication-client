@@ -1,5 +1,6 @@
 package ru.loolzaaa.sso.client.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -78,6 +80,31 @@ public class UserServiceTest {
 
         assertThatThrownBy(() -> userService.getUserFromServerByUsername(basicLogin))
                 .isInstanceOf(UsernameNotFoundException.class);
+    }
+
+    @Test
+    void shouldSendUserConfigRequestAndReturn0() {
+        //given
+        final String USERNAME = "USERNAME";
+
+        ArgumentCaptor<String> uriCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<HttpMethod> httpMethodCaptor = ArgumentCaptor.forClass(HttpMethod.class);
+        ArgumentCaptor<HttpEntity<JsonNode>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> appCaptor = ArgumentCaptor.forClass(String.class);
+
+        //when
+        int code = userService.updateUserConfigOnServer(USERNAME, applicationName, null);
+
+        //then
+        verify(restTemplate).exchange(uriCaptor.capture(), httpMethodCaptor.capture(), requestCaptor.capture(),
+                eq(Void.class), usernameCaptor.capture(), appCaptor.capture());
+        assertThat(uriCaptor.getValue()).startsWith(entryPointAddress);
+        assertThat(httpMethodCaptor.getValue()).isEqualTo(HttpMethod.PATCH);
+        assertThat(requestCaptor.getValue().getBody()).isNull();
+        assertThat(usernameCaptor.getValue()).isEqualTo(USERNAME);
+        assertThat(appCaptor.getValue()).isEqualTo(applicationName);
+        assertThat(code).isEqualTo(0);
     }
 
     @Test
