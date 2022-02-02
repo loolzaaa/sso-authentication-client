@@ -24,7 +24,7 @@ import ru.loolzaaa.sso.client.core.filter.QueryJwtTokenFilter;
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnProperty(prefix = "sso.client", value = { "applicationName", "entryPointAddress", "entryPointUri" })
 @AutoConfigureAfter(SecurityAutoConfiguration.class)
-@Import({ SsoClientFilterConfiguration.class })
+@Import({ SsoClientFilterConfiguration.class, SsoClientEndpointConfiguration.class })
 public class SsoClientAutoConfiguration {
 
     private final SsoClientProperties properties;
