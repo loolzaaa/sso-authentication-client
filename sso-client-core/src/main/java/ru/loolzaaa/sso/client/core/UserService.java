@@ -1,5 +1,6 @@
 package ru.loolzaaa.sso.client.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -73,7 +74,7 @@ public class UserService {
         }
     }
 
-    public UserPrincipal[] getUsersFromServerByRole(String role) {
+    public UserPrincipal[] getUsersFromServerByAuthority(String authority) {
         byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
 
         HttpHeaders headers = new HttpHeaders();
@@ -82,19 +83,37 @@ public class UserService {
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
         ResponseEntity<UserPrincipal[]> userEntity = restTemplate.exchange(
-                entryPointAddress + "/api/fast/user/{role}?app={app}",
+                entryPointAddress + "/api/fast/users?app={app}&authority={authority}",
                 HttpMethod.GET,
                 request,
                 UserPrincipal[].class,
-                role,
-                applicationName
+                applicationName,
+                authority
         );
 
         if (userEntity.getBody() == null) {
-            throw new UsernameNotFoundException(String.format("Users with role=%s not found", role));
+            throw new UsernameNotFoundException(String.format("Users with authority=%s not found", authority));
         } else {
             return userEntity.getBody();
         }
+    }
+
+    public void updateUserConfigOnServer(String token, JsonNode config) {
+        String login = getLoginByToken(token);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.COOKIE, "_t_access=" + token);
+
+        HttpEntity<JsonNode> request = new HttpEntity<>(config, headers);
+
+        restTemplate.exchange(
+                entryPointAddress + "/api/user/{username}/config/{app}/edit",
+                HttpMethod.PATCH,
+                request,
+                Void.class,
+                login,
+                applicationName
+        );
     }
 
     public void saveUserInApplication(UserPrincipal user) {
