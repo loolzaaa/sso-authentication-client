@@ -98,22 +98,23 @@ public class UserService {
         }
     }
 
-    public void updateUserConfigOnServer(String token, JsonNode config) {
-        String login = getLoginByToken(token);
+    public int updateUserConfigOnServer(String username, String app, JsonNode config) {
+        byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.COOKIE, "_t_access=" + token);
+        headers.add(HttpHeaders.AUTHORIZATION, "Basic " + new String(encodedBytes));
 
         HttpEntity<JsonNode> request = new HttpEntity<>(config, headers);
 
         restTemplate.exchange(
-                entryPointAddress + "/api/user/{username}/config/{app}/edit",
+                entryPointAddress + "/api/fast/user/{username}/config/{app}",
                 HttpMethod.PATCH,
                 request,
                 Void.class,
-                login,
-                applicationName
+                username,
+                app
         );
+        return 0;
     }
 
     public void saveUserInApplication(UserPrincipal user) {
@@ -150,6 +151,10 @@ public class UserService {
         String login = getLoginByToken(token);
 
         userStore.getUsers().remove(login);
+    }
+
+    public String getApplicationName() {
+        return applicationName;
     }
 
     private String getLoginByToken(String token) {

@@ -7,8 +7,8 @@ import org.springframework.security.web.context.NullSecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import ru.loolzaaa.sso.client.core.bean.DefaultSsoClientAuthenticationEntryPoint;
-import ru.loolzaaa.sso.client.core.bean.DefaultSsoClientLogoutSuccessHandler;
+import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
+import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
 import ru.loolzaaa.sso.client.core.filter.JwtTokenFilter;
 import ru.loolzaaa.sso.client.core.filter.QueryJwtTokenFilter;
 
