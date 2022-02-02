@@ -11,7 +11,6 @@ public class User {
     private JsonNode config;
     private String name;
     private boolean enabled;
-    private boolean isActive;
     private List<String> authorities;
 
     public Long getId() {
@@ -52,14 +51,6 @@ public class User {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
     }
 
     public List<String> getAuthorities() {
