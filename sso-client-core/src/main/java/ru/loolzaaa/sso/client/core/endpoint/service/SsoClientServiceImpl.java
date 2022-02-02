@@ -51,7 +51,7 @@ public class SsoClientServiceImpl implements SsoClientService {
     public int updateUserConfigOnServer(String username, String app, JsonNode config) {
         // Remove privilege with application name
         JsonNode privilegesNode = config.get("privileges");
-        if (!privilegesNode.isNull()) {
+        if (privilegesNode != null) {
             Iterator<JsonNode> it = privilegesNode.elements();
             while (it.hasNext()) {
                 JsonNode privilege = it.next();

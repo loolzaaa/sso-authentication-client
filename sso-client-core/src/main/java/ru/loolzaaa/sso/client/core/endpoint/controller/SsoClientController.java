@@ -26,7 +26,7 @@ public class SsoClientController {
                     "\"description\":\"Update user config for this application on SSO Server\"," +
                     "\"params\":[\"username\", \"app\"]," +
                     "\"body\":\"user config as JSON\"" +
-                "}]";
+                "}}]";
     }
 
     @GetMapping(path = "/app", produces = "application/json")
