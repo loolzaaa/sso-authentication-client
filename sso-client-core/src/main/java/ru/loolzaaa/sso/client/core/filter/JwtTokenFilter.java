@@ -70,25 +70,24 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         } catch (Exception ignored) {}
 
         if (login != null) {
-            logger.debug("Check user for authentication and update if necessary");
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                logger.trace("Update SecurityContext");
+            logger.debug("Update security context");
+            UserPrincipal userDetails = userService.getUserFromServerByUsername(login);
 
-                UserPrincipal userDetails = userService.getUserFromServerByUsername(login);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
 
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            userService.saveRequestUser(userDetails);
 
-                userService.saveUserInApplication(userDetails);
+            try {
+                chain.doFilter(req, resp);
+            } finally {
+                userService.clearRequestUser();
             }
-
-            chain.doFilter(req, resp);
         } else {
             logger.debug("Invalid access token, try to refresh it");
 

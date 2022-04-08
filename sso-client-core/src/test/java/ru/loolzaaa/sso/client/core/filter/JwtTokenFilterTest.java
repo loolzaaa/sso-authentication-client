@@ -81,7 +81,7 @@ class JwtTokenFilterTest {
 
         jwtTokenFilter.doFilterInternal(req, resp, chain);
 
-        verify(userService).saveUserInApplication(userDetails);
+        verify(userService).saveRequestUser(userDetails);
     }
 
     @Test

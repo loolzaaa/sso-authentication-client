@@ -3,7 +3,6 @@ package ru.loolzaaa.sso.client.core;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -16,9 +15,7 @@ import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.String.*;
@@ -117,7 +114,7 @@ public class UserService {
         return 0;
     }
 
-    public void saveUserInApplication(UserPrincipal user) {
+    public void saveRequestUser(UserPrincipal user) {
         User newUser = user.getUser();
 
         if (newUser == null) {
@@ -125,50 +122,39 @@ public class UserService {
         }
 
         List<String> authorities = user.getAuthorities().stream()
-                .filter(authority -> !applicationName.equals(authority.getAuthority()))
                 .map(GrantedAuthority::getAuthority)
+                .filter(authority -> !applicationName.equals(authority))
                 .collect(Collectors.toList());
 
         newUser.setAuthorities(authorities);
-        userStore.getUsers().put(newUser.getLogin(), newUser);
+        userStore.saveRequestUser(newUser);
     }
 
-    public void removeUserFromApplication(UserPrincipal user) {
-        if (user != null) {
-            userStore.getUsers().remove(user.getUser().getLogin());
-        } else {
-            //TODO: log it
-        }
+    public void clearRequestUser() {
+        userStore.clearRequestUser();
     }
 
-    public User getUserFromApplicationByToken(String token) {
-        String login = getLoginByToken(token);
-
-        return userStore.getUsers().get(login);
-    }
-
-    public void removeUserFromApplicationByToken(String token) {
-        String login = getLoginByToken(token);
-
-        userStore.getUsers().remove(login);
+    public User getRequestUser() {
+        return userStore.getRequestUser();
     }
 
     public String getApplicationName() {
         return applicationName;
     }
 
-    private String getLoginByToken(String token) {
-        String login;
+    public Map<String, String> getTokenClaims(String token) {
+        Map<String, String> stringClaims = new HashMap<>();
 
         if (token == null) throw new NullPointerException("Token must be not null");
 
+        Claims claims;
         try {
-            Jws<Claims> claims = jwtUtils.parserEnforceAccessToken(token);
-            login = (String) claims.getBody().get("login");
+            claims = jwtUtils.parserEnforceAccessToken(token).getBody();
         } catch (ClaimJwtException e) {
-            login = (String) e.getClaims().get("login");
+            claims = e.getClaims();
         }
+        claims.forEach((s, o) -> stringClaims.put(s, (String) o));
 
-        return login;
+        return stringClaims;
     }
 }

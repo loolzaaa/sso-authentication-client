@@ -94,7 +94,6 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
 
         logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
 
-        verify(userService).removeUserFromApplicationByToken(TOKEN);
         HttpHeaders headers = httpEntityArgumentCaptor.getValue().getHeaders();
         assertThat(headers)
                 .containsKey(HttpHeaders.AUTHORIZATION)
@@ -136,7 +135,6 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
                 .queryParam("token", TOKEN)
                 .queryParam("continue", new String(bytes))
                 .build();
-        verify(userService).removeUserFromApplicationByToken(TOKEN);
         HttpHeaders headers = httpEntityArgumentCaptor.getValue().getHeaders();
         assertThat(headers)
                 .containsKey(HttpHeaders.AUTHORIZATION)
@@ -161,7 +159,6 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
 
         logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
 
-        verify(userService).removeUserFromApplicationByToken(TOKEN);
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verifyNoMoreInteractions(response);
     }

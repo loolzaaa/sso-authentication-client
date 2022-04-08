@@ -2,13 +2,19 @@ package ru.loolzaaa.sso.client.core.context;
 
 import ru.loolzaaa.sso.client.core.model.User;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 public class UserStore {
-    private Map<String, User> users = new ConcurrentHashMap<>();
 
-    public Map<String, User> getUsers() {
-        return users;
+    private final ThreadLocal<User> requestUser = new ThreadLocal<>();
+
+    public User getRequestUser() {
+        return requestUser.get();
+    }
+
+    public void saveRequestUser(User user) {
+        requestUser.set(user);
+    }
+
+    public void clearRequestUser() {
+        requestUser.remove();
     }
 }

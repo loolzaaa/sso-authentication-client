@@ -111,7 +111,7 @@ public class UserServiceTest {
     void shouldThrowExceptionIfUserIsNull() {
         when(userPrincipal.getUser()).thenReturn(null);
 
-        assertThatThrownBy(() -> userService.saveUserInApplication(userPrincipal))
+        assertThatThrownBy(() -> userService.saveRequestUser(userPrincipal))
                 .isInstanceOf(NoSuchElementException.class);
     }
 
@@ -135,26 +135,19 @@ public class UserServiceTest {
         user.setLogin(LOGIN);
         when(userPrincipal.getUser()).thenReturn(user);
         doReturn(grantedAuthorities).when(userPrincipal).getAuthorities();
-        when(userStore.getUsers()).thenReturn(users);
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 
-        userService.saveUserInApplication(userPrincipal);
+        userService.saveRequestUser(userPrincipal);
 
-        assertThat(userStore.getUsers()).containsValue(userPrincipal.getUser());
+        verify(userStore).saveRequestUser(userCaptor.capture());
+        assertThat(userCaptor.getValue()).isEqualTo(user);
         assertThat(userPrincipal.getUser().getAuthorities()).isEqualTo(authorities);
     }
 
     @Test
     void shouldRemoveUserFromSystem () {
-        final String LOGIN = "LOGIN";
+        userService.clearRequestUser();
 
-        User user = mock(User.class);
-
-        when(userStore.getUsers()).thenReturn(users);
-        when(userPrincipal.getUser()).thenReturn(user);
-        when(user.getLogin()).thenReturn(LOGIN);
-
-        userService.removeUserFromApplication(userPrincipal);
-
-        verify(users).remove(LOGIN);
+        verify(userStore).clearRequestUser();
     }
 }

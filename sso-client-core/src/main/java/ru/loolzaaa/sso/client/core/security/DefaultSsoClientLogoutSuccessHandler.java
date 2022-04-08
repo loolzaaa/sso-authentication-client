@@ -56,8 +56,6 @@ public class DefaultSsoClientLogoutSuccessHandler extends SimpleUrlLogoutSuccess
         }
 
         if (accessToken != null) {
-            userService.removeUserFromApplicationByToken(accessToken);
-
             byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
 
             HttpHeaders headers = new HttpHeaders();
