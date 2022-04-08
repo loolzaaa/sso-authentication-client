@@ -9,6 +9,7 @@
 </head>
 <body>
 <h1>TEST INDEX</h1>
+<input id="get_user_api_test_btn" onclick="testGetUserAPI()" type="button" value="TEST GET USER">
 <input id="get_api_test_btn" onclick="testGetAPI()" type="button" value="TEST GET">
 <input id="post_api_test_btn" onclick="testPostAPI()" type="button" value="TEST POST">
 <form action="#" id="form_post_api" method="post" th:action="@{/api/post/test/36}">
@@ -54,6 +55,14 @@
             throw err;
         }
     });
+
+    function testGetUserAPI() {
+        axios.get('/api/get/test')
+            .then(resp => {
+                document.getElementById('result_text').value = `${resp.data.name}   ${resp.data.value}`;
+                console.log(resp);
+            })
+    }
 
     function testGetAPI() {
         axios.get('/api/get/test/42')
