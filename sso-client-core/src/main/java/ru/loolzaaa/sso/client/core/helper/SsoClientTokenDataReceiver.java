@@ -20,9 +20,9 @@ public class SsoClientTokenDataReceiver {
 
     private static final Logger log = LogManager.getLogger(SsoClientTokenDataReceiver.class.getName());
 
-    private static final UUID csrfToken = UUID.randomUUID();
+    private final UUID csrfToken = UUID.randomUUID();
 
-    private static final HttpClient client = HttpClient.newBuilder()
+    private final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(4))
             .build();
 
@@ -117,12 +117,25 @@ public class SsoClientTokenDataReceiver {
                 log.debug("Refresh token from POST {} of SSO: {}", apiUri, refreshToken);
             }
         }
-        tokenData.setAccessToken(accessToken);
-        tokenData.setRefreshToken(refreshToken);
+        tokenDataLock.lock();
+        try {
+            tokenData.setAccessToken(accessToken);
+            tokenData.setRefreshToken(refreshToken);
+        } finally {
+            tokenDataLock.unlock();
+        }
     }
 
-    public TokenData getTokenData() {
-        return tokenData;
+    public UUID getCsrfToken() {
+        return csrfToken;
+    }
+
+    public String getAccessToken() {
+        return tokenData.getAccessToken();
+    }
+
+    public String getRefreshToken() {
+        return tokenData.getRefreshToken();
     }
 
     public ReentrantLock getTokenDataLock() {

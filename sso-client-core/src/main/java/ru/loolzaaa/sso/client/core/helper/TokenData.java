@@ -10,7 +10,7 @@ public class TokenData {
         this.refreshToken = refreshToken;
     }
 
-    public void resetValues() {
+    public synchronized void resetValues() {
         this.accessToken = null;
         this.refreshToken = null;
     }

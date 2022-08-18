@@ -59,8 +59,8 @@ public class TestController {
         ssoClientTokenDataReceiver.getTokenDataLock().lock();
         try {
             ssoClientTokenDataReceiver.updateData();
-            log.info("Requested access token from SSO: {}", ssoClientTokenDataReceiver.getTokenData().getAccessToken());
-            log.info("Requested refresh token from SSO: {}", ssoClientTokenDataReceiver.getTokenData().getRefreshToken());
+            log.info("Requested access token from SSO: {}", ssoClientTokenDataReceiver.getAccessToken());
+            log.info("Requested refresh token from SSO: {}", ssoClientTokenDataReceiver.getRefreshToken());
         } finally {
             ssoClientTokenDataReceiver.getTokenDataLock().unlock();
         }
@@ -71,8 +71,8 @@ public class TestController {
         ssoClientTokenDataReceiver.getTokenDataLock().lock();
         try {
             ssoClientTokenDataReceiver.updateData();
-            log.info("Requested access token from SSO: {}", ssoClientTokenDataReceiver.getTokenData().getAccessToken());
-            log.info("Requested refresh token from SSO: {}", ssoClientTokenDataReceiver.getTokenData().getRefreshToken());
+            log.info("Requested access token from SSO: {}", ssoClientTokenDataReceiver.getAccessToken());
+            log.info("Requested refresh token from SSO: {}", ssoClientTokenDataReceiver.getRefreshToken());
         } finally {
             ssoClientTokenDataReceiver.getTokenDataLock().unlock();
         }
