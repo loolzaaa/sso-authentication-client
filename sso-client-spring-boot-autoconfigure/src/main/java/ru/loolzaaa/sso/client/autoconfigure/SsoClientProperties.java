@@ -17,6 +17,8 @@ public class SsoClientProperties {
     private String basicLogin = "SERVICE";
     private String basicPassword = "PASSWORD";
 
+    private final Receiver receiver = new Receiver();
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -71,5 +73,39 @@ public class SsoClientProperties {
 
     public void setBasicPassword(String basicPassword) {
         this.basicPassword = basicPassword;
+    }
+
+    public Receiver getReceiver() {
+        return receiver;
+    }
+
+    public static class Receiver {
+        private String username;
+        private String password;
+        private String fingerprint;
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getFingerprint() {
+            return fingerprint;
+        }
+
+        public void setFingerprint(String fingerprint) {
+            this.fingerprint = fingerprint;
+        }
     }
 }

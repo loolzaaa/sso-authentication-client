@@ -13,11 +13,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestTemplate;
 import ru.loolzaaa.sso.client.core.JWTUtils;
 import ru.loolzaaa.sso.client.core.UserService;
-import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
-import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
 import ru.loolzaaa.sso.client.core.context.UserStore;
 import ru.loolzaaa.sso.client.core.filter.JwtTokenFilter;
 import ru.loolzaaa.sso.client.core.filter.QueryJwtTokenFilter;
+import ru.loolzaaa.sso.client.core.helper.SsoClientTokenDataReceiver;
+import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
+import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(SsoClientProperties.class)
@@ -88,6 +89,17 @@ public class SsoClientAutoConfiguration {
     @ConditionalOnMissingBean
     JWTUtils jwtUtils() {
         return new JWTUtils();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = "sso.client.receiver", value = { "username", "password" })
+    SsoClientTokenDataReceiver ssoClientTokenDataReceiver() {
+        String entryPointAddress = properties.getEntryPointAddress();
+        String username = properties.getReceiver().getUsername();
+        String password = properties.getReceiver().getPassword();
+        String fingerprint = properties.getReceiver().getFingerprint();
+        return new SsoClientTokenDataReceiver(jwtUtils(), entryPointAddress, username, password, fingerprint);
     }
 }
 
