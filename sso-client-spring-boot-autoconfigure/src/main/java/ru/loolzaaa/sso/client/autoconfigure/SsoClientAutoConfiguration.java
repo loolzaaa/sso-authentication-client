@@ -38,8 +38,14 @@ public class SsoClientAutoConfiguration {
     @ConditionalOnMissingBean
     SsoClientHttpConfigurer ssoClientHttpConfigurer(DefaultSsoClientAuthenticationEntryPoint authenticationEntryPoint,
                                                     DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler,
-                                                    QueryJwtTokenFilter queryJwtTokenFilter,
-                                                    JwtTokenFilter jwtTokenFilter) {
+                                                    JWTUtils jwtUtils,
+                                                    UserService userService) {
+//        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(properties.getEntryPointAddress(), properties.getRefreshTokenUri(),
+//                anonymousProperties.getKey(), anonymousProperties.getPrincipal(), anonymousProperties.getAuthorities(),
+//                jwtUtils, userService, webInvocationPrivilegeEvaluator);
+        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(properties.getEntryPointAddress(), properties.getRefreshTokenUri(),
+                jwtUtils, userService);
+        QueryJwtTokenFilter queryJwtTokenFilter = new QueryJwtTokenFilter(jwtUtils);
         return new SsoClientHttpConfigurer(properties, authenticationEntryPoint, logoutSuccessHandler,
                 queryJwtTokenFilter, jwtTokenFilter);
     }
