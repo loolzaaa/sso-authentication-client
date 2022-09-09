@@ -7,7 +7,10 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.stereotype.Component;
 import ru.loolzaaa.sso.client.autoconfigure.SsoClientHttpConfigurer;
+import ru.loolzaaa.sso.client.core.helper.SsoClientApplicationRegister;
+import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 
 @RequiredArgsConstructor
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -32,5 +35,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         web
                 .ignoring()
                     .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+    }
+
+    @Component
+    static class ApplicationRegister implements SsoClientApplicationRegister {
+        @Override
+        public void register(UserPrincipal userPrincipal) {
+            System.out.println("---------   Hello from application register hook!   ---------");
+        }
     }
 }
