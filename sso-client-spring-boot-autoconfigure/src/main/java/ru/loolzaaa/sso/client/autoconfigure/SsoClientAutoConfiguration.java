@@ -16,9 +16,12 @@ import ru.loolzaaa.sso.client.core.UserService;
 import ru.loolzaaa.sso.client.core.context.UserStore;
 import ru.loolzaaa.sso.client.core.filter.JwtTokenFilter;
 import ru.loolzaaa.sso.client.core.filter.QueryJwtTokenFilter;
+import ru.loolzaaa.sso.client.core.helper.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.helper.SsoClientTokenDataReceiver;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
+
+import java.util.List;
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(SsoClientProperties.class)
@@ -39,12 +42,14 @@ public class SsoClientAutoConfiguration {
     SsoClientHttpConfigurer ssoClientHttpConfigurer(DefaultSsoClientAuthenticationEntryPoint authenticationEntryPoint,
                                                     DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler,
                                                     JWTUtils jwtUtils,
-                                                    UserService userService) {
+                                                    UserService userService,
+                                                    List<SsoClientApplicationRegister> ssoClientApplicationRegisters) {
 //        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(properties.getEntryPointAddress(), properties.getRefreshTokenUri(),
 //                anonymousProperties.getKey(), anonymousProperties.getPrincipal(), anonymousProperties.getAuthorities(),
 //                jwtUtils, userService, webInvocationPrivilegeEvaluator);
         JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(properties.getEntryPointAddress(), properties.getRefreshTokenUri(),
                 jwtUtils, userService);
+        jwtTokenFilter.addApplicationRegisters(ssoClientApplicationRegisters);
         QueryJwtTokenFilter queryJwtTokenFilter = new QueryJwtTokenFilter(jwtUtils);
         return new SsoClientHttpConfigurer(properties, authenticationEntryPoint, logoutSuccessHandler,
                 queryJwtTokenFilter, jwtTokenFilter);

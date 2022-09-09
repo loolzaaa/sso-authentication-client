@@ -127,10 +127,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         }
     }
 
-    public void addApplicationRegister(SsoClientApplicationRegister applicationRegister) {
-        if (applicationRegister == null) {
-            throw new NullPointerException("Application register cannot be null");
+    public void addApplicationRegisters(List<SsoClientApplicationRegister> applicationRegisters) {
+        if (applicationRegisters != null && !applicationRegisters.isEmpty()) {
+            ssoClientApplicationRegisters.addAll(applicationRegisters);
         }
-        ssoClientApplicationRegisters.add(applicationRegister);
     }
 }
