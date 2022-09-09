@@ -12,6 +12,7 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import ru.loolzaaa.sso.client.core.JWTUtils;
 import ru.loolzaaa.sso.client.core.UserService;
+import ru.loolzaaa.sso.client.core.helper.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 
 import javax.servlet.FilterChain;
@@ -21,7 +22,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 public class JwtTokenFilter extends OncePerRequestFilter {
 
@@ -32,6 +35,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private final JWTUtils jwtUtils;
 
     private final UserService userService;
+
+    private final List<SsoClientApplicationRegister> ssoClientApplicationRegisters = new ArrayList<>();
 
     public JwtTokenFilter(String entryPointAddress, String refreshTokenURI, JWTUtils jwtUtils, UserService userService) {
         this.entryPointAddress = entryPointAddress;
@@ -84,6 +89,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             userService.saveRequestUser(userDetails);
 
             try {
+                for (SsoClientApplicationRegister applicationRegister : ssoClientApplicationRegisters) {
+                    applicationRegister.register(userDetails);
+                }
                 chain.doFilter(req, resp);
             } finally {
                 userService.clearRequestUser();
@@ -117,5 +125,12 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 resp.sendRedirect(continueUri.toString());
             }
         }
+    }
+
+    public void addApplicationRegister(SsoClientApplicationRegister applicationRegister) {
+        if (applicationRegister == null) {
+            throw new NullPointerException("Application register cannot be null");
+        }
+        ssoClientApplicationRegisters.add(applicationRegister);
     }
 }
