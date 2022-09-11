@@ -10,7 +10,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
-import ru.loolzaaa.sso.client.core.UserService;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -22,25 +21,16 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
 
-import static java.lang.String.*;
+import static java.lang.String.format;
 
 public class DefaultSsoClientLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
 
     private final String entryPointAddress;
 
-    private final String basicLogin;
-    private final String basicPassword;
-
-    private final UserService userService;
-
     private final RestTemplate restTemplate;
 
-    public DefaultSsoClientLogoutSuccessHandler(String entryPointAddress, String basicLogin, String basicPassword,
-                                                UserService userService, RestTemplate restTemplate) {
+    public DefaultSsoClientLogoutSuccessHandler(String entryPointAddress, RestTemplate restTemplate) {
         this.entryPointAddress = entryPointAddress;
-        this.basicLogin = basicLogin;
-        this.basicPassword = basicPassword;
-        this.userService = userService;
         this.restTemplate = restTemplate;
     }
 
@@ -56,10 +46,7 @@ public class DefaultSsoClientLogoutSuccessHandler extends SimpleUrlLogoutSuccess
         }
 
         if (accessToken != null) {
-            byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
-
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.AUTHORIZATION, "Basic " + new String(encodedBytes));
             headers.add("Revoke-Token", accessToken);
 
             try {

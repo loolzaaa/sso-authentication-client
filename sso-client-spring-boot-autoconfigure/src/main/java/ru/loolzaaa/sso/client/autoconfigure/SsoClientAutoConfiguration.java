@@ -1,5 +1,7 @@
 package ru.loolzaaa.sso.client.autoconfigure;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -10,6 +12,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import ru.loolzaaa.sso.client.core.JWTUtils;
 import ru.loolzaaa.sso.client.core.UserService;
@@ -21,6 +24,7 @@ import ru.loolzaaa.sso.client.core.helper.SsoClientTokenDataReceiver;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Configuration(proxyBeanMethods = false)
@@ -30,6 +34,8 @@ import java.util.List;
 @AutoConfigureAfter(SecurityAutoConfiguration.class)
 @Import({ SsoClientFilterConfiguration.class, SsoClientEndpointConfiguration.class })
 public class SsoClientAutoConfiguration {
+
+    private static final Logger log = LogManager.getLogger(SsoClientAutoConfiguration.class.getName());
 
     private final SsoClientProperties properties;
 
@@ -64,15 +70,17 @@ public class SsoClientAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler(RestTemplateBuilder restTemplateBuilder, UserService userService) {
+    DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler(RestTemplateBuilder restTemplateBuilder) {
         String entryPointAddress = properties.getEntryPointAddress();
         String basicLogin = properties.getBasicLogin();
         String basicPassword = properties.getBasicPassword();
 
         //TODO: Make more settings for rest template
-        final RestTemplate restTemplate = restTemplateBuilder.build();
+        final RestTemplate restTemplate = restTemplateBuilder
+                .basicAuthentication(basicLogin, basicPassword, StandardCharsets.US_ASCII)
+                .build();
 
-        return new DefaultSsoClientLogoutSuccessHandler(entryPointAddress, basicLogin, basicPassword, userService, restTemplate);
+        return new DefaultSsoClientLogoutSuccessHandler(entryPointAddress, restTemplate);
     }
 
     @Bean
@@ -84,10 +92,11 @@ public class SsoClientAutoConfiguration {
         String basicPassword = properties.getBasicPassword();
 
         //TODO: Make more settings for rest template
-        final RestTemplate restTemplate = restTemplateBuilder.build();
+        final RestTemplate restTemplate = restTemplateBuilder
+                .basicAuthentication(basicLogin, basicPassword, StandardCharsets.US_ASCII)
+                .build();
 
-        return new UserService(applicationName, entryPointAddress, basicLogin, basicPassword,
-                restTemplate, userStore, jwtUtils);
+        return new UserService(applicationName, entryPointAddress, restTemplate, userStore, jwtUtils);
     }
 
     @Bean
@@ -110,6 +119,9 @@ public class SsoClientAutoConfiguration {
         String username = properties.getReceiver().getUsername();
         String password = properties.getReceiver().getPassword();
         String fingerprint = properties.getReceiver().getFingerprint();
+        if (!StringUtils.hasText(fingerprint)) {
+            log.warn("For production purposes fingerprint must be non-blank/empty string. Current fingerprint: [{}]", fingerprint);
+        }
         return new SsoClientTokenDataReceiver(jwtUtils(), entryPointAddress, username, password, fingerprint);
     }
 }
