@@ -24,10 +24,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.List;
 
-import static java.lang.String.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -57,7 +55,7 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
 
     @BeforeEach
     void setUp() {
-        logoutSuccessHandler = new DefaultSsoClientLogoutSuccessHandler(entryPoint, basicLogin, basicPassword, userService, restTemplate);
+        logoutSuccessHandler = new DefaultSsoClientLogoutSuccessHandler(entryPoint, restTemplate);
     }
 
     @Test
@@ -75,6 +73,8 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
         when(request.getCookies()).thenReturn(cookies);
 
         logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
+
+        verify(request).getCookies();
     }
 
     @Test
@@ -82,8 +82,6 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
         final String TOKEN = "TOKEN";
         Cookie[] cookies = new Cookie[1];
         cookies[0] = new Cookie("_t_access", TOKEN);
-
-        byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
 
         ArgumentCaptor<HttpEntity<Void>> httpEntityArgumentCaptor = ArgumentCaptor.forClass(HttpEntity.class);
         ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
@@ -96,8 +94,6 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
 
         HttpHeaders headers = httpEntityArgumentCaptor.getValue().getHeaders();
         assertThat(headers)
-                .containsKey(HttpHeaders.AUTHORIZATION)
-                .containsValue(List.of("Basic " + new String(encodedBytes)))
                 .containsKey("Revoke-Token")
                 .extractingByKey("Revoke-Token")
                 .matches(strings -> strings.stream().allMatch(s -> s.matches(TOKEN)));
@@ -112,8 +108,6 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
         final String TOKEN = "TOKEN";
         Cookie[] cookies = new Cookie[1];
         cookies[0] = new Cookie("_t_access", TOKEN);
-
-        byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
 
         ArgumentCaptor<HttpEntity<Void>> httpEntityArgumentCaptor = ArgumentCaptor.forClass(HttpEntity.class);
         ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
@@ -137,8 +131,6 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
                 .build();
         HttpHeaders headers = httpEntityArgumentCaptor.getValue().getHeaders();
         assertThat(headers)
-                .containsKey(HttpHeaders.AUTHORIZATION)
-                .containsValue(List.of("Basic " + new String(encodedBytes)))
                 .containsKey("Revoke-Token")
                 .extractingByKey("Revoke-Token")
                 .matches(strings -> strings.stream().allMatch(s -> s.matches(TOKEN)));
