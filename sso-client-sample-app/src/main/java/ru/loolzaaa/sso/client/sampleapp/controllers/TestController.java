@@ -56,14 +56,7 @@ public class TestController {
 
     @PostConstruct
     public void ssoClientTokenDataReceiverTest() {
-        ssoClientTokenDataReceiver.getTokenDataLock().lock();
-        try {
-            ssoClientTokenDataReceiver.updateData();
-            log.info("Requested access token from SSO: {}", ssoClientTokenDataReceiver.getAccessToken());
-            log.info("Requested refresh token from SSO: {}", ssoClientTokenDataReceiver.getRefreshToken());
-        } finally {
-            ssoClientTokenDataReceiver.getTokenDataLock().unlock();
-        }
+        ssoClientTokenDataReceiverRefreshTest();
     }
 
     @Scheduled(initialDelay = 2, fixedDelay = 60, timeUnit = TimeUnit.SECONDS)
