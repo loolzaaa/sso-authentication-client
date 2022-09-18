@@ -42,7 +42,7 @@ public class UserService {
 
     public UserPrincipal getUserFromServerByUsername(String username) {
         ResponseEntity<UserPrincipal> userEntity = restTemplate.getForEntity(
-                entryPointAddress + "/api/fast/user/get/{username}?app={app}",
+                entryPointAddress + "/api/fast/user/{username}?app={app}",
                 UserPrincipal.class,
                 username,
                 applicationName
@@ -70,6 +70,8 @@ public class UserService {
             return userEntity.getBody();
         }
     }
+
+
 
     public int updateUserConfigOnServer(String username, String app, JsonNode config) {
         HttpEntity<JsonNode> request = new HttpEntity<>(config);

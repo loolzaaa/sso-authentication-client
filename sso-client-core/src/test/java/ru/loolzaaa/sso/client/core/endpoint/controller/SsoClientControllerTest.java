@@ -20,11 +20,15 @@ import ru.loolzaaa.sso.client.core.model.User;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(value = SsoClientController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
 @TestPropertySource("/application-test.properties")
@@ -46,7 +50,7 @@ class SsoClientControllerTest {
         given(ssoClientService.getApplicationName()).willReturn(APP);
 
         //when
-        MvcResult mvcResult = mockMvc.perform(get("/admin/app"))
+        MvcResult mvcResult = mockMvc.perform(get("/sso/app"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -65,7 +69,7 @@ class SsoClientControllerTest {
         given(ssoClientService.getUsersForApplicationFromServer()).willReturn(users);
 
         //when
-        MvcResult mvcResult = mockMvc.perform(get("/admin/users"))
+        MvcResult mvcResult = mockMvc.perform(get("/sso/users"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -90,7 +94,7 @@ class SsoClientControllerTest {
         ArgumentCaptor<JsonNode> configCaptor = ArgumentCaptor.forClass(JsonNode.class);
 
         //when
-        MvcResult mvcResult = mockMvc.perform(patch("/admin/user/{username}/config/{app}", USERNAME, APP)
+        MvcResult mvcResult = mockMvc.perform(patch("/sso/user/{username}/config/{app}", USERNAME, APP)
                 .content(objectMapper.writeValueAsBytes(CONFIG))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -110,7 +114,7 @@ class SsoClientControllerTest {
     @ParameterizedTest
     @CsvSource(value = {":aaaa", "aaaa:"}, delimiter = ':')
     void shouldReturn4xxWhenPathVariableIsInvalid(String username, String app) throws Exception {
-        mockMvc.perform(patch("/admin/user/{username}/config/{app}", username, app)
+        mockMvc.perform(patch("/sso/user/{username}/config/{app}", username, app)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
                 .andExpect(status().is4xxClientError());

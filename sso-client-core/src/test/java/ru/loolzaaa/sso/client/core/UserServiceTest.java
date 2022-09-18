@@ -8,7 +8,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,11 +18,10 @@ import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserGrantedAuthority;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static java.lang.String.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -52,30 +50,22 @@ public class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(applicationName, entryPointAddress, basicLogin, basicPassword, restTemplate, userStore, jwtUtils);
+        userService = new UserService(applicationName, entryPointAddress, restTemplate, userStore, jwtUtils);
     }
 
     @Test
     void shouldReturnUserPrincipalIfUserEntityBodyNotNull() {
-        byte[] encodedBytes = Base64.getEncoder().encode(format("%s:%s", basicLogin, basicPassword).getBytes(StandardCharsets.US_ASCII));
-
-        ArgumentCaptor<HttpEntity<Void>> httpEntityArgumentCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-
-        when(restTemplate.exchange(anyString(), any(), httpEntityArgumentCaptor.capture(), eq(UserPrincipal.class), any(), any())).thenReturn(userEntity);
+        when(restTemplate.getForEntity(anyString(), eq(UserPrincipal.class), any(), any())).thenReturn(userEntity);
         when(userEntity.getBody()).thenReturn(userPrincipal);
 
         userService.getUserFromServerByUsername(basicLogin);
 
-        HttpHeaders headers = httpEntityArgumentCaptor.getValue().getHeaders();
-        assertThat(headers)
-                .containsKey(HttpHeaders.AUTHORIZATION)
-                .containsValue(List.of("Basic " + new String(encodedBytes)));
         verify(userEntity).getBody();
     }
 
     @Test
     void shouldThrowExceptionIfUserEntityBodyNull() {
-        when(restTemplate.exchange(anyString(), any(), any(), eq(UserPrincipal.class), any(), any())).thenReturn(userEntity);
+        when(restTemplate.getForEntity(anyString(), eq(UserPrincipal.class), any(), any())).thenReturn(userEntity);
         when(userEntity.getBody()).thenReturn(null);
 
         assertThatThrownBy(() -> userService.getUserFromServerByUsername(basicLogin))
