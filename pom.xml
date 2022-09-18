@@ -10,12 +10,11 @@
 
 	<name>Single Sign-On Authentication Server Client</name>
 
-    <modules>
+	<modules>
 		<module>sso-client-core</module>
 		<module>sso-client-spring-boot-autoconfigure</module>
 		<module>sso-client-spring-boot-starter</module>
-		<module>sso-client-sample-app</module>
-    </modules>
+	</modules>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
