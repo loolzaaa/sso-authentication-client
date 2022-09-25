@@ -11,13 +11,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.6.0</version>
+        <version>2.7.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-sample-app</artifactId>
-    <version>0.1.2</version>
+    <version>0.2.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -39,7 +39,7 @@
         <dependency>
             <groupId>ru.loolzaaa</groupId>
             <artifactId>sso-client-spring-boot-starter</artifactId>
-            <version>0.1.6</version>
+            <version>0.2.0</version>
         </dependency>
 
         <dependency>
