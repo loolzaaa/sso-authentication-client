@@ -17,6 +17,9 @@ public class SsoClientProperties {
     private String basicLogin = "SERVICE";
     private String basicPassword = "PASSWORD";
 
+    private String revokeUsername = "REVOKE_TOKEN_USER";
+    private String revokePassword = "REVOKE_TOKEN_USER_PASSWORD";
+
     private final Receiver receiver = new Receiver();
 
     public boolean isEnabled() {
@@ -73,6 +76,22 @@ public class SsoClientProperties {
 
     public void setBasicPassword(String basicPassword) {
         this.basicPassword = basicPassword;
+    }
+
+    public String getRevokeUsername() {
+        return revokeUsername;
+    }
+
+    public void setRevokeUsername(String revokeUsername) {
+        this.revokeUsername = revokeUsername;
+    }
+
+    public String getRevokePassword() {
+        return revokePassword;
+    }
+
+    public void setRevokePassword(String revokePassword) {
+        this.revokePassword = revokePassword;
     }
 
     public Receiver getReceiver() {

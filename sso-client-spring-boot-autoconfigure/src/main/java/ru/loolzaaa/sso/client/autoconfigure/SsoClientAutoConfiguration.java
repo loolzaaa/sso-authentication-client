@@ -2,6 +2,7 @@ package ru.loolzaaa.sso.client.autoconfigure;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -12,27 +13,30 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.client.ClientHttpRequestExecution;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import ru.loolzaaa.sso.client.core.JWTUtils;
 import ru.loolzaaa.sso.client.core.UserService;
 import ru.loolzaaa.sso.client.core.context.UserStore;
-import ru.loolzaaa.sso.client.core.filter.JwtTokenFilter;
-import ru.loolzaaa.sso.client.core.filter.QueryJwtTokenFilter;
-import ru.loolzaaa.sso.client.core.helper.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.helper.SsoClientTokenDataReceiver;
+import ru.loolzaaa.sso.client.core.security.CookieName;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.time.Duration;
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(SsoClientProperties.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnProperty(prefix = "sso.client", value = { "applicationName", "entryPointAddress", "entryPointUri" })
 @AutoConfigureAfter(SecurityAutoConfiguration.class)
-@Import({ SsoClientFilterConfiguration.class, SsoClientEndpointConfiguration.class })
+@Import({ SsoClientHttpConfiguration.class, SsoClientFilterConfiguration.class, SsoClientEndpointConfiguration.class })
 public class SsoClientAutoConfiguration {
 
     private static final Logger log = LogManager.getLogger(SsoClientAutoConfiguration.class.getName());
@@ -41,24 +45,6 @@ public class SsoClientAutoConfiguration {
 
     public SsoClientAutoConfiguration(SsoClientProperties properties) {
         this.properties = properties;
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    SsoClientHttpConfigurer ssoClientHttpConfigurer(DefaultSsoClientAuthenticationEntryPoint authenticationEntryPoint,
-                                                    DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler,
-                                                    JWTUtils jwtUtils,
-                                                    UserService userService,
-                                                    List<SsoClientApplicationRegister> ssoClientApplicationRegisters) {
-//        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(properties.getEntryPointAddress(), properties.getRefreshTokenUri(),
-//                anonymousProperties.getKey(), anonymousProperties.getPrincipal(), anonymousProperties.getAuthorities(),
-//                jwtUtils, userService, webInvocationPrivilegeEvaluator);
-        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(properties.getEntryPointAddress(), properties.getRefreshTokenUri(),
-                jwtUtils, userService);
-        jwtTokenFilter.addApplicationRegisters(ssoClientApplicationRegisters);
-        QueryJwtTokenFilter queryJwtTokenFilter = new QueryJwtTokenFilter(jwtUtils);
-        return new SsoClientHttpConfigurer(properties, authenticationEntryPoint, logoutSuccessHandler,
-                queryJwtTokenFilter, jwtTokenFilter);
     }
 
     @Bean
@@ -72,12 +58,13 @@ public class SsoClientAutoConfiguration {
     @ConditionalOnMissingBean
     DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler(RestTemplateBuilder restTemplateBuilder) {
         String entryPointAddress = properties.getEntryPointAddress();
-        String basicLogin = properties.getBasicLogin();
-        String basicPassword = properties.getBasicPassword();
+        String login = properties.getRevokeUsername();
+        String password = properties.getRevokePassword();
 
-        //TODO: Make more settings for rest template
         final RestTemplate restTemplate = restTemplateBuilder
-                .basicAuthentication(basicLogin, basicPassword, StandardCharsets.US_ASCII)
+                .basicAuthentication(login, password, StandardCharsets.US_ASCII)
+                .setConnectTimeout(Duration.ofSeconds(4L))
+                .setReadTimeout(Duration.ofSeconds(4L))
                 .build();
 
         return new DefaultSsoClientLogoutSuccessHandler(entryPointAddress, restTemplate);
@@ -85,18 +72,31 @@ public class SsoClientAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    UserService userService(RestTemplateBuilder restTemplateBuilder, UserStore userStore, JWTUtils jwtUtils) {
+    UserService userService(RestTemplateBuilder restTemplateBuilder, UserStore userStore, JWTUtils jwtUtils,
+                            @Autowired(required = false) SsoClientTokenDataReceiver ssoClientTokenDataReceiver) {
         String applicationName = properties.getApplicationName();
         String entryPointAddress = properties.getEntryPointAddress();
         String basicLogin = properties.getBasicLogin();
         String basicPassword = properties.getBasicPassword();
 
-        //TODO: Make more settings for rest template
-        final RestTemplate restTemplate = restTemplateBuilder
-                .basicAuthentication(basicLogin, basicPassword, StandardCharsets.US_ASCII)
-                .build();
+        restTemplateBuilder = restTemplateBuilder
+                .additionalInterceptors(new RestTemplateTokenInterceptor(ssoClientTokenDataReceiver))
+                .setConnectTimeout(Duration.ofSeconds(4L))
+                .setReadTimeout(Duration.ofSeconds(4L));
+        if (ssoClientTokenDataReceiver != null) {
+            restTemplateBuilder.additionalInterceptors(new RestTemplateTokenInterceptor(ssoClientTokenDataReceiver));
+        } else {
+            restTemplateBuilder.basicAuthentication(basicLogin, basicPassword, StandardCharsets.US_ASCII);
+        }
+        RestTemplate restTemplate = restTemplateBuilder.build();
 
-        return new UserService(applicationName, entryPointAddress, restTemplate, userStore, jwtUtils);
+        return new UserService(
+                applicationName,
+                entryPointAddress,
+                restTemplate,
+                userStore,
+                jwtUtils,
+                ssoClientTokenDataReceiver != null);
     }
 
     @Bean
@@ -123,6 +123,29 @@ public class SsoClientAutoConfiguration {
             log.warn("For production purposes fingerprint must be non-blank/empty string. Current fingerprint: [{}]", fingerprint);
         }
         return new SsoClientTokenDataReceiver(jwtUtils(), entryPointAddress, username, password, fingerprint);
+    }
+
+    private static class RestTemplateTokenInterceptor implements ClientHttpRequestInterceptor {
+
+        private final SsoClientTokenDataReceiver ssoClientTokenDataReceiver;
+
+        public RestTemplateTokenInterceptor(SsoClientTokenDataReceiver ssoClientTokenDataReceiver) {
+            this.ssoClientTokenDataReceiver = ssoClientTokenDataReceiver;
+        }
+
+        @Override
+        public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
+            ssoClientTokenDataReceiver.getTokenDataLock().lock();
+            try {
+                ssoClientTokenDataReceiver.updateData();
+                request.getHeaders().add("Cookie", "XSRF-TOKEN=" + ssoClientTokenDataReceiver.getCsrfToken());
+                request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + ssoClientTokenDataReceiver.getAccessToken());
+                request.getHeaders().add("X-XSRF-TOKEN", ssoClientTokenDataReceiver.getCsrfToken().toString());
+                return execution.execute(request, body);
+            } finally {
+                ssoClientTokenDataReceiver.getTokenDataLock().unlock();
+            }
+        }
     }
 }
 
