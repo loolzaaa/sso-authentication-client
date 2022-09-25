@@ -3,7 +3,7 @@ package ru.loolzaaa.sso.client.autoconfigure;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -35,7 +35,7 @@ import java.time.Duration;
 @EnableConfigurationProperties(SsoClientProperties.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnProperty(prefix = "sso.client", value = { "applicationName", "entryPointAddress", "entryPointUri" })
-@AutoConfigureAfter(SecurityAutoConfiguration.class)
+@AutoConfigureBefore(SecurityAutoConfiguration.class)
 @Import({ SsoClientHttpConfiguration.class, SsoClientFilterConfiguration.class, SsoClientEndpointConfiguration.class })
 public class SsoClientAutoConfiguration {
 
