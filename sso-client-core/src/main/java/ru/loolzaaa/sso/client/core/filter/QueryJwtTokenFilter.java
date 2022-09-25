@@ -39,6 +39,15 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
             jwtUtils.setServerSkew(serverTime - System.currentTimeMillis());
         }
 
+        String rfidParameter = request.getParameter(CookieName.RFID.getName());
+        if (rfidParameter != null) {
+            Cookie cookie = new Cookie(CookieName.RFID.getName(), "");
+            cookie.setHttpOnly(false);
+            cookie.setSecure(req.isSecure());
+            cookie.setPath(request.getContextPath().length() > 0 ? request.getContextPath() : "/");
+            response.addCookie(cookie);
+        }
+
         String queryToken = request.getParameter("token");
         if (queryToken != null) {
             Cookie cookie = new Cookie(CookieName.ACCESS.getName(), queryToken);
