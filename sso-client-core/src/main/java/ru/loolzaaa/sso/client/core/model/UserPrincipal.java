@@ -1,5 +1,7 @@
 package ru.loolzaaa.sso.client.core.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,19 +10,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserPrincipal implements UserDetails {
 
-    @JsonProperty("user") //FIXME: Check it. Not deserialize without it!
     private final User user;
 
-    private List<UserGrantedAuthority> authorities = new ArrayList<>();
+    private final List<UserGrantedAuthority> authorities = new ArrayList<>();
 
-    private boolean accountNonExpired = true;
-    private boolean accountNonLocked = true;
-    private boolean credentialsNonExpired = true;
+    @JsonCreator
+    public UserPrincipal(@JsonProperty("user") User user) {
+        this.user = user;
+    }
 
-    public UserPrincipal() {
-        this.user = null;
+    public User getUser() {
+        return user;
     }
 
     @Override
@@ -40,25 +43,21 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return accountNonExpired;
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return accountNonLocked;
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return credentialsNonExpired;
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return user.isEnabled();
-    }
-
-    public User getUser() {
-        return user;
+        return true;
     }
 }

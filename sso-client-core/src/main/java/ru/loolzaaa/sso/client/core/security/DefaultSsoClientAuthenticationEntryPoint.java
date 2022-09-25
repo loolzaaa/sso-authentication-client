@@ -22,9 +22,9 @@ public class DefaultSsoClientAuthenticationEntryPoint extends LoginUrlAuthentica
         String redirect = super.determineUrlToUseForThisRequest(request, response, exception);
 
         String continueParamValue = UrlUtils.buildFullRequestUrl(request);
-        byte[] bytes = Base64.getUrlEncoder().encode(continueParamValue.getBytes(StandardCharsets.UTF_8));
+        String continueUrl = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
         UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(redirect)
-                .queryParam("continue", new String((bytes)))
+                .queryParam("continue", continueUrl)
                 .build();
 
         return continueUri.toString();

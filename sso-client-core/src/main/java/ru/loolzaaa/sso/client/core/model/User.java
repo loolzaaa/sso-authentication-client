@@ -10,7 +10,6 @@ public class User {
     private String login;
     private JsonNode config;
     private String name;
-    private boolean enabled;
     private List<String> authorities;
 
     public Long getId() {
@@ -43,14 +42,6 @@ public class User {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 
     public List<String> getAuthorities() {
