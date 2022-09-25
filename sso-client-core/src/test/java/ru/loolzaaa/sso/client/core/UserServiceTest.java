@@ -1,24 +1,26 @@
 package ru.loolzaaa.sso.client.core;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import ru.loolzaaa.sso.client.core.context.UserStore;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserGrantedAuthority;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,10 +30,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith({MockitoExtension.class})
 public class UserServiceTest {
 
-    private String applicationName = "app";
-    private String entryPointAddress = "entryPoint";
-    private String basicLogin = "login";
-    private String basicPassword = "pass";
+    final String applicationName = "app";
+    final String entryPointAddress = "entryPoint";
 
     @Mock
     UserStore userStore;
@@ -42,59 +42,99 @@ public class UserServiceTest {
     @Mock
     ResponseEntity<UserPrincipal> userEntity;
     @Mock
-    UserPrincipal userPrincipal;
+    ResponseEntity<UserPrincipal[]> usersEntity;
     @Mock
-    Map<String, User> users;
+    UserPrincipal userPrincipal;
 
     UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(applicationName, entryPointAddress, restTemplate, userStore, jwtUtils);
+        userService = new UserService(applicationName, entryPointAddress, restTemplate, userStore, jwtUtils, false);
     }
 
     @Test
-    void shouldReturnUserPrincipalIfUserEntityBodyNotNull() {
+    void shouldReturnUserPrincipalIfCorrectRequest() {
         when(restTemplate.getForEntity(anyString(), eq(UserPrincipal.class), any(), any())).thenReturn(userEntity);
         when(userEntity.getBody()).thenReturn(userPrincipal);
 
-        userService.getUserFromServerByUsername(basicLogin);
+        userService.getUserFromServerByUsername("username");
 
         verify(userEntity).getBody();
     }
 
     @Test
-    void shouldThrowExceptionIfUserEntityBodyNull() {
-        when(restTemplate.getForEntity(anyString(), eq(UserPrincipal.class), any(), any())).thenReturn(userEntity);
-        when(userEntity.getBody()).thenReturn(null);
+    void shouldThrowExceptionIfBadRequestForUser() {
+        when(restTemplate.getForEntity(anyString(), eq(UserPrincipal.class), any(), any()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
-        assertThatThrownBy(() -> userService.getUserFromServerByUsername(basicLogin))
+        assertThatThrownBy(() -> userService.getUserFromServerByUsername("username"))
                 .isInstanceOf(UsernameNotFoundException.class);
     }
 
     @Test
+    void shouldThrowExceptionIfErrorRequestForUser() {
+        when(restTemplate.getForEntity(anyString(), eq(UserPrincipal.class), any(), any()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.CONFLICT));
+
+        assertThatThrownBy(() -> userService.getUserFromServerByUsername("username"))
+                .isInstanceOf(Exception.class);
+    }
+
+    @Test
+    void shouldReturnUsersIfCorrectRequest() {
+        when(restTemplate.getForEntity(anyString(), eq(UserPrincipal[].class), any(), any())).thenReturn(usersEntity);
+        when(usersEntity.getBody()).thenReturn(new UserPrincipal[]{userPrincipal});
+
+        userService.getUsersFromServerByAuthority("app");
+
+        verify(usersEntity).getBody();
+    }
+
+    @Test
+    void shouldThrowExceptionIfBadRequestForUsers() {
+        when(restTemplate.getForEntity(anyString(), eq(UserPrincipal[].class), any(), any()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        assertThatThrownBy(() -> userService.getUsersFromServerByAuthority("app"))
+                .isInstanceOf(UsernameNotFoundException.class);
+    }
+
+    @Test
+    void shouldThrowExceptionIfErrorRequestForUsers() {
+        when(restTemplate.getForEntity(anyString(), eq(UserPrincipal[].class), any(), any()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.CONFLICT));
+
+        assertThatThrownBy(() -> userService.getUsersFromServerByAuthority("app"))
+                .isInstanceOf(Exception.class);
+    }
+
+    @Test
     void shouldSendUserConfigRequestAndReturn0() {
-        //given
-        final String USERNAME = "USERNAME";
+        int code = userService.updateUserConfigOnServer("username", "app", null);
 
-        ArgumentCaptor<String> uriCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<HttpMethod> httpMethodCaptor = ArgumentCaptor.forClass(HttpMethod.class);
-        ArgumentCaptor<HttpEntity<JsonNode>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> appCaptor = ArgumentCaptor.forClass(String.class);
-
-        //when
-        int code = userService.updateUserConfigOnServer(USERNAME, applicationName, null);
-
-        //then
-        verify(restTemplate).exchange(uriCaptor.capture(), httpMethodCaptor.capture(), requestCaptor.capture(),
-                eq(Void.class), usernameCaptor.capture(), appCaptor.capture());
-        assertThat(uriCaptor.getValue()).startsWith(entryPointAddress);
-        assertThat(httpMethodCaptor.getValue()).isEqualTo(HttpMethod.PATCH);
-        assertThat(requestCaptor.getValue().getBody()).isNull();
-        assertThat(usernameCaptor.getValue()).isEqualTo(USERNAME);
-        assertThat(appCaptor.getValue()).isEqualTo(applicationName);
+        verify(restTemplate).exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString());
         assertThat(code).isEqualTo(0);
+    }
+
+    @Test
+    void shouldReturnMinus1IfBadRequestForUserConfigChange() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        int code = userService.updateUserConfigOnServer("username", "app", null);
+
+        assertThat(code).isEqualTo(-1);
+    }
+
+    @Test
+    void shouldReturnMinus2IfErrorRequestForUserConfigChange() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.CONFLICT));
+
+        int code = userService.updateUserConfigOnServer("username", "app", null);
+
+        assertThat(code).isEqualTo(-2);
     }
 
     @Test
@@ -117,8 +157,6 @@ public class UserServiceTest {
                 new UserGrantedAuthority("privilege1"),
                 new UserGrantedAuthority("privilege2")
         );
-
-        Map<String, User> users = new HashMap<>();
 
         final String LOGIN = "LOGIN";
         User user = new User();

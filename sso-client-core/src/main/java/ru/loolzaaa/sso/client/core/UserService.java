@@ -5,9 +5,11 @@ import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import ru.loolzaaa.sso.client.core.context.UserStore;
 import ru.loolzaaa.sso.client.core.model.User;
@@ -31,59 +33,78 @@ public class UserService {
 
     private final JWTUtils jwtUtils;
 
+    private final boolean tokenApiUse;
+
     public UserService(String applicationName, String entryPointAddress, RestTemplate restTemplate,
-                       UserStore userStore, JWTUtils jwtUtils) {
+                       UserStore userStore, JWTUtils jwtUtils, boolean tokenApiUse) {
         this.applicationName = applicationName;
         this.entryPointAddress = entryPointAddress;
         this.restTemplate = restTemplate;
         this.userStore = userStore;
         this.jwtUtils = jwtUtils;
+        this.tokenApiUse = tokenApiUse;
     }
 
     public UserPrincipal getUserFromServerByUsername(String username) {
-        ResponseEntity<UserPrincipal> userEntity = restTemplate.getForEntity(
-                entryPointAddress + "/api/fast/user/{username}?app={app}",
-                UserPrincipal.class,
-                username,
-                applicationName
-        );
-
-        UserPrincipal body = userEntity.getBody();
-        if (body == null) {
-            throw new UsernameNotFoundException(String.format("User with login=%s not found", username));
-        } else {
-            return body;
+        final String API_URI = tokenApiUse ? "/api/user/{username}?app={app}" : "/api/fast/user/{username}?app={app}";
+        UserPrincipal userPrincipal;
+        try {
+            ResponseEntity<UserPrincipal> userEntity = restTemplate.getForEntity(
+                    entryPointAddress + API_URI,
+                    UserPrincipal.class,
+                    username,
+                    applicationName);
+            userPrincipal = userEntity.getBody();
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                throw new UsernameNotFoundException(String.format("User with login=%s not found", username));
+            } else {
+                throw e;
+            }
         }
+        return userPrincipal;
     }
 
     public UserPrincipal[] getUsersFromServerByAuthority(String authority) {
-        ResponseEntity<UserPrincipal[]> userEntity = restTemplate.getForEntity(
-                entryPointAddress + "/api/fast/users?app={app}&authority={authority}",
-                UserPrincipal[].class,
-                applicationName,
-                authority
-        );
-
-        if (userEntity.getBody() == null) {
-            throw new UsernameNotFoundException(String.format("Users with authority=%s not found", authority));
-        } else {
-            return userEntity.getBody();
+        final String API_URI = tokenApiUse ? "/api/users?app={app}&authority={authority}" : "/api/fast/users?app={app}&authority={authority}";
+        UserPrincipal[] users;
+        try {
+            ResponseEntity<UserPrincipal[]> userEntity = restTemplate.getForEntity(
+                    entryPointAddress + API_URI,
+                    UserPrincipal[].class,
+                    applicationName,
+                    authority);
+            users = userEntity.getBody();
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                throw new UsernameNotFoundException(String.format("Users with authority=%s not found", authority));
+            } else {
+                throw e;
+            }
         }
+        return users;
     }
 
-
-
     public int updateUserConfigOnServer(String username, String app, JsonNode config) {
+        final String API_URI = tokenApiUse ? "/api/user/{username}/config/{app}" : "/api/fast/user/{username}/config/{app}";
         HttpEntity<JsonNode> request = new HttpEntity<>(config);
-
-        restTemplate.exchange(
-                entryPointAddress + "/api/fast/user/{username}/config/{app}",
-                HttpMethod.PATCH,
-                request,
-                Void.class,
-                username,
-                app
-        );
+        try {
+            restTemplate.exchange(
+                    entryPointAddress + API_URI,
+                    HttpMethod.PATCH,
+                    request,
+                    Void.class,
+                    username,
+                    app);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                return -1;
+            } else {
+                return -2;
+            }
+        } catch (Exception e) {
+            return -2;
+        }
         return 0;
     }
 
