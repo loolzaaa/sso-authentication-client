@@ -3,7 +3,13 @@ package ru.loolzaaa.sso.client.core.filter;
 import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -27,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 public class JwtTokenFilter extends OncePerRequestFilter {
 
@@ -38,7 +45,13 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     private final UserService userService;
 
+    private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
+
     private final List<SsoClientApplicationRegister> ssoClientApplicationRegisters = new ArrayList<>();
+
+    private final String anonymousKey = UUID.randomUUID().toString();
+    private final List<GrantedAuthority> anonymousAuthorities = AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS");
+    private AuthorizationManager<HttpServletRequest> permitAllAuthorizationManager;
 
     public JwtTokenFilter(String entryPointAddress, String refreshTokenURI, JWTUtils jwtUtils, UserService userService) {
         this.entryPointAddress = entryPointAddress;
@@ -50,6 +63,18 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse resp,
                                     FilterChain chain) throws ServletException, IOException {
+        if (permitAllAuthorizationManager != null) {
+            AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(anonymousKey, "anonymousUser", anonymousAuthorities);
+            anonymousToken.setDetails(authenticationDetailsSource.buildDetails(req));
+
+            AuthorizationDecision decision = permitAllAuthorizationManager.check(() -> anonymousToken, req);
+            if (decision != null && decision.isGranted()) {
+                logger.debug("Permit access to: " + req.getRequestURL().toString());
+                chain.doFilter(req, resp);
+                return;
+            }
+        }
+
         String accessToken = null;
         if (req.getCookies() != null) {
             for (Cookie c : req.getCookies()) {
@@ -90,7 +115,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     userDetails,
                     null,
                     userDetails.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
+            authentication.setDetails(authenticationDetailsSource.buildDetails(req));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -140,5 +165,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             ssoClientApplicationRegisters.addAll(applicationRegisters);
             logger.info("Add application registers: " + ssoClientApplicationRegisters);
         }
+    }
+
+    public void setPermitAllAuthorizationManager(AuthorizationManager<HttpServletRequest> permitAllAuthorizationManager) {
+        this.permitAllAuthorizationManager = permitAllAuthorizationManager;
     }
 }
