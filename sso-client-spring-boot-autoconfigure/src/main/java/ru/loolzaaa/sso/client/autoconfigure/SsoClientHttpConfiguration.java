@@ -97,42 +97,4 @@ public class SsoClientHttpConfiguration {
         log.info("SSO Client HttpSecurity configuration completed");
         return http.build();
     }
-
-//    @Override
-//    public void init(HttpSecurity http) throws Exception {
-//        http
-//                .csrf()
-//                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-//                .and()
-//                .cors()
-//                .and()
-//                    .securityContext()
-//                        .securityContextRepository(new NullSecurityContextRepository())
-//                .and()
-//                    .requestCache()
-//                        .requestCache(new NullRequestCache())
-//                .and()
-//                    .authorizeRequests()
-//                        .anyRequest()
-//                            .hasAuthority(properties.getApplicationName())
-//                .and()
-//                    .exceptionHandling()
-//                        .authenticationEntryPoint(authenticationEntryPoint)
-//                .and()
-//                    .httpBasic()
-//                        .disable()
-//                    .formLogin()
-//                        .disable()
-//                    .logout()
-//                        .logoutRequestMatcher(new AntPathRequestMatcher("/do_logout", "POST"))
-//                        .logoutSuccessHandler(logoutSuccessHandler)
-//                        .deleteCookies("JSESSIONID", CookieName.ACCESS.getName(), CookieName.RFID.getName())
-//                        .invalidateHttpSession(true)
-//                        .clearAuthentication(true)
-//                        .permitAll()
-//                .and()
-//                // Filters order is important!
-//                .addFilterBefore(queryJwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
-//                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
-//    }
 }
