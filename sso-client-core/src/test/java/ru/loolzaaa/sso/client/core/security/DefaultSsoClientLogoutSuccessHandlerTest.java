@@ -8,14 +8,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
-import ru.loolzaaa.sso.client.core.UserService;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -32,9 +30,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class DefaultSsoClientLogoutSuccessHandlerTest {
 
-    private String entryPoint = "http://host.com";
-    private String basicLogin = "login";
-    private String basicPassword = "pass";
+    final String entryPoint = "http://host.com";
 
     @Mock
     HttpServletRequest request;
@@ -43,13 +39,7 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
     @Mock
     Authentication authentication;
     @Mock
-    ResponseEntity<Void> userEntity;
-    @Mock
-    HttpHeaders httpHeaders;
-    @Mock
     RestTemplate restTemplate;
-    @Mock
-    UserService userService;
 
     DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler;
 
@@ -74,7 +64,7 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
 
         logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
 
-        verify(request).getCookies();
+        verify(request, times(2)).getCookies();
     }
 
     @Test
@@ -124,10 +114,10 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
         logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
 
         String continueParamValue = UrlUtils.buildFullRequestUrl(request).replace("/do_logout", "");
-        byte[] bytes = Base64.getUrlEncoder().encode(continueParamValue.getBytes(StandardCharsets.UTF_8));
+        String encodedParam = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
         UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(entryPoint + "/api/logout")
                 .queryParam("token", TOKEN)
-                .queryParam("continue", new String(bytes))
+                .queryParam("continue", encodedParam)
                 .build();
         HttpHeaders headers = httpEntityArgumentCaptor.getValue().getHeaders();
         assertThat(headers)

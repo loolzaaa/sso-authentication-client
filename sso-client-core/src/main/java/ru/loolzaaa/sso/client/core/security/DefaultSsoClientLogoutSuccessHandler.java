@@ -62,10 +62,10 @@ public class DefaultSsoClientLogoutSuccessHandler extends SimpleUrlLogoutSuccess
                     resp.sendRedirect(format(entryPointAddress + "/api/logout?token=%s", accessToken));
                 } else {
                     String continueParamValue = UrlUtils.buildFullRequestUrl(req).replace("/do_logout", "");
-                    byte[] bytes = Base64.getUrlEncoder().encode(continueParamValue.getBytes(StandardCharsets.UTF_8));
+                    String encodedParam = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
                     UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(entryPointAddress + "/api/logout")
                             .queryParam("token", accessToken)
-                            .queryParam("continue", new String((bytes)))
+                            .queryParam("continue", encodedParam)
                             .build();
 
                     resp.sendRedirect(continueUri.toString());
