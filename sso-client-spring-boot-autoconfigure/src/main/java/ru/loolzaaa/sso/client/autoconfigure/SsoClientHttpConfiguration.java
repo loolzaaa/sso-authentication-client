@@ -15,6 +15,7 @@ import ru.loolzaaa.sso.client.core.UserService;
 import ru.loolzaaa.sso.client.core.filter.JwtTokenFilter;
 import ru.loolzaaa.sso.client.core.filter.QueryJwtTokenFilter;
 import ru.loolzaaa.sso.client.core.helper.SsoClientApplicationRegister;
+import ru.loolzaaa.sso.client.core.helper.SsoClientLogoutHandler;
 import ru.loolzaaa.sso.client.core.security.CookieName;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
@@ -59,7 +60,8 @@ public class SsoClientHttpConfiguration {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   List<SsoClientLogoutHandler> logoutHandlers) throws Exception {
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
@@ -67,10 +69,10 @@ public class SsoClientHttpConfiguration {
                 .and()
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint))
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().hasAuthority(properties.getApplicationName()))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint))
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/do_logout", "POST"))
                         .logoutSuccessHandler(logoutSuccessHandler)
@@ -79,11 +81,20 @@ public class SsoClientHttpConfiguration {
                         .clearAuthentication(true)
                         .permitAll())
                 .httpBasic().disable()
+                .formLogin().disable()
                 .anonymous().disable()
                 // Filters order is important!
                 .addFilterBefore(queryJwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
-        log.debug("SSO Client HttpSecurity configuration completed");
+
+        if (logoutHandlers != null && !logoutHandlers.isEmpty()) {
+            for (SsoClientLogoutHandler logoutHandler : logoutHandlers) {
+                http.logout().addLogoutHandler(logoutHandler);
+                log.info("Add custom logout handler: " + logoutHandler);
+            }
+        }
+
+        log.info("SSO Client HttpSecurity configuration completed");
         return http.build();
     }
 
