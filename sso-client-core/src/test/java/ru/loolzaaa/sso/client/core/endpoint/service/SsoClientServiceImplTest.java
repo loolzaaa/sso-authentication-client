@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestTemplate;
 import ru.loolzaaa.sso.client.core.UserService;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserGrantedAuthority;
@@ -24,15 +23,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class SsoClientServiceImplTest {
 
     final String APP_NAME = "APP";
-    final String ENTRY_POINT = "/sso";
 
     ObjectNode config;
 
@@ -40,8 +40,6 @@ class SsoClientServiceImplTest {
 
     @Mock
     UserService userService;
-    @Mock
-    RestTemplate restTemplate;
 
     @InjectMocks
     SsoClientServiceImpl ssoClientService;
@@ -72,7 +70,7 @@ class SsoClientServiceImplTest {
     }
 
     @Test
-    void shouldReturnUsersWithAuthorities() throws Exception {
+    void shouldReturnUsersWithAuthorities() {
         //given
         User user1 = new User();
         user1.setLogin("user1");
@@ -80,14 +78,12 @@ class SsoClientServiceImplTest {
         User user2 = new User();
         user2.setLogin("user2");
 
-        UserPrincipal userPrincipal1 = new UserPrincipal();
+        UserPrincipal userPrincipal1 = new UserPrincipal(user1);
         List<? extends GrantedAuthority> authorities1 = List.of(new UserGrantedAuthority("r1"), new UserGrantedAuthority("p1"));
-        ReflectionTestUtils.setField(userPrincipal1, "user", user1);
         ReflectionTestUtils.setField(userPrincipal1, "authorities", authorities1);
 
-        UserPrincipal userPrincipal2 = new UserPrincipal();
+        UserPrincipal userPrincipal2 = new UserPrincipal(user2);
         List<? extends GrantedAuthority> authorities2 = List.of(new UserGrantedAuthority("r2"), new UserGrantedAuthority("a2"));
-        ReflectionTestUtils.setField(userPrincipal2, "user", user2);
         ReflectionTestUtils.setField(userPrincipal2, "authorities", authorities2);
 
         UserPrincipal[] principals = new UserPrincipal[]{userPrincipal1, userPrincipal2};
@@ -115,7 +111,7 @@ class SsoClientServiceImplTest {
     }
 
     @Test
-    void shouldReturn0BecauseOfSuccess() throws Exception {
+    void shouldReturn0BecauseOfSuccess() {
         //given
         final String USERNAME = "USERNAME";
 
@@ -151,7 +147,7 @@ class SsoClientServiceImplTest {
     }
 
     @Test
-    void shouldReturn1BecausePrivilegesInvalid() throws Exception {
+    void shouldReturn1BecausePrivilegesInvalid() {
         //given
         final String USERNAME = "USERNAME";
         ObjectNode config = objectMapper.createObjectNode();
