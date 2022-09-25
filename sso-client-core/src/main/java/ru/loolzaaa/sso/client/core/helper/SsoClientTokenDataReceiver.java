@@ -105,7 +105,7 @@ public class SsoClientTokenDataReceiver {
         String accessToken = null;
         String refreshToken = null;
         Pattern jwtAccessTokenCookiePattern = Pattern.compile(".*" + CookieName.ACCESS.getName() + "=(.+?);.*");
-        Pattern jwtRefreshTokenCookiePattern = Pattern.compile(".*" + CookieName.ACCESS.getName() + "=(.+?);.*");
+        Pattern jwtRefreshTokenCookiePattern = Pattern.compile(".*" + CookieName.REFRESH.getName() + "=(.+?);.*");
         for (String s : cookies) {
             Matcher jwtAccessTokenCookieMatcher = jwtAccessTokenCookiePattern.matcher(s);
             Matcher jwtRefreshTokenCookieMatcher = jwtRefreshTokenCookiePattern.matcher(s);
