@@ -1,13 +1,16 @@
 package ru.loolzaaa.sso.client.sampleapp.config;
 
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import ru.loolzaaa.sso.client.core.helper.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.helper.SsoClientLogoutHandler;
+import ru.loolzaaa.sso.client.core.helper.SsoClientPermitAllMatcherHandler;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,6 +22,13 @@ public class SecurityConfig implements WebSecurityCustomizer {
     @Override
     public void customize(WebSecurity web) {
         web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+    }
+
+    @Bean
+    SsoClientPermitAllMatcherHandler ssoClientPermitAllMatcherHandler() {
+        SsoClientPermitAllMatcherHandler permitAllMatcherHandler = new SsoClientPermitAllMatcherHandler();
+        permitAllMatcherHandler.addPermitAllMatcher(HttpMethod.GET, "/api/time");
+        return permitAllMatcherHandler;
     }
 
     @Component

@@ -31,6 +31,11 @@ public class TestController {
         this.ssoClientTokenDataReceiver = ssoClientTokenDataReceiver;
     }
 
+    @GetMapping(path = "/time", produces = "application/json")
+    String getTime() {
+        return String.format("{\"time\":%d}", System.currentTimeMillis());
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/get/test/{id}")
     public Test testGet(@PathVariable("id") int id) {
