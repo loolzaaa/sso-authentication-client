@@ -54,6 +54,8 @@ public class SsoClientController {
                 return String.format(answer, code, "Success");
             case 1:
                 return String.format(answer, code, "Config doesn't contain privileges");
+            case -1:
+                return String.format(answer, code, "Bad request format");
             default:
                 return String.format(answer, code, "Error while communicating with SSO server");
         }
