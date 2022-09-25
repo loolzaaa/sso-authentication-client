@@ -1,10 +1,10 @@
 package ru.loolzaaa.sso.client.sampleapp.controllers;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +16,6 @@ import javax.annotation.PostConstruct;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api")
 public class TestController {
@@ -26,6 +25,11 @@ public class TestController {
     private final UserService userService;
 
     private final SsoClientTokenDataReceiver ssoClientTokenDataReceiver;
+
+    public TestController(UserService userService, @Autowired(required = false) SsoClientTokenDataReceiver ssoClientTokenDataReceiver) {
+        this.userService = userService;
+        this.ssoClientTokenDataReceiver = ssoClientTokenDataReceiver;
+    }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/get/test/{id}")
@@ -61,13 +65,17 @@ public class TestController {
 
     @Scheduled(initialDelay = 2, fixedDelay = 60, timeUnit = TimeUnit.SECONDS)
     public void ssoClientTokenDataReceiverRefreshTest() {
-        ssoClientTokenDataReceiver.getTokenDataLock().lock();
-        try {
-            ssoClientTokenDataReceiver.updateData();
-            log.info("Requested access token from SSO: {}", ssoClientTokenDataReceiver.getAccessToken());
-            log.info("Requested refresh token from SSO: {}", ssoClientTokenDataReceiver.getRefreshToken());
-        } finally {
-            ssoClientTokenDataReceiver.getTokenDataLock().unlock();
+        if (ssoClientTokenDataReceiver != null) {
+            ssoClientTokenDataReceiver.getTokenDataLock().lock();
+            try {
+                ssoClientTokenDataReceiver.updateData();
+                log.info("Requested access token from SSO: {}", ssoClientTokenDataReceiver.getAccessToken());
+                log.info("Requested refresh token from SSO: {}", ssoClientTokenDataReceiver.getRefreshToken());
+            } finally {
+                ssoClientTokenDataReceiver.getTokenDataLock().unlock();
+            }
+        } else {
+            log.info("There is no SsoClientTokenDataReceiver instance");
         }
     }
 
