@@ -150,9 +150,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 logger.debug("Browser request detected. Refresh via redirect to " + refreshTokenURI);
 
                 String continueParamValue = UrlUtils.buildFullRequestUrl(req);
-                byte[] bytes = Base64.getUrlEncoder().encode(continueParamValue.getBytes(StandardCharsets.UTF_8));
+                String continueUrl = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
                 UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(entryPointAddress + refreshTokenURI)
-                        .queryParam("continue", new String((bytes)))
+                        .queryParam("continue", continueUrl)
                         .build();
 
                 resp.sendRedirect(continueUri.toString());
