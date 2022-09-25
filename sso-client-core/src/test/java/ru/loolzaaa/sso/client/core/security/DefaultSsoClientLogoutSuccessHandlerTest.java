@@ -81,7 +81,7 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
     void shouldRedirectForTokenRevokeIfAjaxAndAccessTokenNotNull() throws IOException, ServletException {
         final String TOKEN = "TOKEN";
         Cookie[] cookies = new Cookie[1];
-        cookies[0] = new Cookie("_t_access", TOKEN);
+        cookies[0] = new Cookie(CookieName.ACCESS.getName(), TOKEN);
 
         ArgumentCaptor<HttpEntity<Void>> httpEntityArgumentCaptor = ArgumentCaptor.forClass(HttpEntity.class);
         ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
@@ -107,7 +107,7 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
     void shouldRedirectForTokenRevokeIfBrowserAndAccessTokenNotNull() throws IOException, ServletException {
         final String TOKEN = "TOKEN";
         Cookie[] cookies = new Cookie[1];
-        cookies[0] = new Cookie("_t_access", TOKEN);
+        cookies[0] = new Cookie(CookieName.ACCESS.getName(), TOKEN);
 
         ArgumentCaptor<HttpEntity<Void>> httpEntityArgumentCaptor = ArgumentCaptor.forClass(HttpEntity.class);
         ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
@@ -144,7 +144,7 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
     void shouldReturnBadRequestIfErrorWhenTokenRevoke() throws IOException, ServletException {
         final String TOKEN = "TOKEN";
         Cookie[] cookies = new Cookie[1];
-        cookies[0] = new Cookie("_t_access", TOKEN);
+        cookies[0] = new Cookie(CookieName.ACCESS.getName(), TOKEN);
 
         when(request.getCookies()).thenReturn(cookies);
         doThrow(new RestClientException("")).when(restTemplate).exchange(anyString(), any(), any(), eq(Void.class));

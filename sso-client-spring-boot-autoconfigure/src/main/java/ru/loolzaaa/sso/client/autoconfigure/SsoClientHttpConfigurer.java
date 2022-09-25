@@ -7,10 +7,11 @@ import org.springframework.security.web.context.NullSecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
-import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
 import ru.loolzaaa.sso.client.core.filter.JwtTokenFilter;
 import ru.loolzaaa.sso.client.core.filter.QueryJwtTokenFilter;
+import ru.loolzaaa.sso.client.core.security.CookieName;
+import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
+import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
 
 public class SsoClientHttpConfigurer extends AbstractHttpConfigurer<SsoClientHttpConfigurer, HttpSecurity> {
 
@@ -61,7 +62,7 @@ public class SsoClientHttpConfigurer extends AbstractHttpConfigurer<SsoClientHtt
                     .logout()
                         .logoutRequestMatcher(new AntPathRequestMatcher("/do_logout", "POST"))
                         .logoutSuccessHandler(logoutSuccessHandler)
-                        .deleteCookies("JSESSIONID", "_t_access", "_t_rfid")
+                        .deleteCookies("JSESSIONID", CookieName.ACCESS.getName(), CookieName.RFID.getName())
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .permitAll()

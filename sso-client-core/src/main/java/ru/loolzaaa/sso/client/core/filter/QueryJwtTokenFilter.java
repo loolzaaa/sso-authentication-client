@@ -3,6 +3,7 @@ package ru.loolzaaa.sso.client.core.filter;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.UriComponentsBuilder;
 import ru.loolzaaa.sso.client.core.JWTUtils;
+import ru.loolzaaa.sso.client.core.security.CookieName;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -40,7 +41,7 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
 
         String queryToken = request.getParameter("token");
         if (queryToken != null) {
-            Cookie cookie = new Cookie("_t_access", queryToken);
+            Cookie cookie = new Cookie(CookieName.ACCESS.getName(), queryToken);
             cookie.setHttpOnly(true);
             cookie.setSecure(req.isSecure());
             cookie.setPath(request.getContextPath().length() > 0 ? request.getContextPath() : "/");
@@ -56,7 +57,7 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
 
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(request.getRequestURL().toString());
                 request.getParameterNames().asIterator().forEachRemaining(param -> {
-                    if (!"token".equals(param) && !"serverTime".equals(param)) {
+                    if (!"token".equals(param) && !"serverTime".equals(param) && !CookieName.RFID.getName().equals(param)) {
                         uriBuilder.queryParam(param, req.getParameter(param));
                     }
                 });

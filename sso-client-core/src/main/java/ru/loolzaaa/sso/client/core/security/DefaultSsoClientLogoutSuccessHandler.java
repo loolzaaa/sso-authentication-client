@@ -39,7 +39,7 @@ public class DefaultSsoClientLogoutSuccessHandler extends SimpleUrlLogoutSuccess
         String accessToken = null;
         if (req.getCookies() != null) {
             Optional<String> token = Arrays.stream(req.getCookies())
-                    .filter(cookie -> "_t_access".equals(cookie.getName()))
+                    .filter(cookie -> CookieName.ACCESS.getName().equals(cookie.getName()))
                     .map(Cookie::getValue)
                     .findFirst();
             accessToken = token.orElse(null);

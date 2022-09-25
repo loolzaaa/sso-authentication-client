@@ -15,6 +15,7 @@ import org.springframework.security.web.util.UrlUtils;
 import ru.loolzaaa.sso.client.core.JWTUtils;
 import ru.loolzaaa.sso.client.core.UserService;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
+import ru.loolzaaa.sso.client.core.security.CookieName;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.Cookie;
@@ -23,7 +24,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JwtTokenFilterTest {
@@ -65,7 +67,7 @@ class JwtTokenFilterTest {
     @Disabled
     void shouldSaveUserInSystemIfLoginIsNotNullAndAuthenticationIsNull() throws Exception {
         Cookie[] cookies = new Cookie[2];
-        cookies[0] = new Cookie("_t_access", "v1");
+        cookies[0] = new Cookie(CookieName.ACCESS.getName(), "v1");
         cookies[1] = new Cookie("c2", "v2");
 
         when(req.getCookies()).thenReturn(cookies);

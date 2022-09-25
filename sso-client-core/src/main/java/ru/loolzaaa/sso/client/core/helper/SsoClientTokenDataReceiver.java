@@ -4,6 +4,7 @@ import io.jsonwebtoken.ClaimJwtException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ru.loolzaaa.sso.client.core.JWTUtils;
+import ru.loolzaaa.sso.client.core.security.CookieName;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -84,7 +85,7 @@ public class SsoClientTokenDataReceiver {
                 .POST(HttpRequest.BodyPublishers.ofString(String.format("_fingerprint=%s", fingerprint)))
                 .uri(URI.create(String.format("%s%s", entryPointAddress, refreshUri)))
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Cookie", "_t_refresh=" + tokenData.getRefreshToken())
+                .header("Cookie", CookieName.REFRESH.getName() + "=" + tokenData.getRefreshToken())
                 .header("Cookie", "XSRF-TOKEN=" + csrfToken)
                 .header("X-XSRF-TOKEN", csrfToken.toString())
                 .build();
@@ -103,8 +104,8 @@ public class SsoClientTokenDataReceiver {
     private void updateTokenDataFromCookie(List<String> cookies, String apiUri) {
         String accessToken = null;
         String refreshToken = null;
-        Pattern jwtAccessTokenCookiePattern = Pattern.compile(".*_t_access=(.+?);.*");
-        Pattern jwtRefreshTokenCookiePattern = Pattern.compile(".*_t_refresh=(.+?);.*");
+        Pattern jwtAccessTokenCookiePattern = Pattern.compile(".*" + CookieName.ACCESS.getName() + "=(.+?);.*");
+        Pattern jwtRefreshTokenCookiePattern = Pattern.compile(".*" + CookieName.ACCESS.getName() + "=(.+?);.*");
         for (String s : cookies) {
             Matcher jwtAccessTokenCookieMatcher = jwtAccessTokenCookiePattern.matcher(s);
             Matcher jwtRefreshTokenCookieMatcher = jwtRefreshTokenCookiePattern.matcher(s);

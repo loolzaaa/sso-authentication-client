@@ -14,6 +14,7 @@ import ru.loolzaaa.sso.client.core.JWTUtils;
 import ru.loolzaaa.sso.client.core.UserService;
 import ru.loolzaaa.sso.client.core.helper.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
+import ru.loolzaaa.sso.client.core.security.CookieName;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -51,7 +52,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String accessToken = null;
         if (req.getCookies() != null) {
             for (Cookie c : req.getCookies()) {
-                if ("_t_access".equals(c.getName())) {
+                if (CookieName.ACCESS.getName().equals(c.getName())) {
                     accessToken = c.getValue();
                 }
             }
@@ -100,7 +101,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             logger.debug("Invalid access token, try to refresh it");
 
             logger.trace("Remove invalid access token cookie");
-            Cookie c = new Cookie("_t_access", null);
+            Cookie c = new Cookie(CookieName.ACCESS.getName(), null);
             c.setHttpOnly(true);
             c.setSecure(req.isSecure());
             c.setPath(req.getContextPath().length() > 0 ? req.getContextPath() : "/");
