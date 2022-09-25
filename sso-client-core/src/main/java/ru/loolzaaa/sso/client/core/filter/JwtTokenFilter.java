@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -77,7 +78,13 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         if (login != null) {
             logger.debug("Update security context");
-            UserPrincipal userDetails = userService.getUserFromServerByUsername(login);
+            UserPrincipal userDetails;
+            try {
+                userDetails = userService.getUserFromServerByUsername(login);
+            } catch (UsernameNotFoundException e) {
+                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
 
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     userDetails,
@@ -131,6 +138,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     public void addApplicationRegisters(List<SsoClientApplicationRegister> applicationRegisters) {
         if (applicationRegisters != null && !applicationRegisters.isEmpty()) {
             ssoClientApplicationRegisters.addAll(applicationRegisters);
+            logger.info("Add application registers: " + ssoClientApplicationRegisters);
         }
     }
 }
