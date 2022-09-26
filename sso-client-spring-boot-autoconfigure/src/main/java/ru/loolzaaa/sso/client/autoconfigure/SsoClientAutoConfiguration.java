@@ -80,15 +80,14 @@ public class SsoClientAutoConfiguration {
         String basicPassword = properties.getBasicPassword();
 
         restTemplateBuilder = restTemplateBuilder
-                .additionalInterceptors(new RestTemplateTokenInterceptor(ssoClientTokenDataReceiver))
                 .setConnectTimeout(Duration.ofSeconds(4L))
                 .setReadTimeout(Duration.ofSeconds(4L));
         if (ssoClientTokenDataReceiver != null) {
             log.info("SSO Client User service configured with SsoClientTokenDataReceiver");
-            restTemplateBuilder.additionalInterceptors(new RestTemplateTokenInterceptor(ssoClientTokenDataReceiver));
+            restTemplateBuilder = restTemplateBuilder.additionalInterceptors(new RestTemplateTokenInterceptor(ssoClientTokenDataReceiver));
         } else {
             log.info("SSO Client User service configured with Basic Authentication");
-            restTemplateBuilder.basicAuthentication(basicLogin, basicPassword, StandardCharsets.US_ASCII);
+            restTemplateBuilder = restTemplateBuilder.basicAuthentication(basicLogin, basicPassword, StandardCharsets.US_ASCII);
         }
         RestTemplate restTemplate = restTemplateBuilder.build();
 
