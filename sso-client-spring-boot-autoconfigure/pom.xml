@@ -8,7 +8,7 @@
     <parent>
         <groupId>ru.loolzaaa</groupId>
         <artifactId>sso-client</artifactId>
-        <version>0.2.0</version>
+        <version>0.2.1</version>
     </parent>
 
     <name>Single Sign-On Authentication Server Client :: SSO Client AutoConfiguration</name>
