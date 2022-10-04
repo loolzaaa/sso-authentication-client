@@ -92,19 +92,21 @@ public class SsoClientHttpConfiguration {
                 .addFilterBefore(queryJwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
-        final AuthorizationManager<RequestAuthorizationContext> permitAllAuthorizationManager = (a, o) -> new AuthorizationDecision(true);
-        RequestMatcherDelegatingAuthorizationManager.Builder authorizationManagerBuilder = RequestMatcherDelegatingAuthorizationManager
-                .builder();
-        for (AntPathRequestMatcher matcher : permitAllMatcherHandler.getMatchers()) {
-            http.authorizeHttpRequests(authorize -> {
-                authorize.requestMatchers(matcher).permitAll();
-                authorizationManagerBuilder.add(matcher, permitAllAuthorizationManager);
-            });
-            log.info("Add permit all matcher: " + matcher);
+        if (!permitAllMatcherHandler.getMatchers().isEmpty()) {
+            final AuthorizationManager<RequestAuthorizationContext> permitAllAuthorizationManager = (a, o) -> new AuthorizationDecision(true);
+            RequestMatcherDelegatingAuthorizationManager.Builder authorizationManagerBuilder = RequestMatcherDelegatingAuthorizationManager
+                    .builder();
+            for (AntPathRequestMatcher matcher : permitAllMatcherHandler.getMatchers()) {
+                http.authorizeHttpRequests(authorize -> {
+                    authorize.requestMatchers(matcher).permitAll();
+                    authorizationManagerBuilder.add(matcher, permitAllAuthorizationManager);
+                });
+                log.info("Add permit all matcher: " + matcher);
+            }
+            jwtTokenFilter.setPermitAllAuthorizationManager(authorizationManagerBuilder.build());
         }
         http.authorizeHttpRequests(authorize -> authorize
                 .anyRequest().hasAuthority(properties.getApplicationName()));
-        jwtTokenFilter.setPermitAllAuthorizationManager(authorizationManagerBuilder.build());
 
         if (logoutHandlers != null && !logoutHandlers.isEmpty()) {
             for (SsoClientLogoutHandler logoutHandler : logoutHandlers) {
