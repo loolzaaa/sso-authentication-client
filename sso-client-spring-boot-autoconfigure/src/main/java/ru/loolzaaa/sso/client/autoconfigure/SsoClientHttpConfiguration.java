@@ -46,9 +46,6 @@ public class SsoClientHttpConfiguration {
                                       JWTUtils jwtUtils,
                                       UserService userService,
                                       List<SsoClientApplicationRegister> ssoClientApplicationRegisters) {
-        //        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(properties.getEntryPointAddress(), properties.getRefreshTokenUri(),
-//                anonymousProperties.getKey(), anonymousProperties.getPrincipal(), anonymousProperties.getAuthorities(),
-//                jwtUtils, userService, webInvocationPrivilegeEvaluator);
         JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(
                 properties.getEntryPointAddress(),
                 properties.getRefreshTokenUri(),
