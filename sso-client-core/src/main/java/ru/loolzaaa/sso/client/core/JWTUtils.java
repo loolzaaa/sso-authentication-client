@@ -22,7 +22,6 @@ public class JWTUtils {
     public Jws<Claims> parserEnforceAccessToken(String jwt) {
         return Jwts.parser()
                 .setClock(new FixedClock(new Date(System.currentTimeMillis() + serverSkew)))
-                .setAllowedClockSkewSeconds(30)
                 .setSigningKey(getHS256SecretBytes(accessSecretKey))
                 .parseClaimsJws(jwt);
     }
