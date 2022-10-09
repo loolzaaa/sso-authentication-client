@@ -142,10 +142,10 @@ public class SsoClientAutoConfiguration {
                 request.getHeaders().add("Cookie", "XSRF-TOKEN=" + ssoClientTokenDataReceiver.getCsrfToken());
                 request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + ssoClientTokenDataReceiver.getAccessToken());
                 request.getHeaders().add("X-XSRF-TOKEN", ssoClientTokenDataReceiver.getCsrfToken().toString());
-                return execution.execute(request, body);
             } finally {
                 ssoClientTokenDataReceiver.getTokenDataLock().unlock();
             }
+            return execution.execute(request, body);
         }
     }
 }
