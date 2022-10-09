@@ -16,6 +16,12 @@ import java.io.IOException;
 
 public class QueryJwtTokenFilter extends GenericFilterBean {
 
+    private static final String serverTimeParamName = "serverTime";
+
+    private static final String serverTimeHeaderName = "X-SSO-TIME";
+
+    private static final String tokenParamName = "token";
+
     private final JWTUtils jwtUtils;
 
     public QueryJwtTokenFilter(JWTUtils jwtUtils) {
@@ -27,11 +33,14 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) resp;
 
-        String queryServerTime = request.getParameter("serverTime");
-        if (queryServerTime != null) {
+        String serverTimeParam = request.getParameter(serverTimeParamName);
+        if (serverTimeParam == null) {
+            serverTimeParam = request.getHeader(serverTimeHeaderName);
+        }
+        if (serverTimeParam != null) {
             long serverTime;
             try {
-                serverTime = Long.parseLong(queryServerTime);
+                serverTime = Long.parseLong(serverTimeParam);
             } catch (Exception e) {
                 logger.warn("Cannot parse server time from authentication server", e);
                 serverTime = System.currentTimeMillis();
@@ -48,7 +57,7 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
             response.addCookie(cookie);
         }
 
-        String queryToken = request.getParameter("token");
+        String queryToken = request.getParameter(tokenParamName);
         if (queryToken != null) {
             Cookie cookie = new Cookie(CookieName.ACCESS.getName(), queryToken);
             cookie.setHttpOnly(true);
@@ -66,7 +75,7 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
 
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(request.getRequestURL().toString());
                 request.getParameterNames().asIterator().forEachRemaining(param -> {
-                    if (!"token".equals(param) && !"serverTime".equals(param) && !CookieName.RFID.getName().equals(param)) {
+                    if (!isParamNeedToClear(param)) {
                         uriBuilder.queryParam(param, req.getParameter(param));
                     }
                 });
@@ -76,5 +85,11 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
         } else {
             chain.doFilter(req, resp);
         }
+    }
+
+    private boolean isParamNeedToClear(String paramName) {
+        return tokenParamName.equals(paramName)
+                || serverTimeParamName.equals(paramName)
+                || CookieName.RFID.getName().equals(paramName);
     }
 }
