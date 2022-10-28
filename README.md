@@ -141,13 +141,13 @@ public class ApplicationRegister implements SsoClientApplicationRegister {
 ### Add additional *permit all* request matchers
 
 By default, all application resources require the user to be authenticated and have an authority equal to the application name in their user configuration.  
-To allow access to certain resources **without** authentication, you must create bean `SsoClientPermitAllMatcherHandler`.  
+To allow access to certain resources **without** authentication and (*optional*) ignoring CSRF protection, you must create bean `SsoClientPermitAllMatcherHandler`.  
 **Anonymous access is not allowed.**
 ```java
 @Bean
 SsoClientPermitAllMatcherHandler ssoClientPermitAllMatcherHandler() {
     SsoClientPermitAllMatcherHandler permitAllMatcherHandler = new SsoClientPermitAllMatcherHandler();
-    permitAllMatcherHandler.addPermitAllMatcher(HttpMethod.GET, "/api/time");
+    permitAllMatcherHandler.addPermitAllMatcher(HttpMethod.GET, true, "/api/time");
     return permitAllMatcherHandler;
 }
 ```
