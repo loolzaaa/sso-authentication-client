@@ -21,6 +21,7 @@ import ru.loolzaaa.sso.client.core.filter.JwtTokenFilter;
 import ru.loolzaaa.sso.client.core.filter.QueryJwtTokenFilter;
 import ru.loolzaaa.sso.client.core.helper.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.helper.SsoClientLogoutHandler;
+import ru.loolzaaa.sso.client.core.helper.SsoClientPermitAllMatcher;
 import ru.loolzaaa.sso.client.core.helper.SsoClientPermitAllMatcherHandler;
 import ru.loolzaaa.sso.client.core.security.CookieName;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
@@ -90,15 +91,19 @@ public class SsoClientHttpConfiguration {
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         if (!permitAllMatcherHandler.getMatchers().isEmpty()) {
-            final AuthorizationManager<RequestAuthorizationContext> permitAllAuthorizationManager = (a, o) -> new AuthorizationDecision(true);
-            RequestMatcherDelegatingAuthorizationManager.Builder authorizationManagerBuilder = RequestMatcherDelegatingAuthorizationManager
-                    .builder();
-            for (AntPathRequestMatcher matcher : permitAllMatcherHandler.getMatchers()) {
+            final AuthorizationManager<RequestAuthorizationContext> permitAllAuthorizationManager =
+                    (a, o) -> new AuthorizationDecision(true);
+            RequestMatcherDelegatingAuthorizationManager.Builder authorizationManagerBuilder =
+                    RequestMatcherDelegatingAuthorizationManager.builder();
+            for (SsoClientPermitAllMatcher matcher : permitAllMatcherHandler.getMatchers()) {
+                if (matcher.isIgnoreCsrf()) {
+                    http.csrf(csrf -> csrf.ignoringRequestMatchers(matcher.getRequestMatcher()));
+                }
                 http.authorizeHttpRequests(authorize -> {
-                    authorize.requestMatchers(matcher).permitAll();
-                    authorizationManagerBuilder.add(matcher, permitAllAuthorizationManager);
+                    authorize.requestMatchers(matcher.getRequestMatcher()).permitAll();
+                    authorizationManagerBuilder.add(matcher.getRequestMatcher(), permitAllAuthorizationManager);
                 });
-                log.info("Add permit all matcher: " + matcher);
+                log.info("Add permit all matcher: {}", matcher);
             }
             jwtTokenFilter.setPermitAllAuthorizationManager(authorizationManagerBuilder.build());
         }
@@ -109,7 +114,7 @@ public class SsoClientHttpConfiguration {
             for (SsoClientLogoutHandler logoutHandler : logoutHandlers) {
                 http.logout(logout -> logout
                         .addLogoutHandler(logoutHandler));
-                log.info("Add custom logout handler: " + logoutHandler);
+                log.info("Add custom logout handler: {}", logoutHandler);
             }
         }
 
