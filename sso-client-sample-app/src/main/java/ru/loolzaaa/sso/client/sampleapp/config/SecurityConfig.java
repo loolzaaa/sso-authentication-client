@@ -27,7 +27,7 @@ public class SecurityConfig implements WebSecurityCustomizer {
     @Bean
     SsoClientPermitAllMatcherHandler ssoClientPermitAllMatcherHandler() {
         SsoClientPermitAllMatcherHandler permitAllMatcherHandler = new SsoClientPermitAllMatcherHandler();
-        permitAllMatcherHandler.addPermitAllMatcher(HttpMethod.GET, "/api/time");
+        permitAllMatcherHandler.addPermitAllMatcher(HttpMethod.GET, true, "/api/time");
         return permitAllMatcherHandler;
     }
 
