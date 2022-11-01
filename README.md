@@ -49,7 +49,7 @@ spring.jmx.enabled=true
 ```
 # Application name for SSO
 # Will be the main authority to access the application!
-sso.server.application.name=passport
+sso.client.applicationName=app1
 
 # SSO Server address
 sso.client.entryPointAddress=http://localhost:9999
