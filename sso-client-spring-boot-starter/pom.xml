@@ -8,7 +8,7 @@
     <parent>
         <groupId>ru.loolzaaa</groupId>
         <artifactId>sso-client</artifactId>
-        <version>0.2.4</version>
+        <version>0.2.6</version>
     </parent>
 
     <name>Single Sign-On Authentication Server Client :: SSO Client Starter</name>
@@ -28,6 +28,11 @@
             <version>${spring.boot.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpclient.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt</artifactId>

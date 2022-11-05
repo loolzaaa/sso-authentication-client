@@ -6,7 +6,7 @@
 
 	<groupId>ru.loolzaaa</groupId>
 	<artifactId>sso-client</artifactId>
-	<version>0.2.4</version>
+	<version>0.2.6</version>
 
 	<name>Single Sign-On Authentication Server Client</name>
 
@@ -20,6 +20,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>11</java.version>
 		<spring.boot.version>2.7.3</spring.boot.version>
+		<httpclient.version>4.5.13</httpclient.version>
 		<jjwt.version>0.9.1</jjwt.version>
 		<jakarta.xml.bind-api.version>2.3.3</jakarta.xml.bind-api.version>
 	</properties>

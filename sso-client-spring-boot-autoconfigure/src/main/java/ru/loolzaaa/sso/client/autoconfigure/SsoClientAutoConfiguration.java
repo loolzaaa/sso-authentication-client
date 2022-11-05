@@ -16,6 +16,7 @@ import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import ru.loolzaaa.sso.client.core.JWTUtils;
@@ -82,7 +83,8 @@ public class SsoClientAutoConfiguration {
 
         restTemplateBuilder = restTemplateBuilder
                 .setConnectTimeout(Duration.ofSeconds(4L))
-                .setReadTimeout(Duration.ofSeconds(4L));
+                .setReadTimeout(Duration.ofSeconds(4L))
+                .requestFactory(HttpComponentsClientHttpRequestFactory::new);
         if (ssoClientTokenDataReceiver != null) {
             log.info("SSO Client User service configured with SsoClientTokenDataReceiver");
             restTemplateBuilder = restTemplateBuilder.additionalInterceptors(new RestTemplateTokenInterceptor(ssoClientTokenDataReceiver));
