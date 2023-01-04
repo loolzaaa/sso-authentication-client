@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core;
+package ru.loolzaaa.sso.client.core.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;

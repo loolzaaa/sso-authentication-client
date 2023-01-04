@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core.helper;
+package ru.loolzaaa.sso.client.core.security.token;
 
 public class TokenData {
 

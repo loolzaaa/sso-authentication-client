@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core.helper;
+package ru.loolzaaa.sso.client.core.application;
 
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 

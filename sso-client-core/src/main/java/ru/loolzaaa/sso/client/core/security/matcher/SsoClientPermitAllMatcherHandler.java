@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core.helper;
+package ru.loolzaaa.sso.client.core.security.matcher;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;

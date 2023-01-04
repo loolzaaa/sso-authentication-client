@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core;
+package ru.loolzaaa.sso.client.core.context;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.jsonwebtoken.ClaimJwtException;
@@ -11,9 +11,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import ru.loolzaaa.sso.client.core.context.UserStore;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
+import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import java.util.HashMap;
 import java.util.List;

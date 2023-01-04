@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import ru.loolzaaa.sso.client.core.UserService;
-import ru.loolzaaa.sso.client.core.helper.SsoClientTokenDataReceiver;
+import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.model.User;
+import ru.loolzaaa.sso.client.core.security.token.SsoClientTokenDataReceiver;
 
 import javax.annotation.PostConstruct;
 import java.util.Random;

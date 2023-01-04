@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.loolzaaa.sso.client.core.UserService;
+import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.endpoint.controller.SsoClientController;
 import ru.loolzaaa.sso.client.core.endpoint.service.SsoClientService;
 import ru.loolzaaa.sso.client.core.endpoint.service.SsoClientServiceImpl;

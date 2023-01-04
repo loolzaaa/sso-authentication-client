@@ -14,11 +14,12 @@ import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.util.UrlUtils;
-import ru.loolzaaa.sso.client.core.JWTUtils;
-import ru.loolzaaa.sso.client.core.UserService;
-import ru.loolzaaa.sso.client.core.helper.SsoClientApplicationRegister;
+import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
+import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 import ru.loolzaaa.sso.client.core.security.CookieName;
+import ru.loolzaaa.sso.client.core.security.filter.JwtTokenFilter;
+import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.Cookie;

@@ -3,7 +3,7 @@ package ru.loolzaaa.sso.client.core.endpoint.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
-import ru.loolzaaa.sso.client.core.UserService;
+import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 

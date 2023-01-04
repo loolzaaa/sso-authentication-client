@@ -8,10 +8,10 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-import ru.loolzaaa.sso.client.core.helper.SsoClientApplicationRegister;
-import ru.loolzaaa.sso.client.core.helper.SsoClientLogoutHandler;
-import ru.loolzaaa.sso.client.core.helper.SsoClientPermitAllMatcherHandler;
+import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
+import ru.loolzaaa.sso.client.core.application.SsoClientLogoutHandler;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
+import ru.loolzaaa.sso.client.core.security.matcher.SsoClientPermitAllMatcherHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

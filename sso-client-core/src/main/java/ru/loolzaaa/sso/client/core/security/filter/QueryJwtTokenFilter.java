@@ -1,9 +1,9 @@
-package ru.loolzaaa.sso.client.core.filter;
+package ru.loolzaaa.sso.client.core.security.filter;
 
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.UriComponentsBuilder;
-import ru.loolzaaa.sso.client.core.JWTUtils;
 import ru.loolzaaa.sso.client.core.security.CookieName;
+import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;

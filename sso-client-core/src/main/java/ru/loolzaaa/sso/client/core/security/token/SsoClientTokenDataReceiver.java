@@ -1,10 +1,10 @@
-package ru.loolzaaa.sso.client.core.helper;
+package ru.loolzaaa.sso.client.core.security.token;
 
 import io.jsonwebtoken.ClaimJwtException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import ru.loolzaaa.sso.client.core.JWTUtils;
 import ru.loolzaaa.sso.client.core.security.CookieName;
+import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import java.net.URI;
 import java.net.http.HttpClient;

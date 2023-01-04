@@ -6,8 +6,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.loolzaaa.sso.client.core.JWTUtils;
 import ru.loolzaaa.sso.client.core.security.CookieName;
+import ru.loolzaaa.sso.client.core.security.filter.QueryJwtTokenFilter;
+import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.Cookie;
