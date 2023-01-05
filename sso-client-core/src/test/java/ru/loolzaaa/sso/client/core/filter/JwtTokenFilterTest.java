@@ -75,7 +75,7 @@ class JwtTokenFilterTest {
         when(req.getRequestURL()).thenReturn(new StringBuffer("/"));
         jwtTokenFilter.setPermitAllAuthorizationManager(authorizationManager);
 
-        jwtTokenFilter.doFilterInternal(req, resp, chain);
+        jwtTokenFilter.doFilter(req, resp, chain);
 
         verify(chain).doFilter(req, resp);
         verifyNoMoreInteractions(chain);
@@ -87,7 +87,7 @@ class JwtTokenFilterTest {
         Cookie[] cookies = new Cookie[0];
         when(req.getCookies()).thenReturn(cookies);
 
-        jwtTokenFilter.doFilterInternal(req, resp, chain);
+        jwtTokenFilter.doFilter(req, resp, chain);
 
         verify(chain).doFilter(req, resp);
         verifyNoMoreInteractions(chain);
@@ -107,7 +107,7 @@ class JwtTokenFilterTest {
         when(userService.getUserFromServerByUsername(login)).thenReturn(userDetails);
         SecurityContextHolder.setContext(SecurityContextHolder.createEmptyContext());
 
-        jwtTokenFilter.doFilterInternal(req, resp, chain);
+        jwtTokenFilter.doFilter(req, resp, chain);
 
         verify(userService).saveRequestUser(userDetails);
         verify(chain).doFilter(req, resp);
@@ -130,7 +130,7 @@ class JwtTokenFilterTest {
         SsoClientApplicationRegister applicationRegister = mock(SsoClientApplicationRegister.class);
         jwtTokenFilter.addApplicationRegisters(List.of(applicationRegister));
 
-        jwtTokenFilter.doFilterInternal(req, resp, chain);
+        jwtTokenFilter.doFilter(req, resp, chain);
 
         verify(applicationRegister).register(eq(userDetails));
     }
@@ -147,7 +147,7 @@ class JwtTokenFilterTest {
         when(body.get("login")).thenReturn(login);
         when(userService.getUserFromServerByUsername(login)).thenThrow(UsernameNotFoundException.class);
 
-        jwtTokenFilter.doFilterInternal(req, resp, chain);
+        jwtTokenFilter.doFilter(req, resp, chain);
 
         verify(resp).setStatus(HttpServletResponse.SC_FORBIDDEN);
         verifyNoInteractions(chain);
@@ -170,7 +170,7 @@ class JwtTokenFilterTest {
         when(body.get("login")).thenReturn(login);
         ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
 
-        jwtTokenFilter.doFilterInternal(req, resp, chain);
+        jwtTokenFilter.doFilter(req, resp, chain);
 
         verify(resp).addCookie(cookieCaptor.capture());
         verify(resp).setHeader(eq("fp_request"), eq(entryPointAddress + "/api/refresh/ajax"));
@@ -209,7 +209,7 @@ class JwtTokenFilterTest {
         String continueParamValue = UrlUtils.buildFullRequestUrl(req);
         String continueUrl = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
 
-        jwtTokenFilter.doFilterInternal(req, resp, chain);
+        jwtTokenFilter.doFilter(req, resp, chain);
 
         verify(resp).addCookie(cookieCaptor.capture());
         verify(resp).sendRedirect(redirectCaptor.capture());
