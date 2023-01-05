@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core.filter;
+package ru.loolzaaa.sso.client.core.security.filter;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,7 +7,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.loolzaaa.sso.client.core.security.CookieName;
-import ru.loolzaaa.sso.client.core.security.filter.QueryJwtTokenFilter;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import javax.servlet.FilterChain;

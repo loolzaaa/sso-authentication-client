@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core.filter;
+package ru.loolzaaa.sso.client.core.security.filter;
 
 import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
@@ -18,7 +18,6 @@ import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 import ru.loolzaaa.sso.client.core.security.CookieName;
-import ru.loolzaaa.sso.client.core.security.filter.JwtTokenFilter;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import javax.servlet.FilterChain;
