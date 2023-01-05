@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -61,6 +62,16 @@ public class TestController {
         test.setName(requestUser.getLogin());
         test.setValue(requestUser.getId().intValue());
         return test;
+    }
+
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @GetMapping("/get/basic1/test")
+    public void basicTest1() {
+    }
+
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @GetMapping("/get/basic2/test")
+    public void basicTest2() {
     }
 
     @PostConstruct

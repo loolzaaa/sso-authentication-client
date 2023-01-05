@@ -11,10 +11,13 @@ import org.springframework.stereotype.Component;
 import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.application.SsoClientLogoutHandler;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
+import ru.loolzaaa.sso.client.core.security.matcher.SsoClientBasicAuthenticationBuilder;
+import ru.loolzaaa.sso.client.core.security.matcher.SsoClientBasicAuthenticationRegistry;
 import ru.loolzaaa.sso.client.core.security.matcher.SsoClientPermitAllMatcherHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Set;
 
 @Configuration
 public class SecurityConfig implements WebSecurityCustomizer {
@@ -29,6 +32,14 @@ public class SecurityConfig implements WebSecurityCustomizer {
         SsoClientPermitAllMatcherHandler permitAllMatcherHandler = new SsoClientPermitAllMatcherHandler();
         permitAllMatcherHandler.addPermitAllMatcher(HttpMethod.GET, true, "/api/time");
         return permitAllMatcherHandler;
+    }
+
+    @Bean
+    SsoClientBasicAuthenticationRegistry ssoClientBasicMatcherHandler(SsoClientBasicAuthenticationBuilder basicAuthenticationBuilder) {
+        return basicAuthenticationBuilder
+                .addUser("test", "test", Set.of("test"))
+                .addRequestMatcher("/api/get/basic2/**", new String[]{"test"})
+                .build();
     }
 
     @Component
