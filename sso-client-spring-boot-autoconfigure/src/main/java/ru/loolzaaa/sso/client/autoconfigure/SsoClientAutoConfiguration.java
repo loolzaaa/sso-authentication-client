@@ -17,15 +17,16 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.security.web.util.UrlUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-import ru.loolzaaa.sso.client.core.JWTUtils;
-import ru.loolzaaa.sso.client.core.UserService;
+import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.context.UserStore;
-import ru.loolzaaa.sso.client.core.helper.SsoClientTokenDataReceiver;
 import ru.loolzaaa.sso.client.core.security.CookieName;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
 import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
+import ru.loolzaaa.sso.client.core.security.token.SsoClientTokenDataReceiver;
+import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,7 +36,7 @@ import java.time.Duration;
         before = { SecurityAutoConfiguration.class },
         beforeName = "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"
 )
-@EnableConfigurationProperties(SsoClientProperties.class)
+@EnableConfigurationProperties({ SsoClientProperties.class, BasicUsersProperties.class })
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnProperty(prefix = "sso.client", value = { "applicationName", "entryPointAddress", "entryPointUri" })
 @Import({ SsoClientHttpConfiguration.class, SsoClientFilterConfiguration.class, SsoClientEndpointConfiguration.class })
@@ -52,13 +53,27 @@ public class SsoClientAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     DefaultSsoClientAuthenticationEntryPoint authenticationEntryPoint() {
-        String loginFormUrl = properties.getEntryPointAddress() + properties.getEntryPointUri();
-        return new DefaultSsoClientAuthenticationEntryPoint(loginFormUrl);
+        StringBuilder loginFormUrlBuilder = new StringBuilder();
+        if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
+            throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
+        }
+        loginFormUrlBuilder.append(properties.getEntryPointAddress());
+        if (properties.getEntryPointAddress().endsWith("/")) {
+            loginFormUrlBuilder.deleteCharAt(loginFormUrlBuilder.length());
+        }
+        if (!properties.getEntryPointUri().startsWith("/")) {
+            loginFormUrlBuilder.append("/");
+        }
+        loginFormUrlBuilder.append(properties.getEntryPointUri());
+        return new DefaultSsoClientAuthenticationEntryPoint(loginFormUrlBuilder.toString());
     }
 
     @Bean
     @ConditionalOnMissingBean
     DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler(RestTemplateBuilder restTemplateBuilder) {
+        if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
+            throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
+        }
         String entryPointAddress = properties.getEntryPointAddress();
         String login = properties.getRevokeUsername();
         String password = properties.getRevokePassword();
@@ -119,12 +134,15 @@ public class SsoClientAutoConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "sso.client.receiver", value = { "username", "password" })
     SsoClientTokenDataReceiver ssoClientTokenDataReceiver() {
+        if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
+            throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
+        }
         String entryPointAddress = properties.getEntryPointAddress();
         String username = properties.getReceiver().getUsername();
         String password = properties.getReceiver().getPassword();
         String fingerprint = properties.getReceiver().getFingerprint();
         if (!StringUtils.hasText(fingerprint)) {
-            log.warn("For production purposes fingerprint must be non-blank/empty string. Current fingerprint: [{}]", fingerprint);
+            log.warn("For production purposes fingerprint must be non-blank/empty string. Current fingerprint: {}", fingerprint);
         }
         return new SsoClientTokenDataReceiver(jwtUtils(), entryPointAddress, username, password, fingerprint);
     }
