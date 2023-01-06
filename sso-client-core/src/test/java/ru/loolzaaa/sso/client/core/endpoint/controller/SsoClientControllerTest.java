@@ -44,7 +44,7 @@ class SsoClientControllerTest {
 
     @Test
     void shouldReturnJsonEndpointDescription() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get("/sso"))
+        MvcResult mvcResult = mockMvc.perform(get("/sso/client"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -58,7 +58,7 @@ class SsoClientControllerTest {
         String jsonApp = String.format("{\"app\":\"%s\"}", appName);
         when(ssoClientService.getApplicationName()).thenReturn(jsonApp);
 
-        MvcResult mvcResult = mockMvc.perform(get("/sso/app"))
+        MvcResult mvcResult = mockMvc.perform(get("/sso/client/app"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -77,7 +77,7 @@ class SsoClientControllerTest {
         user.setLogin(login);
         when(ssoClientService.getUsersForApplicationFromServer()).thenReturn(List.of(user));
 
-        MvcResult mvcResult = mockMvc.perform(get("/sso/users"))
+        MvcResult mvcResult = mockMvc.perform(get("/sso/client/users"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -97,7 +97,7 @@ class SsoClientControllerTest {
         final String app = "APP";
         when(ssoClientService.updateUserConfigOnServer(anyString(), anyString(), any())).thenReturn(code);
 
-        MvcResult mvcResult = mockMvc.perform(patch("/sso/config")
+        MvcResult mvcResult = mockMvc.perform(patch("/sso/client/config")
                         .param("username", username)
                         .param("app", app)
                         .content("{}")
@@ -119,7 +119,7 @@ class SsoClientControllerTest {
         final String username = "USER";
         final String app = "APP";
 
-        mockMvc.perform(patch("/sso/config")
+        mockMvc.perform(patch("/sso/client/config")
                         .param("username", username)
                         .param("app", app)
                         .content("{{}}")
