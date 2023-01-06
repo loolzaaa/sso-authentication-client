@@ -147,7 +147,7 @@ public class UserService {
         } catch (ClaimJwtException e) {
             claims = e.getClaims();
         }
-        claims.forEach((s, o) -> stringClaims.put(s, (String) o));
+        claims.forEach((s, o) -> stringClaims.put(s, o.toString()));
 
         return stringClaims;
     }

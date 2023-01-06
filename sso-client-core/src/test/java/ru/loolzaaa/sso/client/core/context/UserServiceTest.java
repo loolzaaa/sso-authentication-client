@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import ru.loolzaaa.sso.client.core.model.User;
@@ -20,6 +21,7 @@ import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -138,6 +140,16 @@ public class UserServiceTest {
     }
 
     @Test
+    void shouldReturnMinus2IfErrorForUserConfigChange() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString()))
+                .thenThrow(new RuntimeException("ERROR"));
+
+        int code = userService.updateUserConfigOnServer("username", "app", null);
+
+        assertThat(code).isEqualTo(-2);
+    }
+
+    @Test
     void shouldThrowExceptionIfUserIsNull() {
         when(userPrincipal.getUser()).thenReturn(null);
 
@@ -173,9 +185,95 @@ public class UserServiceTest {
     }
 
     @Test
-    void shouldRemoveUserFromSystem () {
+    void shouldRemoveUserFromSystem() {
         userService.clearRequestUser();
 
         verify(userStore).clearRequestUser();
+    }
+
+    @Test
+    void shouldReturnSavedRequestUser() {
+        final long id = 123;
+        final String login = "TEST";
+        final User user = new User();
+        user.setId(id);
+        user.setLogin(login);
+        UserPrincipal userPrincipal = new UserPrincipal(user);
+        when(userStore.getRequestUser()).thenReturn(user);
+        userService.saveRequestUser(userPrincipal);
+
+        User requestUser = userService.getRequestUser();
+
+        assertThat(requestUser).isNotNull();
+        assertThat(requestUser.getId()).isEqualTo(id);
+        assertThat(requestUser.getLogin()).isEqualTo(login);
+    }
+
+    @Test
+    void shouldReturnApplicationName() {
+        String actualApplicationName = userService.getApplicationName();
+
+        assertThat(actualApplicationName).isEqualTo(applicationName);
+    }
+
+    @Test
+    void shouldThrowExceptionIfTokenNull() {
+        assertThatThrownBy(() -> userService.getTokenClaims(null))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void shouldReturnTokenClaimsWhenTokenCorrect() {
+        final String signature = "TEST";
+        /*
+            Header:
+            {
+              "alg": "HS256",
+              "typ": "JWT"
+            }
+            Payload:
+            {
+              "data": "TEST",
+              "iat": 0
+            }
+            Signature: TEST
+         */
+        final String correctToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiVEVTVCIsImlhdCI6MH0.jeRKzfp89OE_Qr56nwS6PqYQoHuvKgwhMJDH_FT70UU";
+        JWTUtils jwtUtils = new JWTUtils();
+        jwtUtils.setAccessSecretKey(signature);
+        ReflectionTestUtils.setField(userService, "jwtUtils", jwtUtils);
+
+        Map<String, String> tokenClaims = userService.getTokenClaims(correctToken);
+
+        assertThat(tokenClaims).isNotNull();
+        assertThat(tokenClaims.get("data")).isEqualTo(signature);
+    }
+
+    @Test
+    void shouldReturnTokenClaimsWhenTokenExpired() {
+        final String signature = "TEST";
+        /*
+            Header:
+            {
+              "alg": "HS256",
+              "typ": "JWT"
+            }
+            Payload:
+            {
+              "data": "TEST",
+              "iat": 0,
+              "exp": 0  <--- 1970-01-01T05:00:00Z
+            }
+            Signature: TEST
+         */
+        final String expiredToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiVEVTVCIsImlhdCI6MCwiZXhwIjowfQ.eDOcv6BoM-gwVB0nUIl0uZrvlXK19hY3SfCNVJEggbw";
+        JWTUtils jwtUtils = new JWTUtils();
+        jwtUtils.setAccessSecretKey(signature);
+        ReflectionTestUtils.setField(userService, "jwtUtils", jwtUtils);
+
+        Map<String, String> tokenClaims = userService.getTokenClaims(expiredToken);
+
+        assertThat(tokenClaims).isNotNull();
+        assertThat(tokenClaims.get("data")).isEqualTo(signature);
     }
 }

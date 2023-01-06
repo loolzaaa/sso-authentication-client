@@ -35,7 +35,7 @@ public class SecurityConfig implements WebSecurityCustomizer {
     }
 
     @Bean
-    SsoClientBasicAuthenticationRegistry ssoClientBasicMatcherHandler(SsoClientBasicAuthenticationBuilder basicAuthenticationBuilder) {
+    SsoClientBasicAuthenticationRegistry basicAuthenticationRegistry(SsoClientBasicAuthenticationBuilder basicAuthenticationBuilder) {
         return basicAuthenticationBuilder
                 .addUser("test", "test", Set.of("test"))
                 .addRequestMatcher("/api/get/basic2/**", new String[]{"test"})

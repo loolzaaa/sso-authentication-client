@@ -1,7 +1,6 @@
 package ru.loolzaaa.sso.client.core.endpoint.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.loolzaaa.sso.client.core.endpoint.service.SsoClientService;
 import ru.loolzaaa.sso.client.core.model.User;
@@ -42,12 +41,8 @@ public class SsoClientController {
     @PatchMapping(path = "/config", produces = "application/json", consumes = "application/json")
     String updateUserConfig(@RequestParam("username") String username,
                             @RequestParam("app") String app,
-                            @RequestBody JsonNode config,
-                            BindingResult bindingResult) {
+                            @RequestBody JsonNode config) {
         String answer = "{\"code\":%d,\"message\":\"%s\"}";
-        if (bindingResult.hasErrors()) {
-            return String.format(answer, -1, "Cannot parse user config");
-        }
         int code = ssoClientService.updateUserConfigOnServer(username, app, config);
         switch (code) {
             case 0:
@@ -60,5 +55,4 @@ public class SsoClientController {
                 return String.format(answer, code, "Error while communicating with SSO server");
         }
     }
-
 }
