@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ConfigurationProperties("sso.client.basic")
-public class BasicUsersProperties {
+public class BasicAuthenticationProperties {
 
     private String realmName = "Basic realm";
     private final List<User> users = new ArrayList<>();

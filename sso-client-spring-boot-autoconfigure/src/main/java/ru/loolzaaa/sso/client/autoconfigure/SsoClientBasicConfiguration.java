@@ -26,13 +26,13 @@ public class SsoClientBasicConfiguration {
 
     private static final Logger log = LogManager.getLogger(SsoClientBasicConfiguration.class.getName());
 
-    private final BasicUsersProperties basicUsersProperties;
+    private final BasicAuthenticationProperties basicAuthenticationProperties;
 
     private final SsoClientBasicAuthenticationRegistry basicAuthenticationRegistry;
 
-    public SsoClientBasicConfiguration(BasicUsersProperties basicUsersProperties,
+    public SsoClientBasicConfiguration(BasicAuthenticationProperties basicAuthenticationProperties,
                                        SsoClientBasicAuthenticationRegistry basicAuthenticationRegistry) {
-        this.basicUsersProperties = basicUsersProperties;
+        this.basicAuthenticationProperties = basicAuthenticationProperties;
         this.basicAuthenticationRegistry = basicAuthenticationRegistry;
     }
 
@@ -75,7 +75,7 @@ public class SsoClientBasicConfiguration {
         }
         http
                 .httpBasic(httpBasic -> httpBasic
-                        .realmName(basicUsersProperties.getRealmName()))
+                        .realmName(basicAuthenticationProperties.getRealmName()))
                 .anonymous().disable();
         log.info("Basic configuration completed");
         return http.build();

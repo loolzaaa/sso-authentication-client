@@ -36,10 +36,10 @@ import java.time.Duration;
         before = { SecurityAutoConfiguration.class },
         beforeName = "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"
 )
-@EnableConfigurationProperties({ SsoClientProperties.class, BasicUsersProperties.class })
+@EnableConfigurationProperties({ SsoClientProperties.class, BasicAuthenticationProperties.class })
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnProperty(prefix = "sso.client", value = { "applicationName", "entryPointAddress", "entryPointUri" })
-@Import({ SsoClientHttpConfiguration.class })
+@Import({ SsoClientConfiguration.class })
 public class SsoClientAutoConfiguration {
 
     private static final Logger log = LogManager.getLogger(SsoClientAutoConfiguration.class.getName());

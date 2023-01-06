@@ -16,14 +16,14 @@ import java.util.List;
 
 @Configuration(proxyBeanMethods =  false)
 @Import({ SsoClientBasicConfiguration.class, SsoClientJwtConfiguration.class })
-public class SsoClientHttpConfiguration {
+public class SsoClientConfiguration {
 
-    private static final Logger log = LogManager.getLogger(SsoClientHttpConfiguration.class.getName());
+    private static final Logger log = LogManager.getLogger(SsoClientConfiguration.class.getName());
 
-    private final BasicUsersProperties basicUsersProperties;
+    private final BasicAuthenticationProperties basicAuthenticationProperties;
 
-    public SsoClientHttpConfiguration(BasicUsersProperties basicUsersProperties) {
-        this.basicUsersProperties = basicUsersProperties;
+    public SsoClientConfiguration(BasicAuthenticationProperties basicAuthenticationProperties) {
+        this.basicAuthenticationProperties = basicAuthenticationProperties;
     }
 
     @Bean
@@ -36,14 +36,14 @@ public class SsoClientHttpConfiguration {
     @ConditionalOnMissingBean
     SsoClientBasicAuthenticationBuilder ssoClientBasicMatcherHandlerBuilder() {
         SsoClientBasicAuthenticationBuilder builder = new SsoClientBasicAuthenticationBuilder();
-        for (BasicUsersProperties.User user : basicUsersProperties.getUsers()) {
+        for (BasicAuthenticationProperties.User user : basicAuthenticationProperties.getUsers()) {
             String username = user.getUsername();
             String password = user.getPassword();
             List<String> authorities = user.getAuthorities();
             builder.addUser(username, password, authorities);
             log.info("Create basic user: {}", username);
         }
-        for (BasicUsersProperties.Matcher requestMatcher : basicUsersProperties.getRequestMatchers()) {
+        for (BasicAuthenticationProperties.Matcher requestMatcher : basicAuthenticationProperties.getRequestMatchers()) {
             String pattern = requestMatcher.getPattern();
             String httpMethod = requestMatcher.getHttpMethod();
             Boolean caseSensitive = requestMatcher.getCaseSensitive();
