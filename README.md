@@ -1,6 +1,6 @@
 # Single Sign-On authentication client
 
-The client part for the [Single Sign-On (SSO) server](https://github.com/loolzaaa/sso-authentication-server). If the application does not have a JWT token, it is redirected to the server entry point with Base64 encoded `continue` parameter to return to the application. Further authentication occurs through Json Web Tokens (JWT) tokens, which are checked through a custom filter. All other components of the system are based on standard Spring Security beans with minor changes.
+The client part for the [Single Sign-On (SSO) server](https://github.com/loolzaaa/sso-authentication-server). If any request under JWT security control does not have a JWT token, it is redirected to the server entry point with Base64 encoded `continue` parameter to return to the application. Further authentication occurs through Json Web Tokens (JWT), which are checked through a custom filter. All other components of the system are based on standard Spring Security beans with minor changes.
 
 # Client Startup
 
@@ -29,7 +29,7 @@ To use Github Packages, you need to authenticate to it, add an additional reposi
 <dependency>
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-spring-boot-starter</artifactId>
-    <version>0.2.4</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -44,7 +44,7 @@ spring.jmx.enabled=true
 
 ## Main configuration
 
-### To enable SSO Client must define: applicationName, entryPointAddress, entryPointUri
+### To enable SSO Client must define: `applicationName`, `entryPointAddress`, `entryPointUri`
 
 ```
 # Application name for SSO
@@ -64,7 +64,7 @@ sso.client.entryPointUri=/trefresh
 # Default: true
 sso.client.endpoint.enable=true
 
-# Basic authentication credentials
+# Basic authentication credentials for communication with SSO Server
 # Default: SERVICE
 sso.client.basicLogin=SERVICE
 # Default: PASSWORD
@@ -149,6 +149,41 @@ SsoClientPermitAllMatcherHandler ssoClientPermitAllMatcherHandler() {
     SsoClientPermitAllMatcherHandler permitAllMatcherHandler = new SsoClientPermitAllMatcherHandler();
     permitAllMatcherHandler.addPermitAllMatcher(HttpMethod.GET, true, "/api/time");
     return permitAllMatcherHandler;
+}
+```
+
+### Add basic authentication endpoints
+
+By default, all application resources secured by JWT. In addition to the permit all matcher, it is possible to configure access to certain endpoints for certain users through basic authentication. Access is achieved by matching the path's authorities with the user's authorities. There are two ways to do this:
+
+#### Application properties
+
+First, define some users:
+```
+sso.client.basic.users[0].username=user
+sso.client.basic.users[0].password=password
+sso.client.basic.users[0].authorities=view,edit
+```
+Second, define request matchers for basic authentication:
+```
+sso.client.basic.requestMatchers[0].pattern=/api/approve/**
+sso.client.basic.requestMatchers[0].httpMethod=POST
+sso.client.basic.requestMatchers[0].caseSensitive=false
+sso.client.basic.requestMatchers[0].authorities=edit
+```
+
+#### BasicAuthenticationRegistry bean definition
+
+```java
+@Configuration
+public class SecurityConfig {
+  @Bean
+  SsoClientBasicAuthenticationRegistry basicAuthenticationRegistry(SsoClientBasicAuthenticationBuilder builder) {
+    return builder
+              .addUser("test", "test", Set.of("view"))
+              .addRequestMatcher("/api/reports/**", new String[]{"view"})
+              .build();
+  }
 }
 ```
 
