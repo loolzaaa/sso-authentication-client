@@ -6,9 +6,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import ru.loolzaaa.sso.client.core.application.WebhookHandler;
 import ru.loolzaaa.sso.client.core.security.matcher.SsoClientBasicAuthenticationBuilder;
 import ru.loolzaaa.sso.client.core.security.matcher.SsoClientBasicAuthenticationRegistry;
 import ru.loolzaaa.sso.client.core.security.matcher.SsoClientPermitAllMatcherHandler;
+import ru.loolzaaa.sso.client.core.security.matcher.WebhookHandlerRegistry;
 
 import java.util.List;
 
@@ -69,5 +71,17 @@ public class SsoClientHttpConfiguration {
     @ConditionalOnMissingBean
     SsoClientBasicAuthenticationRegistry ssoClientBasicMatcherHandler(SsoClientBasicAuthenticationBuilder configurer) {
         return configurer.build();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    WebhookHandlerRegistry webhookHandlerRegistry(List<WebhookHandler> webhookHandlers) {
+        WebhookHandlerRegistry registry = new WebhookHandlerRegistry();
+        for (WebhookHandler webhookHandler : webhookHandlers) {
+            String id = webhookHandler.getId();
+            registry.addWebhook(id, webhookHandler);
+            log.info("Register webhook: {}", id);
+        }
+        return registry;
     }
 }

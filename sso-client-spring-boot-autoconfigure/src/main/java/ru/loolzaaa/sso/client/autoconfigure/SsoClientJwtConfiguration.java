@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -72,7 +73,8 @@ public class SsoClientJwtConfiguration {
                                                    List<SsoClientLogoutHandler> logoutHandlers) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .ignoringAntMatchers("/sso/webhook/**"))
                 .cors()
                 .and()
                 .sessionManagement(session -> session
@@ -111,6 +113,7 @@ public class SsoClientJwtConfiguration {
             jwtTokenFilter.setPermitAllAuthorizationManager(authorizationManagerBuilder.build());
         }
         http.authorizeHttpRequests(authorize -> authorize
+                .antMatchers(HttpMethod.POST, "/sso/webhook/**").permitAll()
                 .anyRequest().hasAuthority(properties.getApplicationName()));
 
         if (logoutHandlers != null && !logoutHandlers.isEmpty()) {
