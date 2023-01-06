@@ -32,6 +32,7 @@ public class SsoClientBasicAuthenticationBuilder {
 
     public SsoClientBasicAuthenticationBuilder addRequestMatcher(String pattern, String httpMethod, boolean caseSensitive, String... authorities) {
         Assert.notEmpty(authorities, "At least one authority needs for request matcher");
+        //TODO: pattern cannot starts with /sso and permit all matchers
         AntPathRequestMatcher requestMatcher = new AntPathRequestMatcher(pattern, httpMethod, caseSensitive);
         requestMatcherAuthoritiesMap.put(requestMatcher, authorities);
         return this;

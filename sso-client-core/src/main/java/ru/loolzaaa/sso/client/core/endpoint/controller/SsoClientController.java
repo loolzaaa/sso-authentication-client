@@ -8,7 +8,7 @@ import ru.loolzaaa.sso.client.core.model.User;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/sso")
+@RequestMapping(path = "/sso/client")
 public class SsoClientController {
 
     private final SsoClientService ssoClientService;
