@@ -2,15 +2,15 @@ package ru.loolzaaa.sso.client.autoconfigure;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import ru.loolzaaa.sso.client.core.application.WebhookHandler;
-import ru.loolzaaa.sso.client.core.security.matcher.SsoClientBasicAuthenticationBuilder;
-import ru.loolzaaa.sso.client.core.security.matcher.SsoClientBasicAuthenticationRegistry;
-import ru.loolzaaa.sso.client.core.security.matcher.SsoClientPermitAllMatcherHandler;
-import ru.loolzaaa.sso.client.core.security.matcher.WebhookHandlerRegistry;
+import org.springframework.util.CollectionUtils;
+import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
+import ru.loolzaaa.sso.client.core.config.SsoClientConfigurer;
+import ru.loolzaaa.sso.client.core.security.matcher.*;
 
 import java.util.List;
 
@@ -22,26 +22,38 @@ public class SsoClientConfiguration {
 
     private final BasicAuthenticationProperties basicAuthenticationProperties;
 
-    public SsoClientConfiguration(BasicAuthenticationProperties basicAuthenticationProperties) {
+    private final SsoClientConfigurer ssoClientConfigurer;
+
+    public SsoClientConfiguration(BasicAuthenticationProperties basicAuthenticationProperties,
+                                  @Autowired(required = false) SsoClientConfigurer ssoClientConfigurer) {
         this.basicAuthenticationProperties = basicAuthenticationProperties;
+        this.ssoClientConfigurer = ssoClientConfigurer;
     }
 
     @Bean
     @ConditionalOnMissingBean
-    SsoClientPermitAllMatcherHandler ssoClientPermitAllMatcherHandler() {
-        return new SsoClientPermitAllMatcherHandler();
+    PermitAllMatcherRegistry permitAllMatcherRegistry(List<PermitAllMatcher> permitAllMatchers) {
+        PermitAllMatcherRegistry registry = new PermitAllMatcherRegistry();
+        if (!CollectionUtils.isEmpty(permitAllMatchers)) {
+            for (PermitAllMatcher permitAllMatcher : permitAllMatchers) {
+                registry.addPermitAllMatcher(permitAllMatcher);
+            }
+        }
+        if (ssoClientConfigurer != null) {
+            ssoClientConfigurer.addPermitAllMatcher(registry);
+        }
+        return registry;
     }
 
     @Bean
     @ConditionalOnMissingBean
-    SsoClientBasicAuthenticationBuilder ssoClientBasicMatcherHandlerBuilder() {
-        SsoClientBasicAuthenticationBuilder builder = new SsoClientBasicAuthenticationBuilder();
+    BasicAuthenticationRegistry basicAuthenticationRegistry() {
+        BasicAuthenticationConfigurer configurer = new BasicAuthenticationConfigurer();
         for (BasicAuthenticationProperties.User user : basicAuthenticationProperties.getUsers()) {
             String username = user.getUsername();
             String password = user.getPassword();
             List<String> authorities = user.getAuthorities();
-            builder.addUser(username, password, authorities);
-            log.info("Create basic user: {}", username);
+            configurer.addUser(username, password, authorities);
         }
         for (BasicAuthenticationProperties.Matcher requestMatcher : basicAuthenticationProperties.getRequestMatchers()) {
             String pattern = requestMatcher.getPattern();
@@ -59,28 +71,28 @@ public class SsoClientConfiguration {
             }
             if (caseSensitive == null) {
                 caseSensitive = true;
-                log.info("Force case sensitive for {}", requestMatcher);
+                log.warn("Force case sensitive for {}", requestMatcher);
             }
-            builder.addRequestMatcher(pattern, httpMethod, caseSensitive, authorities.toArray(new String[0]));
-            log.info("Add basic request matcher: {} {}. Allowed authorities: {}", httpMethod, pattern, authorities);
+            configurer.addRequestMatcher(pattern, httpMethod, caseSensitive, authorities.toArray(new String[0]));
         }
-        return builder;
+        if (ssoClientConfigurer != null) {
+            ssoClientConfigurer.configureBasicAuthentication(configurer);
+        }
+        return configurer.buildRegistry();
     }
 
     @Bean
     @ConditionalOnMissingBean
-    SsoClientBasicAuthenticationRegistry ssoClientBasicMatcherHandler(SsoClientBasicAuthenticationBuilder configurer) {
-        return configurer.build();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    WebhookHandlerRegistry webhookHandlerRegistry(List<WebhookHandler> webhookHandlers) {
+    WebhookHandlerRegistry webhookHandlerRegistry(List<SsoClientWebhookHandler> ssoClientWebhookHandlers) {
         WebhookHandlerRegistry registry = new WebhookHandlerRegistry();
-        for (WebhookHandler webhookHandler : webhookHandlers) {
-            String id = webhookHandler.getId();
-            registry.addWebhook(id, webhookHandler);
-            log.info("Register webhook: {}", id);
+        if (!CollectionUtils.isEmpty(ssoClientWebhookHandlers)) {
+            for (SsoClientWebhookHandler ssoClientWebhookHandler : ssoClientWebhookHandlers) {
+                String id = ssoClientWebhookHandler.getId();
+                registry.addWebhook(id, ssoClientWebhookHandler);
+            }
+        }
+        if (ssoClientConfigurer != null) {
+            ssoClientConfigurer.addWebhooks(registry);
         }
         return registry;
     }
