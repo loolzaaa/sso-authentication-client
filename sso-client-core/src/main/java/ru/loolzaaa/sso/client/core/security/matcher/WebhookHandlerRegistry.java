@@ -1,5 +1,7 @@
 package ru.loolzaaa.sso.client.core.security.matcher;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
 
 import java.util.HashMap;
@@ -9,6 +11,8 @@ import java.util.function.Function;
 
 public class WebhookHandlerRegistry {
 
+    private static final Logger log = LogManager.getLogger(WebhookHandlerRegistry.class);
+
     private final Map<String, SsoClientWebhookHandler> webhooks = new HashMap<>();
 
     public void addWebhook(String id, SsoClientWebhookHandler webhook) {
@@ -16,6 +20,7 @@ public class WebhookHandlerRegistry {
             throw new IllegalArgumentException(String.format("Webhook with id=%s already exists", id));
         }
         webhooks.put(id, webhook);
+        log.info("Register webhook: {}", id);
     }
 
     public void addWebhook(String id, Function<String, Boolean> keyValidator, Consumer<Object> handler) {
