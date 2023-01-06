@@ -11,7 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.model.User;
-import ru.loolzaaa.sso.client.core.security.token.SsoClientTokenDataReceiver;
+import ru.loolzaaa.sso.client.core.security.token.TokenDataReceiver;
 
 import javax.annotation.PostConstruct;
 import java.util.Random;
@@ -25,11 +25,11 @@ public class TestController {
 
     private final UserService userService;
 
-    private final SsoClientTokenDataReceiver ssoClientTokenDataReceiver;
+    private final TokenDataReceiver tokenDataReceiver;
 
-    public TestController(UserService userService, @Autowired(required = false) SsoClientTokenDataReceiver ssoClientTokenDataReceiver) {
+    public TestController(UserService userService, @Autowired(required = false) TokenDataReceiver tokenDataReceiver) {
         this.userService = userService;
-        this.ssoClientTokenDataReceiver = ssoClientTokenDataReceiver;
+        this.tokenDataReceiver = tokenDataReceiver;
     }
 
     @GetMapping(path = "/time", produces = "application/json")
@@ -75,23 +75,23 @@ public class TestController {
     }
 
     @PostConstruct
-    public void ssoClientTokenDataReceiverTest() {
-        ssoClientTokenDataReceiverRefreshTest();
+    public void tokenDataReceiverTest() {
+        tokenDataReceiverRefreshTest();
     }
 
     @Scheduled(initialDelay = 2, fixedDelay = 60, timeUnit = TimeUnit.SECONDS)
-    public void ssoClientTokenDataReceiverRefreshTest() {
-        if (ssoClientTokenDataReceiver != null) {
-            ssoClientTokenDataReceiver.getTokenDataLock().lock();
+    public void tokenDataReceiverRefreshTest() {
+        if (tokenDataReceiver != null) {
+            tokenDataReceiver.getTokenDataLock().lock();
             try {
-                ssoClientTokenDataReceiver.updateData();
-                log.info("Requested access token from SSO: {}", ssoClientTokenDataReceiver.getAccessToken());
-                log.info("Requested refresh token from SSO: {}", ssoClientTokenDataReceiver.getRefreshToken());
+                tokenDataReceiver.updateData();
+                log.info("Requested access token from SSO: {}", tokenDataReceiver.getAccessToken());
+                log.info("Requested refresh token from SSO: {}", tokenDataReceiver.getRefreshToken());
             } finally {
-                ssoClientTokenDataReceiver.getTokenDataLock().unlock();
+                tokenDataReceiver.getTokenDataLock().unlock();
             }
         } else {
-            log.info("There is no SsoClientTokenDataReceiver instance");
+            log.info("There is no TokenDataReceiver instance");
         }
     }
 

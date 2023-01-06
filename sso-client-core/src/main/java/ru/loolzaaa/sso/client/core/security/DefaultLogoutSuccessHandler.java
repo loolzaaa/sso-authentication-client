@@ -23,13 +23,13 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 
-public class DefaultSsoClientLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
+public class DefaultLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
 
     private final String entryPointAddress;
 
     private final RestTemplate restTemplate;
 
-    public DefaultSsoClientLogoutSuccessHandler(String entryPointAddress, RestTemplate restTemplate) {
+    public DefaultLogoutSuccessHandler(String entryPointAddress, RestTemplate restTemplate) {
         this.entryPointAddress = entryPointAddress;
         this.restTemplate = restTemplate;
     }

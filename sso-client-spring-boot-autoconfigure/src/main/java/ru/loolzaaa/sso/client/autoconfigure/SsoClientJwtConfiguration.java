@@ -20,12 +20,12 @@ import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.application.SsoClientLogoutHandler;
 import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.security.CookieName;
-import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
-import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
+import ru.loolzaaa.sso.client.core.security.DefaultAuthenticationEntryPoint;
+import ru.loolzaaa.sso.client.core.security.DefaultLogoutSuccessHandler;
 import ru.loolzaaa.sso.client.core.security.filter.JwtTokenFilter;
 import ru.loolzaaa.sso.client.core.security.filter.QueryJwtTokenFilter;
-import ru.loolzaaa.sso.client.core.security.matcher.SsoClientPermitAllMatcher;
-import ru.loolzaaa.sso.client.core.security.matcher.SsoClientPermitAllMatcherHandler;
+import ru.loolzaaa.sso.client.core.security.matcher.PermitAllMatcher;
+import ru.loolzaaa.sso.client.core.security.matcher.PermitAllMatcherRegistry;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import java.util.List;
@@ -37,14 +37,14 @@ public class SsoClientJwtConfiguration {
 
     private final SsoClientProperties properties;
 
-    private final DefaultSsoClientAuthenticationEntryPoint authenticationEntryPoint;
-    private final DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler;
+    private final DefaultAuthenticationEntryPoint authenticationEntryPoint;
+    private final DefaultLogoutSuccessHandler logoutSuccessHandler;
     private final QueryJwtTokenFilter queryJwtTokenFilter;
     private final JwtTokenFilter jwtTokenFilter;
 
     public SsoClientJwtConfiguration(SsoClientProperties properties,
-                                     DefaultSsoClientAuthenticationEntryPoint authenticationEntryPoint,
-                                     DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler,
+                                     DefaultAuthenticationEntryPoint authenticationEntryPoint,
+                                     DefaultLogoutSuccessHandler logoutSuccessHandler,
                                      JWTUtils jwtUtils,
                                      UserService userService,
                                      List<SsoClientApplicationRegister> ssoClientApplicationRegisters) {
@@ -69,7 +69,7 @@ public class SsoClientJwtConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   SsoClientPermitAllMatcherHandler permitAllMatcherHandler,
+                                                   PermitAllMatcherRegistry permitAllMatcherRegistry,
                                                    List<SsoClientLogoutHandler> logoutHandlers) throws Exception {
         http
                 .csrf(csrf -> csrf
@@ -95,12 +95,12 @@ public class SsoClientJwtConfiguration {
                 .addFilterBefore(queryJwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
-        if (!permitAllMatcherHandler.getMatchers().isEmpty()) {
+        if (!permitAllMatcherRegistry.getMatchers().isEmpty()) {
             final AuthorizationManager<RequestAuthorizationContext> permitAllAuthorizationManager =
                     (a, o) -> new AuthorizationDecision(true);
             RequestMatcherDelegatingAuthorizationManager.Builder authorizationManagerBuilder =
                     RequestMatcherDelegatingAuthorizationManager.builder();
-            for (SsoClientPermitAllMatcher matcher : permitAllMatcherHandler.getMatchers()) {
+            for (PermitAllMatcher matcher : permitAllMatcherRegistry.getMatchers()) {
                 if (matcher.isIgnoreCsrf()) {
                     http.csrf(csrf -> csrf.ignoringRequestMatchers(matcher.getRequestMatcher()));
                 }

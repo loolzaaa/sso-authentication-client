@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.loolzaaa.sso.client.core.application.WebhookHandler;
+import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
 import ru.loolzaaa.sso.client.core.security.matcher.WebhookHandlerRegistry;
 
 @RestController
@@ -24,7 +24,7 @@ public class SsoClientWebhookController {
     ResponseEntity<WebhookResult> processWebhook(@PathVariable("id") String id,
                                                  @RequestBody WebhookRequest webhookRequest) {
         log.debug("Incoming webhook request for id: {}", id);
-        WebhookHandler webhook = webhookHandlerRegistry.validateWebhook(id, webhookRequest.key);
+        SsoClientWebhookHandler webhook = webhookHandlerRegistry.validateWebhook(id, webhookRequest.key);
         WebhookResult webhookResult;
         if (webhook == null) {
             log.warn("Webhook validation failed: {}", id);

@@ -6,14 +6,14 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SsoClientPermitAllMatcherHandler {
+public class PermitAllMatcherRegistry {
 
-    private final Set<SsoClientPermitAllMatcher> matchers = new HashSet<>();
+    private final Set<PermitAllMatcher> matchers = new HashSet<>();
 
     public void addPermitAllMatcher(HttpMethod method, boolean ignoreCsrf, String... antPatterns) {
         for (String pattern : antPatterns) {
             AntPathRequestMatcher antPathRequestMatcher = new AntPathRequestMatcher(pattern, method.toString());
-            matchers.add(new SsoClientPermitAllMatcher(antPathRequestMatcher, ignoreCsrf));
+            matchers.add(new PermitAllMatcher(antPathRequestMatcher, ignoreCsrf));
         }
     }
 
@@ -25,7 +25,7 @@ public class SsoClientPermitAllMatcherHandler {
         addPermitAllMatcher(null, false, antPatterns);
     }
 
-    public Set<SsoClientPermitAllMatcher> getMatchers() {
+    public Set<PermitAllMatcher> getMatchers() {
         return matchers;
     }
 }

@@ -15,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import ru.loolzaaa.sso.client.core.security.matcher.SsoClientBasicAuthenticationRegistry;
+import ru.loolzaaa.sso.client.core.security.matcher.BasicAuthenticationRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,10 +28,10 @@ public class SsoClientBasicConfiguration {
 
     private final BasicAuthenticationProperties basicAuthenticationProperties;
 
-    private final SsoClientBasicAuthenticationRegistry basicAuthenticationRegistry;
+    private final BasicAuthenticationRegistry basicAuthenticationRegistry;
 
     public SsoClientBasicConfiguration(BasicAuthenticationProperties basicAuthenticationProperties,
-                                       SsoClientBasicAuthenticationRegistry basicAuthenticationRegistry) {
+                                       BasicAuthenticationRegistry basicAuthenticationRegistry) {
         this.basicAuthenticationProperties = basicAuthenticationProperties;
         this.basicAuthenticationRegistry = basicAuthenticationRegistry;
     }
@@ -43,7 +43,7 @@ public class SsoClientBasicConfiguration {
             log.info("There is no users for basic authentication");
         }
         List<UserDetails> userDetailsList = new ArrayList<>(basicAuthenticationRegistry.getUsers().size());
-        for (SsoClientBasicAuthenticationRegistry.User user : basicAuthenticationRegistry.getUsers()) {
+        for (BasicAuthenticationRegistry.User user : basicAuthenticationRegistry.getUsers()) {
             userDetailsList.add(User
                     .withUsername(user.getUsername())
                     .password(basicPasswordEncoder().encode(user.getPassword()))

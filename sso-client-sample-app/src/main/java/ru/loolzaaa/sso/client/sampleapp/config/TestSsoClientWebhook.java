@@ -3,17 +3,17 @@ package ru.loolzaaa.sso.client.sampleapp.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.loolzaaa.sso.client.core.application.WebhookHandler;
+import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
 
 @Component
-public class TestWebhook implements WebhookHandler {
+public class TestSsoClientWebhook implements SsoClientWebhookHandler {
 
-    @Value("${webhook.test.key}")
+    @Value("${sso.client.webhook.test.key}")
     private String key;
 
     private final ObjectMapper mapper;
 
-    public TestWebhook(ObjectMapper mapper) {
+    public TestSsoClientWebhook(ObjectMapper mapper) {
         this.mapper = mapper;
     }
 

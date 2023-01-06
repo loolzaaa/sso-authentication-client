@@ -11,9 +11,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-public class DefaultSsoClientAuthenticationEntryPoint extends LoginUrlAuthenticationEntryPoint {
+public class DefaultAuthenticationEntryPoint extends LoginUrlAuthenticationEntryPoint {
 
-    public DefaultSsoClientAuthenticationEntryPoint(String loginFormUrl) {
+    public DefaultAuthenticationEntryPoint(String loginFormUrl) {
         super(loginFormUrl);
     }
 

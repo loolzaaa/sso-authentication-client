@@ -4,12 +4,12 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.Objects;
 
-public final class SsoClientPermitAllMatcher {
+public final class PermitAllMatcher {
 
     private final AntPathRequestMatcher requestMatcher;
     private final boolean ignoreCsrf;
 
-    public SsoClientPermitAllMatcher(AntPathRequestMatcher requestMatcher, boolean ignoreCsrf) {
+    public PermitAllMatcher(AntPathRequestMatcher requestMatcher, boolean ignoreCsrf) {
         this.requestMatcher = requestMatcher;
         this.ignoreCsrf = ignoreCsrf;
     }
@@ -26,7 +26,7 @@ public final class SsoClientPermitAllMatcher {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SsoClientPermitAllMatcher that = (SsoClientPermitAllMatcher) o;
+        PermitAllMatcher that = (PermitAllMatcher) o;
         return getRequestMatcher().equals(that.getRequestMatcher());
     }
 
@@ -37,7 +37,7 @@ public final class SsoClientPermitAllMatcher {
 
     @Override
     public String toString() {
-        return "SsoClientPermitAllMatcher{" +
+        return "PermitAllMatcher{" +
                 "requestMatcher=" + requestMatcher +
                 ", ignoreCsrf=" + ignoreCsrf +
                 '}';

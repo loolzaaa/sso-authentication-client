@@ -144,12 +144,12 @@ public class ApplicationRegister implements SsoClientApplicationRegister {
 ### Add additional *permit all* request matchers
 
 By default, all application resources require the user to be authenticated and have an authority equal to the application name in their user configuration.  
-To allow access to certain resources **without** authentication and (*optional*) ignoring CSRF protection, you must create bean `SsoClientPermitAllMatcherHandler`.  
+To allow access to certain resources **without** authentication and (*optional*) ignoring CSRF protection, you must create bean `PermitAllMatcherHandler`.  
 **Anonymous access is not allowed.**
 ```java
 @Bean
-SsoClientPermitAllMatcherHandler ssoClientPermitAllMatcherHandler() {
-    SsoClientPermitAllMatcherHandler permitAllMatcherHandler = new SsoClientPermitAllMatcherHandler();
+PermitAllMatcherHandler permitAllMatcherHandler() {
+    PermitAllMatcherHandler permitAllMatcherHandler = new PermitAllMatcherHandler();
     permitAllMatcherHandler.addPermitAllMatcher(HttpMethod.GET, true, "/api/time");
     return permitAllMatcherHandler;
 }
@@ -231,29 +231,29 @@ Each request between applications must be intercepted, the required headers are 
 @Bean
 RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
     return restTemplateBuilder
-          .additionalInterceptors(new RestTemplateTokenInterceptor(ssoClientTokenDataReceiver))
+          .additionalInterceptors(new RestTemplateTokenInterceptor(tokenDataReceiver))
           .build();
 }
 
 public class RestTemplateTokenInterceptor implements ClientHttpRequestInterceptor {
 
-    private final SsoClientTokenDataReceiver ssoClientTokenDataReceiver;
+    private final SsoClientTokenDataReceiver tokenDataReceiver;
 
-    public RestTemplateTokenInterceptor(SsoClientTokenDataReceiver ssoClientTokenDataReceiver) {
-        this.ssoClientTokenDataReceiver = ssoClientTokenDataReceiver;
+    public RestTemplateTokenInterceptor(SsoClientTokenDataReceiver tokenDataReceiver) {
+        this.tokenDataReceiver = tokenDataReceiver;
     }
 
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-        ssoClientTokenDataReceiver.getTokenDataLock().lock();
+        tokenDataReceiver.getTokenDataLock().lock();
         try {
-            ssoClientTokenDataReceiver.updateData();
-            request.getHeaders().add("Cookie", "XSRF-TOKEN=" + ssoClientTokenDataReceiver.getCsrfToken());
-            request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + ssoClientTokenDataReceiver.getAccessToken());
-            request.getHeaders().add("X-XSRF-TOKEN", ssoClientTokenDataReceiver.getCsrfToken().toString());
+            tokenDataReceiver.updateData();
+            request.getHeaders().add("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfToken());
+            request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + tokenDataReceiver.getAccessToken());
+            request.getHeaders().add("X-XSRF-TOKEN", tokenDataReceiver.getCsrfToken().toString());
             return execution.execute(request, body);
         } finally {
-            ssoClientTokenDataReceiver.getTokenDataLock().unlock();
+            tokenDataReceiver.getTokenDataLock().unlock();
         }
     }
 }
@@ -264,14 +264,14 @@ public class RestTemplateTokenInterceptor implements ClientHttpRequestIntercepto
 @Bean
 RequestInterceptor ssoRequestInterceptor() {
     return requestTemplate -> {
-        ssoClientTokenDataReceiver.getTokenDataLock().lock();
+        tokenDataReceiver.getTokenDataLock().lock();
         try {
-            ssoClientTokenDataReceiver.updateData();
-            requestTemplate.header("Cookie", "XSRF-TOKEN=" + ssoClientTokenDataReceiver.getCsrfToken());
-            requestTemplate.header("Cookie", "_t_access=" + ssoClientTokenDataReceiver.getAccessToken());
-            requestTemplate.header("X-XSRF-TOKEN", ssoClientTokenDataReceiver.getCsrfToken().toString());
+            tokenDataReceiver.updateData();
+            requestTemplate.header("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfToken());
+            requestTemplate.header("Cookie", "_t_access=" + tokenDataReceiver.getAccessToken());
+            requestTemplate.header("X-XSRF-TOKEN", tokenDataReceiver.getCsrfToken().toString());
         } finally {
-            ssoClientTokenDataReceiver.getTokenDataLock().unlock();
+            tokenDataReceiver.getTokenDataLock().unlock();
         }
     };
 }

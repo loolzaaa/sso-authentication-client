@@ -23,9 +23,9 @@ import org.springframework.web.client.RestTemplate;
 import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.context.UserStore;
 import ru.loolzaaa.sso.client.core.security.CookieName;
-import ru.loolzaaa.sso.client.core.security.DefaultSsoClientAuthenticationEntryPoint;
-import ru.loolzaaa.sso.client.core.security.DefaultSsoClientLogoutSuccessHandler;
-import ru.loolzaaa.sso.client.core.security.token.SsoClientTokenDataReceiver;
+import ru.loolzaaa.sso.client.core.security.DefaultAuthenticationEntryPoint;
+import ru.loolzaaa.sso.client.core.security.DefaultLogoutSuccessHandler;
+import ru.loolzaaa.sso.client.core.security.token.TokenDataReceiver;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class SsoClientAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    DefaultSsoClientAuthenticationEntryPoint authenticationEntryPoint() {
+    DefaultAuthenticationEntryPoint authenticationEntryPoint() {
         StringBuilder loginFormUrlBuilder = new StringBuilder();
         if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
             throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
@@ -65,12 +65,12 @@ public class SsoClientAutoConfiguration {
             loginFormUrlBuilder.append("/");
         }
         loginFormUrlBuilder.append(properties.getEntryPointUri());
-        return new DefaultSsoClientAuthenticationEntryPoint(loginFormUrlBuilder.toString());
+        return new DefaultAuthenticationEntryPoint(loginFormUrlBuilder.toString());
     }
 
     @Bean
     @ConditionalOnMissingBean
-    DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler(RestTemplateBuilder restTemplateBuilder) {
+    DefaultLogoutSuccessHandler logoutSuccessHandler(RestTemplateBuilder restTemplateBuilder) {
         if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
             throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
         }
@@ -84,13 +84,13 @@ public class SsoClientAutoConfiguration {
                 .setReadTimeout(Duration.ofSeconds(4L))
                 .build();
 
-        return new DefaultSsoClientLogoutSuccessHandler(entryPointAddress, restTemplate);
+        return new DefaultLogoutSuccessHandler(entryPointAddress, restTemplate);
     }
 
     @Bean
     @ConditionalOnMissingBean
     UserService userService(RestTemplateBuilder restTemplateBuilder, UserStore userStore, JWTUtils jwtUtils,
-                            @Autowired(required = false) SsoClientTokenDataReceiver ssoClientTokenDataReceiver) {
+                            @Autowired(required = false) TokenDataReceiver tokenDataReceiver) {
         String applicationName = properties.getApplicationName();
         String entryPointAddress = properties.getEntryPointAddress();
         String basicLogin = properties.getBasicLogin();
@@ -100,9 +100,9 @@ public class SsoClientAutoConfiguration {
                 .setConnectTimeout(Duration.ofSeconds(4L))
                 .setReadTimeout(Duration.ofSeconds(4L))
                 .requestFactory(HttpComponentsClientHttpRequestFactory::new);
-        if (ssoClientTokenDataReceiver != null) {
-            log.info("SSO Client User service configured with SsoClientTokenDataReceiver");
-            restTemplateBuilder = restTemplateBuilder.additionalInterceptors(new RestTemplateTokenInterceptor(ssoClientTokenDataReceiver));
+        if (tokenDataReceiver != null) {
+            log.info("SSO Client User service configured with TokenDataReceiver");
+            restTemplateBuilder = restTemplateBuilder.additionalInterceptors(new RestTemplateTokenInterceptor(tokenDataReceiver));
         } else {
             log.info("SSO Client User service configured with Basic Authentication");
             restTemplateBuilder = restTemplateBuilder.basicAuthentication(basicLogin, basicPassword, StandardCharsets.US_ASCII);
@@ -115,7 +115,7 @@ public class SsoClientAutoConfiguration {
                 restTemplate,
                 userStore,
                 jwtUtils,
-                ssoClientTokenDataReceiver != null);
+                tokenDataReceiver != null);
     }
 
     @Bean
@@ -133,7 +133,7 @@ public class SsoClientAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "sso.client.receiver", value = { "username", "password" })
-    SsoClientTokenDataReceiver ssoClientTokenDataReceiver() {
+    TokenDataReceiver tokenDataReceiver() {
         if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
             throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
         }
@@ -144,27 +144,27 @@ public class SsoClientAutoConfiguration {
         if (!StringUtils.hasText(fingerprint)) {
             log.warn("For production purposes fingerprint must be non-blank/empty string. Current fingerprint: {}", fingerprint);
         }
-        return new SsoClientTokenDataReceiver(jwtUtils(), entryPointAddress, username, password, fingerprint);
+        return new TokenDataReceiver(jwtUtils(), entryPointAddress, username, password, fingerprint);
     }
 
     private static class RestTemplateTokenInterceptor implements ClientHttpRequestInterceptor {
 
-        private final SsoClientTokenDataReceiver ssoClientTokenDataReceiver;
+        private final TokenDataReceiver tokenDataReceiver;
 
-        public RestTemplateTokenInterceptor(SsoClientTokenDataReceiver ssoClientTokenDataReceiver) {
-            this.ssoClientTokenDataReceiver = ssoClientTokenDataReceiver;
+        public RestTemplateTokenInterceptor(TokenDataReceiver tokenDataReceiver) {
+            this.tokenDataReceiver = tokenDataReceiver;
         }
 
         @Override
         public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-            ssoClientTokenDataReceiver.getTokenDataLock().lock();
+            tokenDataReceiver.getTokenDataLock().lock();
             try {
-                ssoClientTokenDataReceiver.updateData();
-                request.getHeaders().add("Cookie", "XSRF-TOKEN=" + ssoClientTokenDataReceiver.getCsrfToken());
-                request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + ssoClientTokenDataReceiver.getAccessToken());
-                request.getHeaders().add("X-XSRF-TOKEN", ssoClientTokenDataReceiver.getCsrfToken().toString());
+                tokenDataReceiver.updateData();
+                request.getHeaders().add("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfToken());
+                request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + tokenDataReceiver.getAccessToken());
+                request.getHeaders().add("X-XSRF-TOKEN", tokenDataReceiver.getCsrfToken().toString());
             } finally {
-                ssoClientTokenDataReceiver.getTokenDataLock().unlock();
+                tokenDataReceiver.getTokenDataLock().unlock();
             }
             return execution.execute(request, body);
         }

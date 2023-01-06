@@ -13,11 +13,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class DefaultSsoClientAuthenticationEntryPointTest {
+class DefaultAuthenticationEntryPointTest {
 
     final String loginFormUrl = "http://example.com/";
 
@@ -28,11 +28,11 @@ class DefaultSsoClientAuthenticationEntryPointTest {
     @Mock
     AuthenticationException exception;
 
-    DefaultSsoClientAuthenticationEntryPoint authenticationEntryPoint;
+    DefaultAuthenticationEntryPoint authenticationEntryPoint;
 
     @BeforeEach
     void setUp() {
-        authenticationEntryPoint = new DefaultSsoClientAuthenticationEntryPoint(loginFormUrl);
+        authenticationEntryPoint = new DefaultAuthenticationEntryPoint(loginFormUrl);
         when(request.getScheme()).thenReturn("http");
         when(request.getServerName()).thenReturn("example.com");
         when(request.getServerPort()).thenReturn(80);

@@ -1,6 +1,6 @@
 package ru.loolzaaa.sso.client.core.security.matcher;
 
-import ru.loolzaaa.sso.client.core.application.WebhookHandler;
+import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,9 +9,9 @@ import java.util.function.Function;
 
 public class WebhookHandlerRegistry {
 
-    private final Map<String, WebhookHandler> webhooks = new HashMap<>();
+    private final Map<String, SsoClientWebhookHandler> webhooks = new HashMap<>();
 
-    public void addWebhook(String id, WebhookHandler webhook) {
+    public void addWebhook(String id, SsoClientWebhookHandler webhook) {
         if (webhooks.containsKey(id)) {
             throw new IllegalArgumentException(String.format("Webhook with id=%s already exists", id));
         }
@@ -19,7 +19,7 @@ public class WebhookHandlerRegistry {
     }
 
     public void addWebhook(String id, Function<String, Boolean> keyValidator, Consumer<Object> handler) {
-        WebhookHandler webhookHandler = new WebhookHandler() {
+        SsoClientWebhookHandler ssoClientWebhookHandler = new SsoClientWebhookHandler() {
             @Override
             public String getId() {
                 return id;
@@ -33,11 +33,11 @@ public class WebhookHandlerRegistry {
                 handler.accept(payload);
             }
         };
-        addWebhook(id, webhookHandler);
+        addWebhook(id, ssoClientWebhookHandler);
     }
 
-    public WebhookHandler validateWebhook(String id, String key) {
-        WebhookHandler webhook = webhooks.get(id);
+    public SsoClientWebhookHandler validateWebhook(String id, String key) {
+        SsoClientWebhookHandler webhook = webhooks.get(id);
         if (webhook == null) {
             return null;
         }

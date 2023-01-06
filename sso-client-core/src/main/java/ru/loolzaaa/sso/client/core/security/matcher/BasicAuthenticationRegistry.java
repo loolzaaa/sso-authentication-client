@@ -7,12 +7,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class SsoClientBasicAuthenticationRegistry {
+public class BasicAuthenticationRegistry {
 
     private final Set<User> users;
     private final Map<AntPathRequestMatcher, String[]> requestMatcherAuthoritiesMap;
 
-    public SsoClientBasicAuthenticationRegistry(Set<User> users, Map<AntPathRequestMatcher,
+    public BasicAuthenticationRegistry(Set<User> users, Map<AntPathRequestMatcher,
             String[]> requestMatcherAuthoritiesMap) {
         this.users = users;
         this.requestMatcherAuthoritiesMap = requestMatcherAuthoritiesMap;

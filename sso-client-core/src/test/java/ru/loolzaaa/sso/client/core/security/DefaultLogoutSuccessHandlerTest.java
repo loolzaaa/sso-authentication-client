@@ -28,7 +28,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class DefaultSsoClientLogoutSuccessHandlerTest {
+class DefaultLogoutSuccessHandlerTest {
 
     final String entryPoint = "http://host.com";
 
@@ -41,11 +41,11 @@ class DefaultSsoClientLogoutSuccessHandlerTest {
     @Mock
     RestTemplate restTemplate;
 
-    DefaultSsoClientLogoutSuccessHandler logoutSuccessHandler;
+    DefaultLogoutSuccessHandler logoutSuccessHandler;
 
     @BeforeEach
     void setUp() {
-        logoutSuccessHandler = new DefaultSsoClientLogoutSuccessHandler(entryPoint, restTemplate);
+        logoutSuccessHandler = new DefaultLogoutSuccessHandler(entryPoint, restTemplate);
     }
 
     @Test

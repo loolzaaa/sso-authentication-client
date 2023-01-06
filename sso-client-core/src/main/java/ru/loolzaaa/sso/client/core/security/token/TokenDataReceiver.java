@@ -17,9 +17,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SsoClientTokenDataReceiver {
+public class TokenDataReceiver {
 
-    private static final Logger log = LogManager.getLogger(SsoClientTokenDataReceiver.class.getName());
+    private static final Logger log = LogManager.getLogger(TokenDataReceiver.class.getName());
 
     private final UUID csrfToken = UUID.randomUUID();
 
@@ -37,7 +37,7 @@ public class SsoClientTokenDataReceiver {
     private final String password;
     private final String fingerprint;
 
-    public SsoClientTokenDataReceiver(JWTUtils jwtUtils, String entryPointAddress, String username, String password, String fingerprint) {
+    public TokenDataReceiver(JWTUtils jwtUtils, String entryPointAddress, String username, String password, String fingerprint) {
         this.jwtUtils = jwtUtils;
         this.entryPointAddress = entryPointAddress;
         this.username = username;
