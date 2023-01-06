@@ -5,8 +5,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "sso.client")
 public class SsoClientProperties {
 
-    private boolean enabled = true;
-
     private String applicationName;
 
     private String refreshTokenUri = "/trefresh";
@@ -22,13 +20,7 @@ public class SsoClientProperties {
 
     private final Receiver receiver = new Receiver();
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
+    private final Webhook webhook = new Webhook();
 
     public String getApplicationName() {
         return applicationName;
@@ -98,6 +90,10 @@ public class SsoClientProperties {
         return receiver;
     }
 
+    public Webhook getWebhook() {
+        return webhook;
+    }
+
     public static class Receiver {
         private String username;
         private String password;
@@ -125,6 +121,18 @@ public class SsoClientProperties {
 
         public void setFingerprint(String fingerprint) {
             this.fingerprint = fingerprint;
+        }
+    }
+
+    public static class Webhook {
+        private boolean enable;
+
+        public boolean isEnable() {
+            return enable;
+        }
+
+        public void setEnable(boolean enable) {
+            this.enable = enable;
         }
     }
 }
