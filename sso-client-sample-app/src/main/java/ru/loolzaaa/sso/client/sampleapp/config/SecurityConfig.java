@@ -37,7 +37,6 @@ public class SecurityConfig implements WebSecurityCustomizer, SsoClientConfigure
         configurer
                 .addUser("test", "test", Set.of("test"))
                 .addRequestMatcher("/api/get/basic2/**", new String[]{"test"});
-        SsoClientConfigurer.super.configureBasicAuthentication(configurer);
     }
 
     @Override
