@@ -63,9 +63,14 @@ sso.client.entryPointUri=/login
 sso.client.entryPointUri=/trefresh
 
 # SSO Client endpoint
-# Description can be accessed via GET /sso
-# Default: true
+# Description can be accessed via GET /sso/client
+# Default: false
 sso.client.endpoint.enable=true
+
+# SSO Client Webhook processor
+# Webhook process can be accessed via POST /sso/webhook/{id}
+# Default: false
+sso.client.webhook.enable=true
 
 # Basic authentication credentials for communication with SSO Server
 # Default: SERVICE
@@ -144,14 +149,15 @@ public class ApplicationRegister implements SsoClientApplicationRegister {
 ### Add additional *permit all* request matchers
 
 By default, all application resources require the user to be authenticated and have an authority equal to the application name in their user configuration.  
-To allow access to certain resources **without** authentication and (*optional*) ignoring CSRF protection, you must create bean `PermitAllMatcherHandler`.  
+To allow access to certain resources **without** authentication and (*optional*) ignoring CSRF protection, you must implement `SsoClientConfigurer` and override `addPermitAllMatcher`.  
 **Anonymous access is not allowed.**
 ```java
-@Bean
-PermitAllMatcherHandler permitAllMatcherHandler() {
-    PermitAllMatcherHandler permitAllMatcherHandler = new PermitAllMatcherHandler();
-    permitAllMatcherHandler.addPermitAllMatcher(HttpMethod.GET, true, "/api/time");
-    return permitAllMatcherHandler;
+@Configuration
+public class SecurityConfig implements SsoClientConfigurer {
+    @Override
+    public void addPermitAllMatcher(PermitAllMatcherRegistry registry) {
+        registry.addPermitAllMatcher(HttpMethod.GET, true, "/api/time");
+    }
 }
 ```
 
@@ -175,18 +181,34 @@ sso.client.basic.requestMatchers[0].caseSensitive=false
 sso.client.basic.requestMatchers[0].authorities=edit
 ```
 
-#### BasicAuthenticationRegistry bean definition
+#### Override `configureBasicAuthentication` of `SsoClientConfigurer`
 
 ```java
 @Configuration
-public class SecurityConfig {
-  @Bean
-  SsoClientBasicAuthenticationRegistry basicAuthenticationRegistry(SsoClientBasicAuthenticationBuilder builder) {
-    return builder
-              .addUser("test", "test", Set.of("view"))
-              .addRequestMatcher("/api/reports/**", new String[]{"view"})
-              .build();
-  }
+public class SecurityConfig implements SsoClientConfigurer {
+    @Override
+    public void configureBasicAuthentication(BasicAuthenticationConfigurer configurer) {
+        configurer
+                .addUser("test", "test", Set.of("view"))
+                .addRequestMatcher("/api/reports/**", new String[]{"view"});
+    }
+}
+```
+
+### Add Webhook handlers
+
+For an application that is protected by a SSO Client, it is possible to create any number of webhook handlers.  
+To enable webhook processing, you must define `sso.client.webhook.enable` property to `true` value.  
+All webhook requests processed by `POST /sso/webhook/{id}` controller, where `{id}` - unique webhook identifier.  
+Content type of any webhook request must be `application/json`. Object must contain webhook **key** and, optionally, payload.  
+To create webhook handler you must implement `SsoClientWebhookHandler` or override `addWebhooks` of `SsoClientConfigurer`:
+```java
+@Configuration
+public class SecurityConfig implements SsoClientConfigurer {
+    @Override
+    public void addWebhooks(WebhookHandlerRegistry registry) {
+        registry.addWebhook("WEBHOOK_VIA_CONFIG", "PASSWORD"::equals, System.err::println);
+    }
 }
 ```
 
