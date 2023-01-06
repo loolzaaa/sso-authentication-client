@@ -1,1 +1,3 @@
 ru.loolzaaa.sso.client.autoconfigure.SsoClientAutoConfiguration
+ru.loolzaaa.sso.client.autoconfigure.SsoClientFilterAutoConfiguration
+ru.loolzaaa.sso.client.autoconfigure.SsoClientControllerAutoConfiguration

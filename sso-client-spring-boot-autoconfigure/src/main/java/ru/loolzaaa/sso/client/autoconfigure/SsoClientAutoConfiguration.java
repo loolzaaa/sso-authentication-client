@@ -39,7 +39,7 @@ import java.time.Duration;
 @EnableConfigurationProperties({ SsoClientProperties.class, BasicUsersProperties.class })
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnProperty(prefix = "sso.client", value = { "applicationName", "entryPointAddress", "entryPointUri" })
-@Import({ SsoClientHttpConfiguration.class, SsoClientFilterConfiguration.class, SsoClientEndpointConfiguration.class })
+@Import({ SsoClientHttpConfiguration.class })
 public class SsoClientAutoConfiguration {
 
     private static final Logger log = LogManager.getLogger(SsoClientAutoConfiguration.class.getName());
