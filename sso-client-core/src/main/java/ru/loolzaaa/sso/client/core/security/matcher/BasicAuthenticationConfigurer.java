@@ -1,5 +1,7 @@
 package ru.loolzaaa.sso.client.core.security.matcher;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.Assert;
 import ru.loolzaaa.sso.client.core.model.UserGrantedAuthority;
@@ -8,6 +10,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class BasicAuthenticationConfigurer {
+
+    private static final Logger log = LogManager.getLogger(BasicAuthenticationConfigurer.class);
 
     private final Set<BasicAuthenticationRegistry.User> users = new HashSet<>();
     private final Map<AntPathRequestMatcher, String[]> requestMatcherAuthoritiesMap = new HashMap<>();
@@ -19,6 +23,7 @@ public class BasicAuthenticationConfigurer {
         BasicAuthenticationRegistry.User user =
                 new BasicAuthenticationRegistry.User(username, password, userGrantedAuthorities);
         users.add(user);
+        log.debug("Add basic user: {}", username);
         return this;
     }
 
@@ -35,10 +40,11 @@ public class BasicAuthenticationConfigurer {
         //TODO: pattern cannot starts with /sso and permit all matchers
         AntPathRequestMatcher requestMatcher = new AntPathRequestMatcher(pattern, httpMethod, caseSensitive);
         requestMatcherAuthoritiesMap.put(requestMatcher, authorities);
+        log.debug("Add basic request matcher: {} {}. Allowed authorities: {}", httpMethod, pattern, authorities);
         return this;
     }
 
-    public BasicAuthenticationRegistry build() {
+    public BasicAuthenticationRegistry buildRegistry() {
         return new BasicAuthenticationRegistry(users, requestMatcherAuthoritiesMap);
     }
 }

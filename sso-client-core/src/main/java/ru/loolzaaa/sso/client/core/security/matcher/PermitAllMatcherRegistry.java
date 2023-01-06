@@ -1,5 +1,7 @@
 package ru.loolzaaa.sso.client.core.security.matcher;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -8,12 +10,20 @@ import java.util.Set;
 
 public class PermitAllMatcherRegistry {
 
+    private static final Logger log = LogManager.getLogger(PermitAllMatcherRegistry.class);
+
     private final Set<PermitAllMatcher> matchers = new HashSet<>();
+
+    public void addPermitAllMatcher(PermitAllMatcher matcher) {
+        matchers.add(matcher);
+        log.info("Add permit all matcher: {}", matcher);
+    }
 
     public void addPermitAllMatcher(HttpMethod method, boolean ignoreCsrf, String... antPatterns) {
         for (String pattern : antPatterns) {
             AntPathRequestMatcher antPathRequestMatcher = new AntPathRequestMatcher(pattern, method.toString());
-            matchers.add(new PermitAllMatcher(antPathRequestMatcher, ignoreCsrf));
+            PermitAllMatcher matcher = new PermitAllMatcher(antPathRequestMatcher, ignoreCsrf);
+            addPermitAllMatcher(matcher);
         }
     }
 
