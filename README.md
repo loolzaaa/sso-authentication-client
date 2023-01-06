@@ -1,3 +1,5 @@
+[![Java CI with Maven](https://github.com/loolzaaa/sso-authentication-client/actions/workflows/maven.yml/badge.svg?branch=master)](https://github.com/loolzaaa/sso-authentication-client/actions/workflows/maven.yml)
+
 # Single Sign-On authentication client
 
 The client part for the [Single Sign-On (SSO) server](https://github.com/loolzaaa/sso-authentication-server). If any request under JWT security control does not have a JWT token, it is redirected to the server entry point with Base64 encoded `continue` parameter to return to the application. Further authentication occurs through Json Web Tokens (JWT), which are checked through a custom filter. All other components of the system are based on standard Spring Security beans with minor changes.
