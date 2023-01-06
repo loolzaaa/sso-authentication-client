@@ -73,8 +73,7 @@ public class SsoClientJwtConfiguration {
                                                    List<SsoClientLogoutHandler> logoutHandlers) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringAntMatchers("/sso/webhook/**"))
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
                 .cors()
                 .and()
                 .sessionManagement(session -> session
@@ -108,12 +107,19 @@ public class SsoClientJwtConfiguration {
                     authorize.requestMatchers(matcher.getRequestMatcher()).permitAll();
                     authorizationManagerBuilder.add(matcher.getRequestMatcher(), permitAllAuthorizationManager);
                 });
-                log.info("Add permit all matcher: {}", matcher);
             }
             jwtTokenFilter.setPermitAllAuthorizationManager(authorizationManagerBuilder.build());
         }
+
+        if (properties.getWebhook().isEnable()) {
+            http
+                    .csrf(csrf -> csrf
+                            .ignoringAntMatchers("/sso/webhook/**"))
+                    .authorizeHttpRequests(authorize -> authorize
+                            .antMatchers(HttpMethod.POST, "/sso/webhook/**").permitAll());
+        }
+
         http.authorizeHttpRequests(authorize -> authorize
-                .antMatchers(HttpMethod.POST, "/sso/webhook/**").permitAll()
                 .anyRequest().hasAuthority(properties.getApplicationName()));
 
         if (logoutHandlers != null && !logoutHandlers.isEmpty()) {
@@ -124,7 +130,7 @@ public class SsoClientJwtConfiguration {
             }
         }
 
-        log.info("SSO Client HttpSecurity configuration completed");
+        log.info("SSO Client JWT configuration completed");
         return http.build();
     }
 }
