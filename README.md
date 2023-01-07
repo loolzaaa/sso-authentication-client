@@ -1,4 +1,5 @@
 [![Java CI with Maven](https://github.com/loolzaaa/sso-authentication-client/actions/workflows/maven.yml/badge.svg?branch=master)](https://github.com/loolzaaa/sso-authentication-client/actions/workflows/maven.yml)
+[![codecov](https://codecov.io/gh/loolzaaa/sso-authentication-client/branch/master/graph/badge.svg?token=6U1U1T8TY1)](https://codecov.io/gh/loolzaaa/sso-authentication-client)
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/loolzaaa/sso-authentication-client)
 
 # Single Sign-On authentication client
