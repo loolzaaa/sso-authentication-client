@@ -16,11 +16,11 @@ import java.io.IOException;
 
 public class QueryJwtTokenFilter extends GenericFilterBean {
 
-    private static final String serverTimeParamName = "serverTime";
+    private static final String SERVER_TIME_PARAM_NAME = "serverTime";
 
-    private static final String serverTimeHeaderName = "X-SSO-TIME";
+    private static final String SERVER_TIME_HEADER_NAME = "X-SSO-TIME";
 
-    private static final String tokenParamName = "token";
+    private static final String TOKEN_PARAM_NAME = "token";
 
     private final JWTUtils jwtUtils;
 
@@ -33,9 +33,9 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) resp;
 
-        String serverTimeParam = request.getParameter(serverTimeParamName);
+        String serverTimeParam = request.getParameter(SERVER_TIME_PARAM_NAME);
         if (serverTimeParam == null) {
-            serverTimeParam = request.getHeader(serverTimeHeaderName);
+            serverTimeParam = request.getHeader(SERVER_TIME_HEADER_NAME);
         }
         if (serverTimeParam != null) {
             long serverTime;
@@ -57,7 +57,7 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
             response.addCookie(cookie);
         }
 
-        String queryToken = request.getParameter(tokenParamName);
+        String queryToken = request.getParameter(TOKEN_PARAM_NAME);
         if (queryToken != null) {
             Cookie cookie = new Cookie(CookieName.ACCESS.getName(), queryToken);
             cookie.setHttpOnly(true);
@@ -88,8 +88,8 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
     }
 
     private boolean isParamNeedToClear(String paramName) {
-        return tokenParamName.equals(paramName)
-                || serverTimeParamName.equals(paramName)
+        return TOKEN_PARAM_NAME.equals(paramName)
+                || SERVER_TIME_PARAM_NAME.equals(paramName)
                 || CookieName.RFID.getName().equals(paramName);
     }
 }

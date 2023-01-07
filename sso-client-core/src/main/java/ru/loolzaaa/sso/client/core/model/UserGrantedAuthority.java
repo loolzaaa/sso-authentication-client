@@ -9,6 +9,8 @@ import java.util.Objects;
 
 public class UserGrantedAuthority implements GrantedAuthority {
 
+    private static final long serialVersionUID = -3075446244218789331L;
+
     private String authority;
 
     @JsonCreator

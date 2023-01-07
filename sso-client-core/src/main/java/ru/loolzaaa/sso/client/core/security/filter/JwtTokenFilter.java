@@ -99,7 +99,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             logger.debug(String.format("Access token for user [%s] validated", login));
         } catch (ClaimJwtException e) {
             logger.trace(String.format("Access token for user [%s] is expired", e.getClaims().get("login")));
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            logger.debug("Undeclared exception while parse access token: " + e.getMessage());
+        }
 
         if (login != null) {
             logger.debug("Update security context");

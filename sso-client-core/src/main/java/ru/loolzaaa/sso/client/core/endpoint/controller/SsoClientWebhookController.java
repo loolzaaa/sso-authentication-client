@@ -12,7 +12,7 @@ import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerRegistry;
 @RequestMapping("/sso/webhook")
 public class SsoClientWebhookController {
 
-    private final static Logger log = LogManager.getLogger(SsoClientWebhookController.class);
+    private static final Logger log = LogManager.getLogger(SsoClientWebhookController.class);
 
     private final WebhookHandlerRegistry webhookHandlerRegistry;
 

@@ -13,6 +13,8 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserPrincipal implements UserDetails {
 
+    private static final long serialVersionUID = 4848348670190400707L;
+
     private final User user;
 
     private final List<UserGrantedAuthority> authorities = new ArrayList<>();

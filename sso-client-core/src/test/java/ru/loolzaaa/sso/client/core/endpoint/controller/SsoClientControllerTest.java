@@ -84,10 +84,13 @@ class SsoClientControllerTest {
         String contentAsString = mvcResult.getResponse().getContentAsString();
         List<User> actualUsers = new ObjectMapper().readValue(contentAsString, new TypeReference<>() {});
 
-        assertThat(actualUsers).isNotNull();
-        assertThat(actualUsers).hasSize(1);
-        assertThat(actualUsers.get(0)).isNotNull();
-        assertThat(actualUsers.get(0).getLogin()).isEqualTo(login);
+        assertThat(actualUsers)
+                .isNotNull()
+                .hasSize(1)
+                .element(0)
+                .isNotNull()
+                .extracting("login")
+                .isEqualTo(login);
     }
 
     @ParameterizedTest

@@ -59,7 +59,7 @@ public class DefaultLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
 
                 String acceptHeader = req.getHeader("Accept");
                 if (acceptHeader != null && acceptHeader.toLowerCase().contains("application/json")) {
-                    resp.sendRedirect(format(entryPointAddress + "/api/logout?token=%s", accessToken));
+                    resp.sendRedirect(format("%s/api/logout?token=%s", entryPointAddress, accessToken));
                 } else {
                     String continueParamValue = UrlUtils.buildFullRequestUrl(req).replace("/do_logout", "");
                     String encodedParam = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));

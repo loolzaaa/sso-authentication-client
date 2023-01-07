@@ -143,7 +143,7 @@ class SsoClientServiceImplTest {
         assertThat(usernameCaptor.getValue()).startsWith(USERNAME);
         assertThat(appCaptor.getValue()).isEqualTo(APP_NAME);
         assertThat(configCaptor.getValue()).isEqualTo(config);
-        assertThat(code).isEqualTo(0);
+        assertThat(code).isZero();
     }
 
     @Test

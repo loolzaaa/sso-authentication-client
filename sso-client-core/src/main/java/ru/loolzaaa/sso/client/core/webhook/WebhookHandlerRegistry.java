@@ -7,7 +7,7 @@ import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class WebhookHandlerRegistry {
 
@@ -23,7 +23,7 @@ public class WebhookHandlerRegistry {
         log.info("Register webhook: {}", id);
     }
 
-    public void addWebhook(String id, Function<String, Boolean> keyValidator, Consumer<Object> handler) {
+    public void addWebhook(String id, Predicate<String> keyValidator, Consumer<Object> handler) {
         SsoClientWebhookHandler ssoClientWebhookHandler = new SsoClientWebhookHandler() {
             @Override
             public String getId() {
@@ -31,7 +31,7 @@ public class WebhookHandlerRegistry {
             }
             @Override
             public boolean validateKey(String key) {
-                return keyValidator.apply(key);
+                return keyValidator.test(key);
             }
             @Override
             public void handle(Object payload) throws Exception {

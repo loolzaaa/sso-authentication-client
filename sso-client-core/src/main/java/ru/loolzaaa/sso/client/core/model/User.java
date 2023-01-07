@@ -2,10 +2,14 @@ package ru.loolzaaa.sso.client.core.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
-public class User {
+public class User implements Serializable {
+
+    private static final long serialVersionUID = 4063700817894271487L;
+
     private Long id;
     private String login;
     private JsonNode config;

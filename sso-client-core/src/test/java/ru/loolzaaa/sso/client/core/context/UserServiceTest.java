@@ -30,7 +30,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith({MockitoExtension.class})
-public class UserServiceTest {
+class UserServiceTest {
 
     final String applicationName = "app";
     final String entryPointAddress = "entryPoint";
@@ -116,7 +116,7 @@ public class UserServiceTest {
         int code = userService.updateUserConfigOnServer("username", "app", null);
 
         verify(restTemplate).exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString());
-        assertThat(code).isEqualTo(0);
+        assertThat(code).isZero();
     }
 
     @Test
@@ -246,7 +246,7 @@ public class UserServiceTest {
         Map<String, String> tokenClaims = userService.getTokenClaims(correctToken);
 
         assertThat(tokenClaims).isNotNull();
-        assertThat(tokenClaims.get("data")).isEqualTo(signature);
+        assertThat(tokenClaims).containsEntry("data", signature);
     }
 
     @Test
@@ -274,6 +274,6 @@ public class UserServiceTest {
         Map<String, String> tokenClaims = userService.getTokenClaims(expiredToken);
 
         assertThat(tokenClaims).isNotNull();
-        assertThat(tokenClaims.get("data")).isEqualTo(signature);
+        assertThat(tokenClaims).containsEntry("data", signature);
     }
 }

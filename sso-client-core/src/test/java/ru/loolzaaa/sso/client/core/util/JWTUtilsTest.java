@@ -45,7 +45,7 @@ class JWTUtilsTest {
         assertNotNull(issuedAt);
         assertNotNull(actualData);
         assertEquals(jwtUtils.getAccessSecretKey(), expectedData);
-        assertEquals(issuedAt.getTime(), 0);
+        assertEquals(0, issuedAt.getTime());
         assertEquals(actualData, expectedData);
     }
 
@@ -75,6 +75,6 @@ class JWTUtilsTest {
         Date expiration = claimsJws.getBody().getExpiration();
 
         assertNotNull(expiration);
-        assertEquals(expiration.getTime(), 0);
+        assertEquals(0, expiration.getTime());
     }
 }

@@ -3,6 +3,7 @@ package ru.loolzaaa.sso.client.core.security.token;
 import io.jsonwebtoken.ClaimJwtException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpHeaders;
 import ru.loolzaaa.sso.client.core.security.CookieName;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
@@ -43,7 +44,7 @@ public class TokenDataReceiver {
         this.username = username;
         this.password = password;
         this.fingerprint = fingerprint;
-        log.info("Token data receiver created with CSRF token: " + csrfToken);
+        log.info("Token data receiver created with CSRF token: {}", csrfToken);
     }
 
     public void updateData() {
@@ -54,8 +55,8 @@ public class TokenDataReceiver {
             HttpRequest request = HttpRequest.newBuilder()
                     .POST(HttpRequest.BodyPublishers.ofString(jwtTokenRequestBody))
                     .uri(URI.create(String.format("%s%s", entryPointAddress, loginUri)))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .header("Cookie", "XSRF-TOKEN=" + csrfToken)
+                    .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                    .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + csrfToken)
                     .build();
 
             HttpResponse<String> response;
@@ -84,9 +85,9 @@ public class TokenDataReceiver {
         HttpRequest request = HttpRequest.newBuilder()
                 .POST(HttpRequest.BodyPublishers.ofString(String.format("_fingerprint=%s", fingerprint)))
                 .uri(URI.create(String.format("%s%s", entryPointAddress, refreshUri)))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Cookie", CookieName.REFRESH.getName() + "=" + tokenData.getRefreshToken())
-                .header("Cookie", "XSRF-TOKEN=" + csrfToken)
+                .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .header(HttpHeaders.COOKIE, CookieName.REFRESH.getName() + "=" + tokenData.getRefreshToken())
+                .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + csrfToken)
                 .header("X-XSRF-TOKEN", csrfToken.toString())
                 .build();
 

@@ -131,7 +131,7 @@ class JwtTokenFilterTest {
 
         jwtTokenFilter.doFilter(req, resp, chain);
 
-        verify(applicationRegister).register(eq(userDetails));
+        verify(applicationRegister).register(userDetails);
     }
 
     @Test
@@ -161,7 +161,7 @@ class JwtTokenFilterTest {
         ClaimJwtException exception = mock(ClaimJwtException.class);
 
         when(req.getContextPath()).thenReturn("/");
-        when(req.getHeader(eq("Accept"))).thenReturn("application/json");
+        when(req.getHeader("Accept")).thenReturn("application/json");
         when(req.getCookies()).thenReturn(cookies);
         when(req.isSecure()).thenReturn(SECURE);
         when(jwtUtils.parserEnforceAccessToken(accessToken)).thenThrow(exception);
@@ -172,7 +172,7 @@ class JwtTokenFilterTest {
         jwtTokenFilter.doFilter(req, resp, chain);
 
         verify(resp).addCookie(cookieCaptor.capture());
-        verify(resp).setHeader(eq("fp_request"), eq(entryPointAddress + "/api/refresh/ajax"));
+        verify(resp).setHeader("fp_request", entryPointAddress + "/api/refresh/ajax");
         verify(resp).setStatus(HttpServletResponse.SC_FORBIDDEN);
         assertThat(cookieCaptor.getValue().isHttpOnly()).isTrue();
         assertThat(cookieCaptor.getValue().getSecure()).isEqualTo(SECURE);
@@ -193,7 +193,7 @@ class JwtTokenFilterTest {
         ClaimJwtException exception = mock(ClaimJwtException.class);
 
         when(req.getContextPath()).thenReturn("/");
-        when(req.getHeader(eq("Accept"))).thenReturn("test/html");
+        when(req.getHeader("Accept")).thenReturn("test/html");
         when(req.getCookies()).thenReturn(cookies);
         when(req.isSecure()).thenReturn(SECURE);
         when(req.getScheme()).thenReturn(SCHEME);

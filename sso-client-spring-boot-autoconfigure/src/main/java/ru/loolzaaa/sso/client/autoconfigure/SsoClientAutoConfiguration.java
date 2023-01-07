@@ -44,6 +44,8 @@ public class SsoClientAutoConfiguration {
 
     private static final Logger log = LogManager.getLogger(SsoClientAutoConfiguration.class.getName());
 
+    private static final String ENTRYPOINT_CHECK_MSG = "SSO Server entrypoint must be absolute url";
+
     private final SsoClientProperties properties;
 
     public SsoClientAutoConfiguration(SsoClientProperties properties) {
@@ -55,7 +57,7 @@ public class SsoClientAutoConfiguration {
     DefaultAuthenticationEntryPoint authenticationEntryPoint() {
         StringBuilder loginFormUrlBuilder = new StringBuilder();
         if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
-            throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
+            throw new IllegalArgumentException(ENTRYPOINT_CHECK_MSG);
         }
         loginFormUrlBuilder.append(properties.getEntryPointAddress());
         if (properties.getEntryPointAddress().endsWith("/")) {
@@ -72,7 +74,7 @@ public class SsoClientAutoConfiguration {
     @ConditionalOnMissingBean
     DefaultLogoutSuccessHandler logoutSuccessHandler(RestTemplateBuilder restTemplateBuilder) {
         if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
-            throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
+            throw new IllegalArgumentException(ENTRYPOINT_CHECK_MSG);
         }
         String entryPointAddress = properties.getEntryPointAddress();
         String login = properties.getRevokeUsername();
@@ -135,7 +137,7 @@ public class SsoClientAutoConfiguration {
     @ConditionalOnProperty(prefix = "sso.client.receiver", value = { "username", "password" })
     TokenDataReceiver tokenDataReceiver() {
         if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
-            throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
+            throw new IllegalArgumentException(ENTRYPOINT_CHECK_MSG);
         }
         String entryPointAddress = properties.getEntryPointAddress();
         String username = properties.getReceiver().getUsername();
