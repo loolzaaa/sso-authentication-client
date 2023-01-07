@@ -12,7 +12,7 @@ import ru.loolzaaa.sso.client.core.endpoint.controller.SsoClientController;
 import ru.loolzaaa.sso.client.core.endpoint.controller.SsoClientWebhookController;
 import ru.loolzaaa.sso.client.core.endpoint.service.SsoClientService;
 import ru.loolzaaa.sso.client.core.endpoint.service.SsoClientServiceImpl;
-import ru.loolzaaa.sso.client.core.security.matcher.WebhookHandlerRegistry;
+import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerRegistry;
 
 @AutoConfiguration(after = SsoClientAutoConfiguration.class)
 public class SsoClientControllerAutoConfiguration {

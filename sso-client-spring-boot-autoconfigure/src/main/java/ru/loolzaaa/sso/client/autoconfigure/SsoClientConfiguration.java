@@ -10,7 +10,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.util.CollectionUtils;
 import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
 import ru.loolzaaa.sso.client.core.config.SsoClientConfigurer;
-import ru.loolzaaa.sso.client.core.security.matcher.*;
+import ru.loolzaaa.sso.client.core.security.basic.BasicAuthenticationConfigurer;
+import ru.loolzaaa.sso.client.core.security.basic.BasicAuthenticationRegistry;
+import ru.loolzaaa.sso.client.core.security.permitall.PermitAllMatcher;
+import ru.loolzaaa.sso.client.core.security.permitall.PermitAllMatcherRegistry;
+import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerRegistry;
 
 import java.util.List;
 

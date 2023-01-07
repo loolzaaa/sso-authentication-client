@@ -15,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import ru.loolzaaa.sso.client.core.security.matcher.BasicAuthenticationRegistry;
+import ru.loolzaaa.sso.client.core.security.basic.BasicAuthenticationRegistry;
 
 import java.util.ArrayList;
 import java.util.List;

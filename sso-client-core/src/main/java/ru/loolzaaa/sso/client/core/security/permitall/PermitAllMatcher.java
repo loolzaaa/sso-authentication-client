@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core.security.matcher;
+package ru.loolzaaa.sso.client.core.security.permitall;
 
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 

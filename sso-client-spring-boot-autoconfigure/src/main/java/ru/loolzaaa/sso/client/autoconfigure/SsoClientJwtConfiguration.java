@@ -24,8 +24,8 @@ import ru.loolzaaa.sso.client.core.security.DefaultAuthenticationEntryPoint;
 import ru.loolzaaa.sso.client.core.security.DefaultLogoutSuccessHandler;
 import ru.loolzaaa.sso.client.core.security.filter.JwtTokenFilter;
 import ru.loolzaaa.sso.client.core.security.filter.QueryJwtTokenFilter;
-import ru.loolzaaa.sso.client.core.security.matcher.PermitAllMatcher;
-import ru.loolzaaa.sso.client.core.security.matcher.PermitAllMatcherRegistry;
+import ru.loolzaaa.sso.client.core.security.permitall.PermitAllMatcher;
+import ru.loolzaaa.sso.client.core.security.permitall.PermitAllMatcherRegistry;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import java.util.List;

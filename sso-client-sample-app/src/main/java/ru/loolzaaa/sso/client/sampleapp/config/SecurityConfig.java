@@ -11,9 +11,9 @@ import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.application.SsoClientLogoutHandler;
 import ru.loolzaaa.sso.client.core.config.SsoClientConfigurer;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
-import ru.loolzaaa.sso.client.core.security.matcher.BasicAuthenticationConfigurer;
-import ru.loolzaaa.sso.client.core.security.matcher.PermitAllMatcherRegistry;
-import ru.loolzaaa.sso.client.core.security.matcher.WebhookHandlerRegistry;
+import ru.loolzaaa.sso.client.core.security.basic.BasicAuthenticationConfigurer;
+import ru.loolzaaa.sso.client.core.security.permitall.PermitAllMatcherRegistry;
+import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerRegistry;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

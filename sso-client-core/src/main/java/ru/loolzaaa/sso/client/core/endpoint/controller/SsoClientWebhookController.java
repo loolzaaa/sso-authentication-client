@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
-import ru.loolzaaa.sso.client.core.security.matcher.WebhookHandlerRegistry;
+import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerRegistry;
 
 @RestController
 @RequestMapping("/sso/webhook")

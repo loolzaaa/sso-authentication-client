@@ -1,4 +1,4 @@
-package ru.loolzaaa.sso.client.core.security.matcher;
+package ru.loolzaaa.sso.client.core.security.basic;
 
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import ru.loolzaaa.sso.client.core.model.UserGrantedAuthority;
