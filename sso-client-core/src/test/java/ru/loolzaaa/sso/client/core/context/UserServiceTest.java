@@ -245,8 +245,9 @@ class UserServiceTest {
 
         Map<String, String> tokenClaims = userService.getTokenClaims(correctToken);
 
-        assertThat(tokenClaims).isNotNull();
-        assertThat(tokenClaims).containsEntry("data", signature);
+        assertThat(tokenClaims)
+                .isNotNull()
+                .containsEntry("data", signature);
     }
 
     @Test
@@ -273,7 +274,8 @@ class UserServiceTest {
 
         Map<String, String> tokenClaims = userService.getTokenClaims(expiredToken);
 
-        assertThat(tokenClaims).isNotNull();
-        assertThat(tokenClaims).containsEntry("data", signature);
+        assertThat(tokenClaims)
+                .isNotNull()
+                .containsEntry("data", signature);
     }
 }
