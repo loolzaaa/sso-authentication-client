@@ -24,28 +24,16 @@ public class WebhookHandlerRegistry {
     }
 
     public void addWebhook(String id, Predicate<String> keyValidator, Consumer<Object> handler) {
-        SsoClientWebhookHandler ssoClientWebhookHandler = new SsoClientWebhookHandler() {
-            @Override
-            public String getId() {
-                return id;
-            }
-            @Override
-            public boolean validateKey(String key) {
-                return keyValidator.test(key);
-            }
-            @Override
-            public void handle(Object payload) throws Exception {
-                handler.accept(payload);
-            }
-        };
-        addWebhook(id, ssoClientWebhookHandler);
+        SsoClientWebhookHandler webhookHandler = new DefaultWebhookHandler(id, keyValidator, handler);
+        addWebhook(id, webhookHandler);
     }
 
-    public SsoClientWebhookHandler validateWebhook(String id, String key) {
+    public SsoClientWebhookHandler validateWebhook(String id, String key) throws WebhookHandlerException {
         SsoClientWebhookHandler webhook = webhooks.get(id);
         if (webhook == null) {
             return null;
         }
-        return webhook.validateKey(key) ? webhook : null;
+        webhook.validateKey(key);
+        return webhook;
     }
 }
