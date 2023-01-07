@@ -23,6 +23,8 @@
 		<httpclient.version>4.5.13</httpclient.version>
 		<jjwt.version>0.9.1</jjwt.version>
 		<jakarta.xml.bind-api.version>2.3.3</jakarta.xml.bind-api.version>
+		<sonar.organization>loolzaaa</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
 
 	<build>
