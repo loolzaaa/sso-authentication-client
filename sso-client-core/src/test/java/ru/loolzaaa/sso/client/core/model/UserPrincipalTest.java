@@ -19,4 +19,15 @@ class UserPrincipalTest {
         assertThat(userPrincipal.getUser().getId()).isEqualTo(1L);
         assertThat(userPrincipal.getUser().getLogin()).isEqualTo("admin");
     }
+
+    @Test
+    void shouldCorrectValuesOfUnusedFields() {
+        UserPrincipal userPrincipal = new UserPrincipal(null);
+
+        assertThat(userPrincipal.getPassword()).isNull();
+        assertThat(userPrincipal.isAccountNonExpired()).isTrue();
+        assertThat(userPrincipal.isAccountNonLocked()).isTrue();
+        assertThat(userPrincipal.isCredentialsNonExpired()).isTrue();
+        assertThat(userPrincipal.isEnabled()).isTrue();
+    }
 }

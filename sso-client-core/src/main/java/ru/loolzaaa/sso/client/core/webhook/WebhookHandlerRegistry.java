@@ -2,6 +2,7 @@ package ru.loolzaaa.sso.client.core.webhook;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.util.Assert;
 import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
 
 import java.util.HashMap;
@@ -24,6 +25,8 @@ public class WebhookHandlerRegistry {
     }
 
     public void addWebhook(String id, Predicate<String> keyValidator, Consumer<Object> handler) {
+        Assert.notNull(keyValidator, "Key validator must not be null");
+        Assert.notNull(handler, "Handler must not be null");
         SsoClientWebhookHandler webhookHandler = new DefaultWebhookHandler(id, keyValidator, handler);
         addWebhook(id, webhookHandler);
     }

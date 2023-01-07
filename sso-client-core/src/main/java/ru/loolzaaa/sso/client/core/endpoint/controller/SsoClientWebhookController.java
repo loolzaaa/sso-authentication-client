@@ -28,13 +28,13 @@ public class SsoClientWebhookController {
         log.debug("Incoming webhook request for id: {}", id);
         WebhookResult webhookResult;
         try {
-            SsoClientWebhookHandler webhook = webhookHandlerRegistry.validateWebhook(id, webhookRequest.key);
+            SsoClientWebhookHandler webhook = webhookHandlerRegistry.validateWebhook(id, webhookRequest.getKey());
             if (webhook == null) {
                 log.warn("Webhook not exists: {}", id);
                 webhookResult = new WebhookResult(id, "Webhook not exists");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(webhookResult);
             }
-            webhook.handle(webhookRequest.payload);
+            webhook.handle(webhookRequest.getPayload());
             log.info("Webhook handle success: {}", id);
             webhookResult = new WebhookResult(id, "Webhook successfully handled");
             return ResponseEntity.ok(webhookResult);
