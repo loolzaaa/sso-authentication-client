@@ -142,8 +142,10 @@ public class SsoClientAutoConfiguration {
         SimpleModule simpleModule = new SimpleModule();
         if (configTypeSupplier != null) {
             simpleModule.addDeserializer(User.class, new UserDeserializer(User.class, configTypeSupplier.get()));
+            log.info("Custom user configuration class: {}", configTypeSupplier.get());
         } else {
             simpleModule.addDeserializer(User.class, new UserDeserializer(User.class, BaseUserConfig.class));
+            log.info("There is no custom user configuration class, fallback to default");
         }
         return simpleModule;
     }
