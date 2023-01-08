@@ -1,7 +1,5 @@
 package ru.loolzaaa.sso.client.core.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
@@ -12,7 +10,7 @@ public class User implements Serializable {
 
     private Long id;
     private String login;
-    private JsonNode config;
+    private BaseUserConfig config;
     private String name;
     private List<String> authorities;
 
@@ -32,11 +30,11 @@ public class User implements Serializable {
         this.login = login;
     }
 
-    public JsonNode getConfig() {
+    public BaseUserConfig getConfig() {
         return config;
     }
 
-    public void setConfig(JsonNode config) {
+    public void setConfig(BaseUserConfig config) {
         this.config = config;
     }
 

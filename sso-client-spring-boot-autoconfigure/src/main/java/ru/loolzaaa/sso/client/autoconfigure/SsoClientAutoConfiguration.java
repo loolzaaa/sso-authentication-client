@@ -1,5 +1,6 @@
 package ru.loolzaaa.sso.client.autoconfigure;
 
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,13 +21,17 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import ru.loolzaaa.sso.client.core.application.UserConfigTypeSupplier;
 import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.context.UserStore;
+import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
+import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.security.CookieName;
 import ru.loolzaaa.sso.client.core.security.DefaultAuthenticationEntryPoint;
 import ru.loolzaaa.sso.client.core.security.DefaultLogoutSuccessHandler;
 import ru.loolzaaa.sso.client.core.security.token.TokenDataReceiver;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
+import ru.loolzaaa.sso.client.core.util.UserDeserializer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -130,6 +135,17 @@ public class SsoClientAutoConfiguration {
     @ConditionalOnMissingBean
     JWTUtils jwtUtils() {
         return new JWTUtils();
+    }
+
+    @Bean
+    SimpleModule userDeserializerModule(@Autowired(required = false) UserConfigTypeSupplier configTypeSupplier) {
+        SimpleModule simpleModule = new SimpleModule();
+        if (configTypeSupplier != null) {
+            simpleModule.addDeserializer(User.class, new UserDeserializer(User.class, configTypeSupplier.get()));
+        } else {
+            simpleModule.addDeserializer(User.class, new UserDeserializer(User.class, BaseUserConfig.class));
+        }
+        return simpleModule;
     }
 
     @Bean
