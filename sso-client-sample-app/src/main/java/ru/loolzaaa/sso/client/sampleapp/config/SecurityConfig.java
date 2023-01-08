@@ -1,6 +1,7 @@
 package ru.loolzaaa.sso.client.sampleapp.config;
 
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -9,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.application.SsoClientLogoutHandler;
+import ru.loolzaaa.sso.client.core.application.UserConfigTypeSupplier;
 import ru.loolzaaa.sso.client.core.config.SsoClientConfigurer;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 import ru.loolzaaa.sso.client.core.security.basic.BasicAuthenticationConfigurer;
@@ -21,6 +23,11 @@ import java.util.Set;
 
 @Configuration
 public class SecurityConfig implements WebSecurityCustomizer, SsoClientConfigurer {
+
+    @Bean
+    UserConfigTypeSupplier userConfigTypeSupplier() {
+        return () -> UserConfig.class;
+    }
 
     @Override
     public void customize(WebSecurity web) {
