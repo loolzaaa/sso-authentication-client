@@ -33,7 +33,7 @@ To use Github Packages, you need to authenticate to it, add an additional reposi
 <dependency>
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-spring-boot-starter</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
 </dependency>
 ```
 
@@ -99,7 +99,7 @@ sso.client.receiver.fingerprint=ru.loolzaaa.sso.client.sampleapp
 
 ## Additional configuration
 
-The vast majority of SSO Client settings work out of the box, however, the user may wish to fine-tune `WebSecurity`, add custom logout handlers, etc.
+The vast majority of SSO Client settings work out of the box, however, the user may wish to fine-tune `WebSecurity`, define custom user configuration class, add custom logout handlers, etc.
 
 ### WebSecurity customization
 
@@ -112,6 +112,25 @@ public class SecurityConfig implements WebSecurityCustomizer {
   }
 }
 ```
+
+### Define custom user configuration class
+
+To define the custom user configuration class itself, it is necessary to extend it from the `BaseUserConfig` class, and then create a bean `UserConfigTypeSupplier` that provides the custom class instance.
+```java
+public class UserConfig extends BaseUserConfig {
+    private String someSetting;
+    // ...getters & setters
+}
+
+@Configuration
+public class SecurityConfig {
+    @Bean
+    UserConfigTypeSupplier userConfigTypeSupplier() {
+        return () -> UserConfig.class;
+    }
+}
+```
+**Note:** `BaseUserConfig` saves roles and privileges for any application, your custom class saves any other config properties.
 
 ### Add custom logout handlers
 
