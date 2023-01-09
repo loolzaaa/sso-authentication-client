@@ -30,4 +30,16 @@ class UserPrincipalTest {
         assertThat(userPrincipal.isCredentialsNonExpired()).isTrue();
         assertThat(userPrincipal.isEnabled()).isTrue();
     }
+
+    @Test
+    void shouldReturnUsernameByUserLogin() {
+        final String login = "SUPER_LOGIN";
+        User user = new User();
+        user.setLogin(login);
+        UserPrincipal userPrincipal = new UserPrincipal(user);
+
+        String username = userPrincipal.getUsername();
+
+        assertThat(username).isEqualTo(login);
+    }
 }

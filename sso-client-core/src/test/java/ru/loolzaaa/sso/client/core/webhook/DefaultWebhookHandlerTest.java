@@ -2,8 +2,9 @@ package ru.loolzaaa.sso.client.core.webhook;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class DefaultWebhookHandlerTest {
 
@@ -34,5 +35,16 @@ class DefaultWebhookHandlerTest {
         });
 
         assertThrows(WebhookHandlerException.class,() -> webhookHandler.handle(new Object()));
+    }
+
+    @Test
+    void shouldCorrectHandleWebhook() throws Exception {
+        final String id = "ID";
+        final AtomicBoolean flag = new AtomicBoolean(false);
+        webhookHandler = new DefaultWebhookHandler(id, null, o -> ((AtomicBoolean) o).set(true));
+
+        webhookHandler.handle(flag);
+
+        assertTrue(flag::get);
     }
 }

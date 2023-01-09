@@ -11,15 +11,11 @@ public class UserGrantedAuthority implements GrantedAuthority {
 
     private static final long serialVersionUID = -3075446244218789331L;
 
-    private String authority;
+    private final String authority;
 
     @JsonCreator
     public UserGrantedAuthority(@JsonProperty("authority") String authority) {
         Assert.hasText(authority, "A granted authority textual representation is required");
-        this.authority = authority;
-    }
-
-    public void setAuthority(String authority) {
         this.authority = authority;
     }
 
