@@ -9,25 +9,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserGrantedAuthority;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith({MockitoExtension.class})
 class UserServiceTest {
@@ -45,7 +44,7 @@ class UserServiceTest {
     ResponseEntity<UserPrincipal> userEntity;
     @Mock
     ResponseEntity<UserPrincipal[]> usersEntity;
-    @Mock
+
     UserPrincipal userPrincipal;
 
     UserService userService;
@@ -53,16 +52,32 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         userService = new UserService(applicationName, entryPointAddress, restTemplate, userStore, jwtUtils, false);
+
+        User user = new User();
+        user.setId(1L);
+        user.setLogin("LOGIN");
+        user.setConfig(new BaseUserConfig());
+        user.setName("NAME");
+        userPrincipal = new UserPrincipal(user);
     }
 
     @Test
     void shouldReturnUserPrincipalIfCorrectRequest() {
         when(restTemplate.getForEntity(anyString(), eq(UserPrincipal.class), any(), any())).thenReturn(userEntity);
         when(userEntity.getBody()).thenReturn(userPrincipal);
+        ReflectionTestUtils.setField(userPrincipal, "authorities", getFakeAuthorities());
 
-        userService.getUserFromServerByUsername("username");
+        UserPrincipal actualPrincipal = userService.getUserFromServerByUsername("username");
 
         verify(userEntity).getBody();
+        assertThat(actualPrincipal.getUser()).isEqualTo(userPrincipal.getUser());
+        assertThat(actualPrincipal.getUser().getConfig()).isNotNull();
+        assertThat(actualPrincipal.getUser().getConfig().getRoles())
+                .isNotNull()
+                .hasSize(2);
+        assertThat(actualPrincipal.getUser().getConfig().getPrivileges())
+                .isNotNull()
+                .hasSize(2);
     }
 
     @Test
@@ -84,13 +99,31 @@ class UserServiceTest {
     }
 
     @Test
+    void shouldThrowNPEIfUserPrincipalIsNull() {
+        when(restTemplate.getForEntity(anyString(), eq(UserPrincipal.class), any(), any())).thenReturn(userEntity);
+        when(userEntity.getBody()).thenReturn(null);
+
+        assertThatThrownBy(() -> userService.getUserFromServerByUsername("username"))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
     void shouldReturnUsersIfCorrectRequest() {
         when(restTemplate.getForEntity(anyString(), eq(UserPrincipal[].class), any(), any())).thenReturn(usersEntity);
-        when(usersEntity.getBody()).thenReturn(new UserPrincipal[]{userPrincipal});
+        when(usersEntity.getBody()).thenReturn(new UserPrincipal[]{userPrincipal, userPrincipal});
+        ReflectionTestUtils.setField(userPrincipal, "authorities", getFakeAuthorities());
 
-        userService.getUsersFromServerByAuthority("app");
+        List<UserPrincipal> actualPrincipals = userService.getUsersFromServerByAuthority("app");
 
         verify(usersEntity).getBody();
+        assertThat(actualPrincipals).map(UserPrincipal::getUser).containsOnly(userPrincipal.getUser());
+        assertThat(actualPrincipals).map(UserPrincipal::getUser).extracting("config").isNotNull();
+        assertThat(actualPrincipals).map(UserPrincipal::getUser).extracting("config").extracting("roles")
+                .isNotNull()
+                .hasSize(2);
+        assertThat(actualPrincipals).map(UserPrincipal::getUser).extracting("config").extracting("privileges")
+                .isNotNull()
+                .hasSize(2);
     }
 
     @Test
@@ -109,6 +142,15 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> userService.getUsersFromServerByAuthority("app"))
                 .isInstanceOf(Exception.class);
+    }
+
+    @Test
+    void shouldThrowNPEIfUserPrincipalsIsNull() {
+        when(restTemplate.getForEntity(anyString(), eq(UserPrincipal[].class), any(), any())).thenReturn(usersEntity);
+        when(usersEntity.getBody()).thenReturn(null);
+
+        assertThatThrownBy(() -> userService.getUsersFromServerByAuthority("app"))
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -151,37 +193,20 @@ class UserServiceTest {
 
     @Test
     void shouldThrowExceptionIfUserIsNull() {
-        when(userPrincipal.getUser()).thenReturn(null);
+        userPrincipal = new UserPrincipal(null);
 
         assertThatThrownBy(() -> userService.saveRequestUser(userPrincipal))
-                .isInstanceOf(NoSuchElementException.class);
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void shouldSaveUserInApplication() {
-        List<String> authorities = List.of(
-                "privilege1",
-                "privilege2"
-        );
-
-        Collection<? extends GrantedAuthority> grantedAuthorities = List.of(
-                new UserGrantedAuthority(applicationName),
-                new UserGrantedAuthority("privilege1"),
-                new UserGrantedAuthority("privilege2")
-        );
-
-        final String LOGIN = "LOGIN";
-        User user = new User();
-        user.setLogin(LOGIN);
-        when(userPrincipal.getUser()).thenReturn(user);
-        doReturn(grantedAuthorities).when(userPrincipal).getAuthorities();
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 
         userService.saveRequestUser(userPrincipal);
 
         verify(userStore).saveRequestUser(userCaptor.capture());
-        assertThat(userCaptor.getValue()).isEqualTo(user);
-        assertThat(userPrincipal.getUser().getAuthorities()).isEqualTo(authorities);
+        assertThat(userCaptor.getValue()).isEqualTo(userPrincipal.getUser());
     }
 
     @Test
@@ -277,5 +302,14 @@ class UserServiceTest {
         assertThat(tokenClaims)
                 .isNotNull()
                 .containsEntry("data", signature);
+    }
+
+    private List<UserGrantedAuthority> getFakeAuthorities() {
+        return List.of(
+                new UserGrantedAuthority(applicationName),
+                new UserGrantedAuthority("ROLE_USER"),
+                new UserGrantedAuthority("ROLE_ADMIN"),
+                new UserGrantedAuthority("EDITOR"),
+                new UserGrantedAuthority("VIEWER"));
     }
 }

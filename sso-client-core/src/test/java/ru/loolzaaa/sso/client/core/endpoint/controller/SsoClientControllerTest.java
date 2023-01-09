@@ -8,13 +8,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import ru.loolzaaa.sso.client.core.application.UserConfigTypeSupplier;
 import ru.loolzaaa.sso.client.core.endpoint.service.SsoClientService;
+import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
 
 import java.util.List;
@@ -37,9 +41,13 @@ class SsoClientControllerTest {
 
     MockMvc mockMvc;
 
+    SsoClientController controller;
+
     @BeforeEach
     void setUp() {
-        this.mockMvc = MockMvcBuilders.standaloneSetup(new SsoClientController(ssoClientService)).build();
+        ObjectMapper mapper = new ObjectMapper();
+        controller = new SsoClientController(mapper, ssoClientService, null);
+        this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
     @Test
@@ -118,6 +126,28 @@ class SsoClientControllerTest {
     }
 
     @Test
+    void shouldUseUserConfigClass() throws Exception {
+        final String username = "USER";
+        final String app = "APP";
+        final int code = 0;
+        UserConfigTypeSupplier configTypeSupplier = () -> TestConfig.class;
+        ReflectionTestUtils.setField(controller, "configTypeSupplier", configTypeSupplier);
+        when(ssoClientService.updateUserConfigOnServer(anyString(), anyString(), any())).thenReturn(code);
+        ArgumentCaptor<BaseUserConfig> configCaptor = ArgumentCaptor.forClass(BaseUserConfig.class);
+
+        mockMvc.perform(patch("/sso/client/config")
+                        .param("username", username)
+                        .param("app", app)
+                        .content("{}")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(ssoClientService).updateUserConfigOnServer(anyString(), anyString(), configCaptor.capture());
+        assertThat(configCaptor.getValue()).isNotNull().isInstanceOf(TestConfig.class);
+    }
+
+    @Test
     void shouldReturn400WhenParseErrorConfig() throws Exception {
         final String username = "USER";
         final String app = "APP";
@@ -129,4 +159,6 @@ class SsoClientControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
+
+    static class TestConfig extends BaseUserConfig {}
 }

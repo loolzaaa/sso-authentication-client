@@ -1,6 +1,5 @@
 package ru.loolzaaa.sso.client.core.context;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
 import org.springframework.http.HttpEntity;
@@ -11,14 +10,15 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 public class UserService {
@@ -62,19 +62,23 @@ public class UserService {
                 throw e;
             }
         }
+        if (userPrincipal == null) {
+            throw new NullPointerException("User principal null");
+        }
+        postProcessUserPrincipal(userPrincipal);
         return userPrincipal;
     }
 
-    public UserPrincipal[] getUsersFromServerByAuthority(String authority) {
+    public List<UserPrincipal> getUsersFromServerByAuthority(String authority) {
         final String API_URI = tokenApiUse ? "/api/users?app={app}&authority={authority}" : "/api/fast/users?app={app}&authority={authority}";
-        UserPrincipal[] users;
+        UserPrincipal[] userPrincipalArray;
         try {
             ResponseEntity<UserPrincipal[]> userEntity = restTemplate.getForEntity(
                     entryPointAddress + API_URI,
                     UserPrincipal[].class,
                     applicationName,
                     authority);
-            users = userEntity.getBody();
+            userPrincipalArray = userEntity.getBody();
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
                 throw new UsernameNotFoundException(String.format("Users with authority=%s not found", authority));
@@ -82,12 +86,20 @@ public class UserService {
                 throw e;
             }
         }
-        return users;
+        if (userPrincipalArray == null) {
+            throw new NullPointerException("User principals null");
+        }
+        List<UserPrincipal> userPrincipals = new ArrayList<>(userPrincipalArray.length);
+        for (UserPrincipal userPrincipal : userPrincipalArray) {
+            postProcessUserPrincipal(userPrincipal);
+            userPrincipals.add(userPrincipal);
+        }
+        return userPrincipals;
     }
 
-    public int updateUserConfigOnServer(String username, String app, JsonNode config) {
+    public int updateUserConfigOnServer(String username, String app, BaseUserConfig config) {
         final String API_URI = tokenApiUse ? "/api/user/{username}/config/{app}" : "/api/fast/user/{username}/config/{app}";
-        HttpEntity<JsonNode> request = new HttpEntity<>(config);
+        HttpEntity<BaseUserConfig> request = new HttpEntity<>(config);
         try {
             restTemplate.exchange(
                     entryPointAddress + API_URI,
@@ -108,20 +120,12 @@ public class UserService {
         return 0;
     }
 
-    public void saveRequestUser(UserPrincipal user) {
-        User newUser = user.getUser();
-
-        if (newUser == null) {
-            throw new NoSuchElementException("Can't find user");
+    public void saveRequestUser(UserPrincipal userPrincipal) {
+        User user = userPrincipal.getUser();
+        if (user == null) {
+            throw new NullPointerException("Can't find user");
         }
-
-        List<String> authorities = user.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(authority -> !applicationName.equals(authority))
-                .collect(Collectors.toList());
-
-        newUser.setAuthorities(authorities);
-        userStore.saveRequestUser(newUser);
+        userStore.saveRequestUser(user);
     }
 
     public void clearRequestUser() {
@@ -150,5 +154,26 @@ public class UserService {
         claims.forEach((s, o) -> stringClaims.put(s, o.toString()));
 
         return stringClaims;
+    }
+
+    private void postProcessUserPrincipal(UserPrincipal userPrincipal) {
+        List<String> authorities = userPrincipal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> !applicationName.equals(authority))
+                .collect(Collectors.toList());
+        BaseUserConfig config = userPrincipal.getUser().getConfig();
+        if (config.getRoles() == null) {
+            config.setRoles(new ArrayList<>(4));
+        }
+        if (config.getPrivileges() == null) {
+            config.setPrivileges(new ArrayList<>(4));
+        }
+        for (String authority : authorities) {
+            if (authority.startsWith("ROLE_")) {
+                config.getRoles().add(authority);
+            } else {
+                config.getPrivileges().add(authority);
+            }
+        }
     }
 }

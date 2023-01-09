@@ -1,7 +1,6 @@
 package ru.loolzaaa.sso.client.core.model;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Objects;
 
 public class User implements Serializable {
@@ -12,7 +11,6 @@ public class User implements Serializable {
     private String login;
     private BaseUserConfig config;
     private String name;
-    private List<String> authorities;
 
     public Long getId() {
         return id;
@@ -44,14 +42,6 @@ public class User implements Serializable {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public List<String> getAuthorities() {
-        return authorities;
-    }
-
-    public void setAuthorities(List<String> authorities) {
-        this.authorities = authorities;
     }
 
     @Override

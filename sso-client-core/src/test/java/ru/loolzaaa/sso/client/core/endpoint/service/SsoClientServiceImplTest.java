@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,20 +11,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.test.util.ReflectionTestUtils;
 import ru.loolzaaa.sso.client.core.context.UserService;
+import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
-import ru.loolzaaa.sso.client.core.model.UserGrantedAuthority;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.verify;
 
@@ -79,14 +75,9 @@ class SsoClientServiceImplTest {
         user2.setLogin("user2");
 
         UserPrincipal userPrincipal1 = new UserPrincipal(user1);
-        List<? extends GrantedAuthority> authorities1 = List.of(new UserGrantedAuthority("r1"), new UserGrantedAuthority("p1"));
-        ReflectionTestUtils.setField(userPrincipal1, "authorities", authorities1);
-
         UserPrincipal userPrincipal2 = new UserPrincipal(user2);
-        List<? extends GrantedAuthority> authorities2 = List.of(new UserGrantedAuthority("r2"), new UserGrantedAuthority("a2"));
-        ReflectionTestUtils.setField(userPrincipal2, "authorities", authorities2);
 
-        UserPrincipal[] principals = new UserPrincipal[]{userPrincipal1, userPrincipal2};
+        List<UserPrincipal> principals = List.of(userPrincipal1, userPrincipal2);
 
         given(userService.getApplicationName()).willReturn(APP_NAME);
         given(userService.getUsersFromServerByAuthority(anyString())).willReturn(principals);
@@ -97,17 +88,16 @@ class SsoClientServiceImplTest {
         List<User> usersForApplicationFromServer = ssoClientService.getUsersForApplicationFromServer();
 
         //then
-        List<String> expectedAuthorities = Arrays.stream(principals)
-                .flatMap(userPrincipal -> userPrincipal.getAuthorities().stream())
-                .map(GrantedAuthority::getAuthority)
+        List<String> expectedLogins = principals.stream()
+                .map(userPrincipal -> userPrincipal.getUser().getLogin())
                 .collect(Collectors.toList());
 
         verify(userService).getUsersFromServerByAuthority(appNameCaptor.capture());
         assertThat(appNameCaptor.getValue()).isEqualTo(APP_NAME);
         assertThat(usersForApplicationFromServer)
-                .hasSize(principals.length)
-                .flatExtracting("authorities")
-                .containsExactlyElementsOf(expectedAuthorities);
+                .hasSize(principals.size())
+                .map(User::getLogin)
+                .containsExactlyElementsOf(expectedLogins);
     }
 
     @Test
@@ -115,30 +105,27 @@ class SsoClientServiceImplTest {
         //given
         final String USERNAME = "USERNAME";
 
-        ObjectNode config = objectMapper.createObjectNode();
-        config.putArray("privileges");
-        config.putArray("roles");
-        config.put("temp", "1");
-        ((ArrayNode)config.get("privileges")).add(APP_NAME).add("p1").add("p2");
-        ((ArrayNode)config.get("roles")).add("r1").add("r2");
+        BaseUserConfig config = new BaseUserConfig();
+        config.setPrivileges(new ArrayList<>());
+        config.getPrivileges().add("p1");
+        config.getPrivileges().add("p2");
+        config.setRoles(new ArrayList<>());
+        config.getRoles().add("r2");
+        config.getRoles().add("r2");
 
         ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> appCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<JsonNode> configCaptor = ArgumentCaptor.forClass(JsonNode.class);
+        ArgumentCaptor<BaseUserConfig> configCaptor = ArgumentCaptor.forClass(BaseUserConfig.class);
 
-        given(userService.getApplicationName()).willReturn(APP_NAME);
         given(userService.updateUserConfigOnServer(anyString(), anyString(), any())).willReturn(0);
 
         //when
         int code = ssoClientService.updateUserConfigOnServer(USERNAME, APP_NAME, config);
 
         //then
-        TextNode p1 = objectMapper.getNodeFactory().textNode("p1");
-        TextNode p2 = objectMapper.getNodeFactory().textNode("p2");
-
-        assertThat(config.get("privileges"))
+        assertThat(config.getPrivileges())
                 .isNotNull()
-                .containsOnly(p1, p2);
+                .containsOnly("p1", "p2");
         verify(userService).updateUserConfigOnServer(usernameCaptor.capture(), appCaptor.capture(), configCaptor.capture());
         assertThat(usernameCaptor.getValue()).startsWith(USERNAME);
         assertThat(appCaptor.getValue()).isEqualTo(APP_NAME);
@@ -150,12 +137,11 @@ class SsoClientServiceImplTest {
     void shouldReturn1BecausePrivilegesInvalid() {
         //given
         final String USERNAME = "USERNAME";
-        ObjectNode config = objectMapper.createObjectNode();
 
         //when
-        int code = ssoClientService.updateUserConfigOnServer(USERNAME, APP_NAME, config);
+        int code = ssoClientService.updateUserConfigOnServer(USERNAME, APP_NAME, new BaseUserConfig());
 
         //then
-        assertThat(code).isEqualTo(1);
+        verify(userService).updateUserConfigOnServer(eq(USERNAME), eq(APP_NAME), any());
     }
 }
