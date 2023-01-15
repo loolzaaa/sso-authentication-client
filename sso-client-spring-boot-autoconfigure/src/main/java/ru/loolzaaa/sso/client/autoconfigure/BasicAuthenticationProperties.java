@@ -8,9 +8,18 @@ import java.util.List;
 @ConfigurationProperties("sso.client.basic")
 public class BasicAuthenticationProperties {
 
+    private boolean enable = false;
     private String realmName = "Basic realm";
     private final List<User> users = new ArrayList<>();
     private final List<Matcher> requestMatchers = new ArrayList<>();
+
+    public boolean isEnable() {
+        return enable;
+    }
+
+    public void setEnable(boolean enable) {
+        this.enable = enable;
+    }
 
     public String getRealmName() {
         return realmName;

@@ -3,6 +3,7 @@ package ru.loolzaaa.sso.client.autoconfigure;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @Configuration
+@ConditionalOnProperty(prefix = "sso.client.basic", name = "enable", havingValue = "true")
 public class SsoClientBasicConfiguration {
 
     private static final Logger log = LogManager.getLogger(SsoClientBasicConfiguration.class.getName());
@@ -37,10 +39,9 @@ public class SsoClientBasicConfiguration {
     }
 
     @Bean
-    //@Qualifier("basicUserDetailsService")
     public InMemoryUserDetailsManager inMemoryUserDetailsManager() {
         if (basicAuthenticationRegistry.getUsers().isEmpty()) {
-            log.info("There is no users for basic authentication");
+            log.warn("Basic authentication was enabled, but there is no users for it");
         }
         List<UserDetails> userDetailsList = new ArrayList<>(basicAuthenticationRegistry.getUsers().size());
         for (BasicAuthenticationRegistry.User user : basicAuthenticationRegistry.getUsers()) {
@@ -58,6 +59,9 @@ public class SsoClientBasicConfiguration {
     @Bean
     public SecurityFilterChain basicFilterChain(HttpSecurity http) throws Exception {
         Set<AntPathRequestMatcher> requestMatchers = basicAuthenticationRegistry.getRequestMatcherAuthoritiesMap().keySet();
+        if (requestMatchers.isEmpty()) {
+            throw new InstantiationException("Basic authentication was enabled, but there is no request matchers for it!");
+        }
         for (AntPathRequestMatcher requestMatcher : requestMatchers) {
             http.requestMatchers(configurer -> configurer.requestMatchers(requestMatcher));
         }
@@ -81,7 +85,6 @@ public class SsoClientBasicConfiguration {
         return http.build();
     }
 
-    //@Qualifier("basicPasswordEncoder")
     @Bean
     @ConditionalOnMissingBean
     PasswordEncoder basicPasswordEncoder() {

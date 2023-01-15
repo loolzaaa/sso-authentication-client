@@ -53,6 +53,9 @@ public class SsoClientConfiguration {
     @ConditionalOnMissingBean
     BasicAuthenticationRegistry basicAuthenticationRegistry() {
         BasicAuthenticationConfigurer configurer = new BasicAuthenticationConfigurer();
+        if (!basicAuthenticationProperties.isEnable()) {
+            return configurer.buildRegistry();
+        }
         for (BasicAuthenticationProperties.User user : basicAuthenticationProperties.getUsers()) {
             String username = user.getUsername();
             String password = user.getPassword();
