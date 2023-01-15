@@ -183,7 +183,16 @@ public class SecurityConfig implements SsoClientConfigurer {
 
 ### Add basic authentication endpoints
 
-By default, all application resources secured by JWT. In addition to the permit all matcher, it is possible to configure access to certain endpoints for certain users through basic authentication. Access is achieved by matching the path's authorities with the user's authorities. There are two ways to do this:
+By default, all application resources secured by JWT. In addition to the permit all matcher, it is possible to configure access to certain endpoints for certain users through basic authentication.  
+
+#### Enable basic authentication
+
+```
+sso.client.basic.enable=true
+sso.client.basic.realmName=Example realm
+```
+
+Access is achieved by matching the path's authorities with the user's authorities. There are two ways to do this:
 
 #### Application properties
 
@@ -214,6 +223,7 @@ public class SecurityConfig implements SsoClientConfigurer {
     }
 }
 ```
+**WARNING! If you enable basic authentication, you must define at least one request matcher for it!**
 
 ### Add SSO Server Webhook handlers
 
