@@ -21,7 +21,12 @@ public class PermitAllMatcherRegistry {
 
     public void addPermitAllMatcher(HttpMethod method, boolean ignoreCsrf, String... antPatterns) {
         for (String pattern : antPatterns) {
-            AntPathRequestMatcher antPathRequestMatcher = new AntPathRequestMatcher(pattern, method.toString());
+            AntPathRequestMatcher antPathRequestMatcher;
+            if (method == null) {
+                antPathRequestMatcher = new AntPathRequestMatcher(pattern);
+            } else {
+                antPathRequestMatcher = new AntPathRequestMatcher(pattern, method.toString());
+            }
             PermitAllMatcher matcher = new PermitAllMatcher(antPathRequestMatcher, ignoreCsrf);
             addPermitAllMatcher(matcher);
         }
