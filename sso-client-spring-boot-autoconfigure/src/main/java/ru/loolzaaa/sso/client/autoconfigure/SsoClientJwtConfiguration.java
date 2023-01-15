@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
@@ -67,6 +68,7 @@ public class SsoClientJwtConfiguration {
         this.jwtTokenFilter = jwtTokenFilter;
     }
 
+    @Order(10)
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    PermitAllMatcherRegistry permitAllMatcherRegistry,
