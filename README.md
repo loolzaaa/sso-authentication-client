@@ -282,6 +282,13 @@ Each request between applications must be intercepted, the required headers are 
 ```java
 @Configuration
 public class SecurityConfig {
+
+    private final TokenDataReceiver tokenDataReceiver;
+    
+    public SecurityConfig(TokenDataReceiver tokenDataReceiver) {
+        this.tokenDataReceiver = tokenDataReceiver;
+    }
+    
     @Bean
     RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
         return restTemplateBuilder
@@ -291,9 +298,9 @@ public class SecurityConfig {
 
     static class RestTemplateTokenInterceptor implements ClientHttpRequestInterceptor {
 
-        private final SsoClientTokenDataReceiver tokenDataReceiver;
+        private final TokenDataReceiver tokenDataReceiver;
 
-        public RestTemplateTokenInterceptor(SsoClientTokenDataReceiver tokenDataReceiver) {
+        public RestTemplateTokenInterceptor(TokenDataReceiver tokenDataReceiver) {
             this.tokenDataReceiver = tokenDataReceiver;
         }
 
@@ -318,6 +325,13 @@ public class SecurityConfig {
 ```java
 @Configuration
 public class SecurityConfig {
+
+    private final TokenDataReceiver tokenDataReceiver;
+    
+    public SecurityConfig(TokenDataReceiver tokenDataReceiver) {
+        this.tokenDataReceiver = tokenDataReceiver;
+    }
+    
     @Bean
     RequestInterceptor ssoRequestInterceptor() {
         return requestTemplate -> {
