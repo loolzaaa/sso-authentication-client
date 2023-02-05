@@ -68,27 +68,13 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse resp,
                                     FilterChain chain) throws ServletException, IOException {
-        if (permitAllAuthorizationManager != null) {
-            AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(anonymousKey, "anonymousUser", anonymousAuthorities);
-            anonymousToken.setDetails(authenticationDetailsSource.buildDetails(req));
-
-            AuthorizationDecision decision = permitAllAuthorizationManager.check(() -> anonymousToken, req);
-            if (decision != null && decision.isGranted()) {
-                logger.debug("Permit access to: " + req.getRequestURL().toString());
-                chain.doFilter(req, resp);
-                return;
-            }
+        if (isPermitAllRequest(req)) {
+            logger.debug("Permit access to: " + req.getRequestURL().toString());
+            chain.doFilter(req, resp);
+            return;
         }
 
-        String accessToken = null;
-        if (req.getCookies() != null) {
-            for (Cookie c : req.getCookies()) {
-                if (CookieName.ACCESS.getName().equals(c.getName())) {
-                    accessToken = c.getValue();
-                }
-            }
-        }
-
+        String accessToken = extractAccessToken(req);
         if (accessToken == null) {
             logger.trace("Access token is null");
 
@@ -96,18 +82,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             return;
         }
 
-        String login = null;
-        try {
-            Jws<Claims> claims = jwtUtils.parserEnforceAccessToken(accessToken);
-            login = (String) claims.getBody().get("login");
-
-            logger.debug(String.format("Access token for user [%s] validated", login));
-        } catch (ClaimJwtException e) {
-            logger.trace(String.format("Access token for user [%s] is expired", e.getClaims().get("login")));
-        } catch (Exception e) {
-            logger.warn("Parsed access token: " + accessToken);
-            logger.warn("Undeclared exception while parse access token: " + e.getMessage());
-        }
+        String login = validateAccessToken(accessToken);
 
         if (login != null) {
             logger.debug("Update security context");
@@ -148,8 +123,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             c.setMaxAge(0);
             resp.addCookie(c);
 
-            String acceptHeader = req.getHeader("Accept");
-            if (acceptHeader != null && acceptHeader.toLowerCase().contains("application/json")) {
+            if (isAjaxRequest(req)) {
                 logger.debug("Ajax request detected. Refresh via Auth Server API");
 
                 resp.setHeader("fp_request", entryPointAddress + "/api/refresh/ajax");
@@ -177,5 +151,48 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     public void setPermitAllAuthorizationManager(AuthorizationManager<HttpServletRequest> permitAllAuthorizationManager) {
         this.permitAllAuthorizationManager = permitAllAuthorizationManager;
+    }
+
+    private boolean isPermitAllRequest(HttpServletRequest req) {
+        if (permitAllAuthorizationManager != null) {
+            AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(anonymousKey, "anonymousUser", anonymousAuthorities);
+            anonymousToken.setDetails(authenticationDetailsSource.buildDetails(req));
+
+            AuthorizationDecision decision = permitAllAuthorizationManager.check(() -> anonymousToken, req);
+            return decision != null && decision.isGranted();
+        }
+        return false;
+    }
+
+    private String extractAccessToken(HttpServletRequest req) {
+        if (req.getCookies() != null) {
+            for (Cookie c : req.getCookies()) {
+                if (CookieName.ACCESS.getName().equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    private String validateAccessToken(String accessToken) {
+        String login = null;
+        try {
+            Jws<Claims> claims = jwtUtils.parserEnforceAccessToken(accessToken);
+            login = (String) claims.getBody().get("login");
+
+            logger.debug(String.format("Access token for user [%s] validated", login));
+        } catch (ClaimJwtException e) {
+            logger.trace(String.format("Access token for user [%s] is expired", e.getClaims().get("login")));
+        } catch (Exception e) {
+            logger.warn("Parsed access token: " + accessToken);
+            logger.warn("Undeclared exception while parse access token: " + e.getMessage());
+        }
+        return login;
+    }
+
+    private boolean isAjaxRequest(HttpServletRequest request) {
+        String acceptHeader = request.getHeader("Accept");
+        return acceptHeader != null && acceptHeader.toLowerCase().contains("application/json");
     }
 }

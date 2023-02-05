@@ -33,40 +33,15 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) resp;
 
-        String serverTimeParam = request.getParameter(SERVER_TIME_PARAM_NAME);
-        if (serverTimeParam == null) {
-            serverTimeParam = request.getHeader(SERVER_TIME_HEADER_NAME);
-        }
-        if (serverTimeParam != null) {
-            long serverTime;
-            try {
-                serverTime = Long.parseLong(serverTimeParam);
-            } catch (Exception e) {
-                logger.warn("Cannot parse server time from authentication server", e);
-                serverTime = System.currentTimeMillis();
-            }
-            jwtUtils.setServerSkew(serverTime - System.currentTimeMillis());
-        }
+        updateServerTime(request);
 
-        String rfidParameter = request.getParameter(CookieName.RFID.getName());
-        if (rfidParameter != null) {
-            Cookie cookie = new Cookie(CookieName.RFID.getName(), "");
-            cookie.setHttpOnly(false);
-            cookie.setSecure(req.isSecure());
-            cookie.setPath(request.getContextPath().length() > 0 ? request.getContextPath() : "/");
-            response.addCookie(cookie);
-        }
+        attemptToAddRfidCookie(request, response);
 
         String queryToken = request.getParameter(TOKEN_PARAM_NAME);
         if (queryToken != null) {
-            Cookie cookie = new Cookie(CookieName.ACCESS.getName(), queryToken);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(req.isSecure());
-            cookie.setPath(request.getContextPath().length() > 0 ? request.getContextPath() : "/");
-            response.addCookie(cookie);
+            addCookieToResponse(request, response, CookieName.ACCESS.getName(), queryToken, true);
 
-            String acceptHeader = request.getHeader("Accept");
-            if (acceptHeader != null && acceptHeader.toLowerCase().contains("application/json")) {
+            if (isAjaxRequest(request)) {
                 logger.debug("Ajax request detected. Not need to redirect for param clean");
 
                 response.setStatus(HttpServletResponse.SC_OK);
@@ -87,9 +62,49 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
         }
     }
 
+    private void updateServerTime(HttpServletRequest request) {
+        String serverTimeParam = request.getParameter(SERVER_TIME_PARAM_NAME);
+        if (serverTimeParam == null) {
+            serverTimeParam = request.getHeader(SERVER_TIME_HEADER_NAME);
+        }
+        if (serverTimeParam != null) {
+            long serverTime;
+            try {
+                serverTime = Long.parseLong(serverTimeParam);
+            } catch (Exception e) {
+                logger.warn("Cannot parse server time from authentication server", e);
+                serverTime = System.currentTimeMillis();
+            }
+            jwtUtils.setServerSkew(serverTime - System.currentTimeMillis());
+        }
+    }
+
+    private void attemptToAddRfidCookie(HttpServletRequest request, HttpServletResponse response) {
+        String rfidParameter = request.getParameter(CookieName.RFID.getName());
+        if (rfidParameter != null) {
+            addCookieToResponse(request, response, CookieName.RFID.getName(), "", false);
+        }
+    }
+
+    private void addCookieToResponse(HttpServletRequest request, HttpServletResponse response,
+                                     String cookieName, String cookieValue, boolean httpOnly) {
+        Cookie cookie = new Cookie(cookieName, cookieValue);
+        cookie.setHttpOnly(httpOnly);
+        cookie.setSecure(request.isSecure());
+        cookie.setPath(request.getContextPath().length() > 0 ? request.getContextPath() : "/");
+        response.addCookie(cookie);
+    }
+
+    private boolean isAjaxRequest(HttpServletRequest request) {
+        String acceptHeader = request.getHeader("Accept");
+        return acceptHeader != null && acceptHeader.toLowerCase().contains("application/json");
+    }
+
     private boolean isParamNeedToClear(String paramName) {
         return TOKEN_PARAM_NAME.equals(paramName)
                 || SERVER_TIME_PARAM_NAME.equals(paramName)
                 || CookieName.RFID.getName().equals(paramName);
     }
+
+
 }

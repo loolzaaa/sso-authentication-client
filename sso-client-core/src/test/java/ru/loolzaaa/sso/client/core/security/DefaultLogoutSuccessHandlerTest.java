@@ -51,8 +51,11 @@ class DefaultLogoutSuccessHandlerTest {
     @Test
     void shouldLogoutSuccessIfCookiesIsNull() throws IOException, ServletException {
         when(request.getCookies()).thenReturn(null);
+        when(response.isCommitted()).thenReturn(false);
 
         logoutSuccessHandler.onLogoutSuccess(request, response, authentication);
+
+        verify(response, atLeastOnce()).sendRedirect(null);
     }
 
     @Test

@@ -22,6 +22,9 @@ public class SsoClientControllerAutoConfiguration {
 
     private static final Logger log = LogManager.getLogger(SsoClientControllerAutoConfiguration.class);
 
+    private SsoClientControllerAutoConfiguration() {
+    }
+
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnProperty(prefix = "sso.client", value = "endpoint.enable", havingValue = "true")
     static class SsoClientMainControllerConfiguration {

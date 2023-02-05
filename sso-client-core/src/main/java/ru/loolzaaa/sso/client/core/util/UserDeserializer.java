@@ -13,6 +13,8 @@ import java.io.IOException;
 
 public class UserDeserializer  extends StdDeserializer<User> {
 
+    private static final String CONFIG_NODE_NAME = "config";
+
     private final Class<? extends BaseUserConfig> configClass;
 
     public UserDeserializer(Class<?> vc, Class<? extends BaseUserConfig> configClass) {
@@ -24,8 +26,8 @@ public class UserDeserializer  extends StdDeserializer<User> {
     public User deserialize(JsonParser jp, DeserializationContext ctx) throws IOException {
         ObjectCodec codec = jp.getCodec();
         JsonNode userNode = jp.readValueAsTree();
-        JsonNode configNode = userNode.has("config") ? userNode.get("config") : null;
-        ((ObjectNode) userNode).remove("config");
+        JsonNode configNode = userNode.has(CONFIG_NODE_NAME) ? userNode.get(CONFIG_NODE_NAME) : null;
+        ((ObjectNode) userNode).remove(CONFIG_NODE_NAME);
 
         Long id = userNode.get("id").asLong();
         String login = userNode.get("login").asText();
