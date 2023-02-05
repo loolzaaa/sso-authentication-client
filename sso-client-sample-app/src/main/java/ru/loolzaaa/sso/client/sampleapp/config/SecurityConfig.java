@@ -7,6 +7,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.stereotype.Component;
 import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.application.SsoClientLogoutHandler;
@@ -27,6 +29,13 @@ public class SecurityConfig implements WebSecurityCustomizer, SsoClientConfigure
     @Bean
     UserConfigTypeSupplier userConfigTypeSupplier() {
         return () -> UserConfig.class;
+    }
+
+    @Bean
+    AccessDeniedHandler accessDeniedHandler() {
+        AccessDeniedHandlerImpl accessDeniedHandler = new AccessDeniedHandlerImpl();
+        accessDeniedHandler.setErrorPage("/forbidden");
+        return accessDeniedHandler;
     }
 
     @Override
