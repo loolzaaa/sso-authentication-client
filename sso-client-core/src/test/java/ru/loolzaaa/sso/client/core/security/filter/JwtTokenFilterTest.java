@@ -9,10 +9,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.util.UrlUtils;
 import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.context.UserService;
@@ -43,6 +44,8 @@ class JwtTokenFilterTest {
     JWTUtils jwtUtils;
     @Mock
     UserService userService;
+    @Mock
+    AccessDeniedHandler accessDeniedHandler;
 
     @Mock
     HttpServletRequest req;
@@ -62,7 +65,7 @@ class JwtTokenFilterTest {
 
     @BeforeEach
     void setUp() {
-        jwtTokenFilter = new JwtTokenFilter(entryPointAddress, refreshTokenURI, jwtUtils, userService);
+        jwtTokenFilter = new JwtTokenFilter(entryPointAddress, refreshTokenURI, jwtUtils, userService, accessDeniedHandler);
     }
 
     @Test
@@ -144,11 +147,11 @@ class JwtTokenFilterTest {
         when(jwtUtils.parserEnforceAccessToken(accessToken)).thenReturn(claims);
         when(claims.getBody()).thenReturn(body);
         when(body.get("login")).thenReturn(login);
-        when(userService.getUserFromServerByUsername(login)).thenThrow(UsernameNotFoundException.class);
+        when(userService.getUserFromServerByUsername(login)).thenThrow(AccessDeniedException.class);
 
         jwtTokenFilter.doFilter(req, resp, chain);
 
-        verify(resp).setStatus(HttpServletResponse.SC_FORBIDDEN);
+        verify(accessDeniedHandler).handle(eq(req), eq(resp), any());
         verifyNoInteractions(chain);
     }
 

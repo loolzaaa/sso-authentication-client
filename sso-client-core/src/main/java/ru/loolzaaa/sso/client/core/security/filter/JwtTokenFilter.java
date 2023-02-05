@@ -3,6 +3,7 @@ package ru.loolzaaa.sso.client.core.security.filter;
 import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -11,7 +12,7 @@ import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -45,6 +46,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     private final UserService userService;
 
+    private final AccessDeniedHandler accessDeniedHandler;
+
     private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 
     private final List<SsoClientApplicationRegister> ssoClientApplicationRegisters = new ArrayList<>();
@@ -53,11 +56,13 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private final List<GrantedAuthority> anonymousAuthorities = AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS");
     private AuthorizationManager<HttpServletRequest> permitAllAuthorizationManager;
 
-    public JwtTokenFilter(String entryPointAddress, String refreshTokenURI, JWTUtils jwtUtils, UserService userService) {
+    public JwtTokenFilter(String entryPointAddress, String refreshTokenURI, JWTUtils jwtUtils,
+                          UserService userService, AccessDeniedHandler accessDeniedHandler) {
         this.entryPointAddress = entryPointAddress;
         this.refreshTokenURI = refreshTokenURI;
         this.jwtUtils = jwtUtils;
         this.userService = userService;
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Override
@@ -100,7 +105,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         } catch (ClaimJwtException e) {
             logger.trace(String.format("Access token for user [%s] is expired", e.getClaims().get("login")));
         } catch (Exception e) {
-            logger.debug("Undeclared exception while parse access token: " + e.getMessage());
+            logger.warn("Parsed access token: " + accessToken);
+            logger.warn("Undeclared exception while parse access token: " + e.getMessage());
         }
 
         if (login != null) {
@@ -108,8 +114,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             UserPrincipal userDetails;
             try {
                 userDetails = userService.getUserFromServerByUsername(login);
-            } catch (UsernameNotFoundException e) {
-                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            } catch (AccessDeniedException e) {
+                accessDeniedHandler.handle(req, resp, e);
                 return;
             }
 

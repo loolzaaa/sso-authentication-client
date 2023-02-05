@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -86,7 +86,7 @@ class UserServiceTest {
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
         assertThatThrownBy(() -> userService.getUserFromServerByUsername("username"))
-                .isInstanceOf(UsernameNotFoundException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
@@ -132,7 +132,7 @@ class UserServiceTest {
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
         assertThatThrownBy(() -> userService.getUsersFromServerByAuthority("app"))
-                .isInstanceOf(UsernameNotFoundException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
