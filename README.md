@@ -33,7 +33,7 @@ To use Github Packages, you need to authenticate to it, add an additional reposi
 <dependency>
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-spring-boot-starter</artifactId>
-    <version>0.5.1</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -131,6 +131,31 @@ public class SecurityConfig {
 }
 ```
 **Note:** `BaseUserConfig` saves roles and privileges for any application, your custom class saves any other config properties.
+
+### Define access denied page view
+
+By default, if SSO Client can't get user from SSO Server while check authentication, it sends error with 403 status code and empty body, so browser shows default page with reload button.  
+To define some view as forbidden (access denied) page, it is necessary to create a bean of type `AccessDeniedHandler`.
+```java
+@Configuration
+public class SecurityConfig {
+    @Bean
+    AccessDeniedHandler accessDeniedHandler() {
+        AccessDeniedHandlerImpl accessDeniedHandler = new AccessDeniedHandlerImpl();
+        accessDeniedHandler.setErrorPage("/forbidden");
+        return accessDeniedHandler;
+    }
+}
+
+// Don't forget to add some view controllers for your forbidden template!
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addViewController("/forbidden").setViewName("403");
+    }
+}
+```
 
 ### Add custom logout handlers
 
