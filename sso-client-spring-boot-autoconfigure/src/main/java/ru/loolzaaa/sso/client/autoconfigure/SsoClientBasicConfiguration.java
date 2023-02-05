@@ -15,8 +15,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.security.basic.BasicAuthenticationRegistry;
+import ru.loolzaaa.sso.client.core.security.filter.SaveRequestUserAfterBasicAuthenticationFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +35,14 @@ public class SsoClientBasicConfiguration {
 
     private final BasicAuthenticationRegistry basicAuthenticationRegistry;
 
+    private final SaveRequestUserAfterBasicAuthenticationFilter saveRequestUserAfterBasicAuthenticationFilter;
+
     public SsoClientBasicConfiguration(BasicAuthenticationProperties basicAuthenticationProperties,
-                                       BasicAuthenticationRegistry basicAuthenticationRegistry) {
+                                       BasicAuthenticationRegistry basicAuthenticationRegistry,
+                                       UserService userService) {
         this.basicAuthenticationProperties = basicAuthenticationProperties;
         this.basicAuthenticationRegistry = basicAuthenticationRegistry;
+        this.saveRequestUserAfterBasicAuthenticationFilter = new SaveRequestUserAfterBasicAuthenticationFilter(userService);
     }
 
     @Bean
@@ -80,7 +87,8 @@ public class SsoClientBasicConfiguration {
         http
                 .httpBasic(httpBasic -> httpBasic
                         .realmName(basicAuthenticationProperties.getRealmName()))
-                .anonymous().disable();
+                .anonymous().disable()
+                .addFilterAfter(saveRequestUserAfterBasicAuthenticationFilter, BasicAuthenticationFilter.class);
         log.info("Basic configuration completed");
         return http.build();
     }

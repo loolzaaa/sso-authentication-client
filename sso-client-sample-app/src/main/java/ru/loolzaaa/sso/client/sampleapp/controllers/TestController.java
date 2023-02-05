@@ -67,11 +67,15 @@ public class TestController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @GetMapping("/get/basic1/test")
     public void basicTest1() {
+        User requestUser = userService.getRequestUser();
+        System.out.println(requestUser.getLogin());
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @GetMapping("/get/basic2/test")
     public void basicTest2() {
+        User requestUser = userService.getRequestUser();
+        System.out.println(requestUser.getLogin());
     }
 
     @PostConstruct
