@@ -3,6 +3,8 @@ package ru.loolzaaa.sso.client.core.context;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,6 +21,7 @@ import ru.loolzaaa.sso.client.core.model.UserGrantedAuthority;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -80,10 +83,12 @@ class UserServiceTest {
                 .hasSize(2);
     }
 
-    @Test
-    void shouldThrowExceptionIfBadRequestForUser() {
+    @ParameterizedTest
+    @ValueSource(strings = {"{}", "{\"text\":\"ERROR\"}", ""})
+    void shouldThrowExceptionIfBadRequestForUser(String body) {
         when(restTemplate.getForEntity(anyString(), eq(UserPrincipal.class), any(), any()))
-                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST, "ERR",
+                        body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
 
         assertThatThrownBy(() -> userService.getUserFromServerByUsername("username"))
                 .isInstanceOf(AccessDeniedException.class);
