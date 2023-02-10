@@ -19,12 +19,14 @@
     <input type="submit" value="Logout"/>
 </form>
 <input id="result_text" type="text" value="">
-<script>
+<script type="text/javascript" th:inline="javascript">
     const CSRF_TOKEN = document.cookie.match(new RegExp(`XSRF-TOKEN=([^;]+)`));
     if (CSRF_TOKEN !== undefined && CSRF_TOKEN !== null ) {
         axios.defaults.headers.post['X-XSRF-TOKEN'] = CSRF_TOKEN[1];
     }
 
+    const contextPath = /*[[@{/}]]*/ "/";
+    axios.defaults.baseURL = contextPath;
     axios.interceptors.response.use(function (response) {
         const _csrf = document.cookie.match(new RegExp(`XSRF-TOKEN=([^;]+)`));
         if (_csrf !== undefined && _csrf !== null) {
@@ -45,7 +47,7 @@
                 return await axios.request(err.response.config);
             } catch (authError) {
                 if (authError.response.status === 401) {
-                    window.location.href = '/';
+                    window.location.href = contextPath;
                     return;
                 } else {
                     throw authError;
