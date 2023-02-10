@@ -60,7 +60,7 @@ public class TestController {
         User requestUser = userService.getRequestUser();
         Test test = new Test();
         test.setName(requestUser.getLogin());
-        test.setValue(requestUser.getId().intValue());
+        test.setValue(new Random().nextInt());
         return test;
     }
 
