@@ -166,13 +166,14 @@ public class SsoClientAutoConfiguration {
             throw new IllegalArgumentException(ENTRYPOINT_CHECK_MSG);
         }
         String entryPointAddress = properties.getEntryPointAddress();
+        String applicationName = properties.getApplicationName();
         String username = properties.getReceiver().getUsername();
         String password = properties.getReceiver().getPassword();
         String fingerprint = properties.getReceiver().getFingerprint();
         if (!StringUtils.hasText(fingerprint)) {
             log.warn("For production purposes fingerprint must be non-blank/empty string. Current fingerprint: {}", fingerprint);
         }
-        return new TokenDataReceiver(jwtUtils(), entryPointAddress, username, password, fingerprint);
+        return new TokenDataReceiver(jwtUtils(), entryPointAddress, applicationName, username, password, fingerprint);
     }
 
     private static class RestTemplateTokenInterceptor implements ClientHttpRequestInterceptor {
