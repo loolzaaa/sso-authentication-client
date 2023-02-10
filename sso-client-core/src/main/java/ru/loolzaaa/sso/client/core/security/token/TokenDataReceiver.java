@@ -86,6 +86,7 @@ public class TokenDataReceiver {
                 .POST(HttpRequest.BodyPublishers.ofString(String.format("_fingerprint=%s", fingerprint)))
                 .uri(URI.create(String.format("%s%s", entryPointAddress, refreshUri)))
                 .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .header(HttpHeaders.COOKIE, CookieName.ACCESS.getName() + "=" + tokenData.getAccessToken())
                 .header(HttpHeaders.COOKIE, CookieName.REFRESH.getName() + "=" + tokenData.getRefreshToken())
                 .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + csrfToken)
                 .header("X-XSRF-TOKEN", csrfToken.toString())
