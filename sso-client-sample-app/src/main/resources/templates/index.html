@@ -34,14 +34,23 @@
         }
         return response;
     }, async function (err) {
-        if (err?.response?.status === 403 && err.response.headers.fp_request !== undefined) {
+        if (err?.response?.status === 403) {
+            let headers = Object.entries(err.response.headers);
+            let xSsoFpHeader = headers.find(el => el[0].toUpperCase() === 'X-SSO-FP');
+            let xSsoAppHeader = headers.find(el => el[0].toUpperCase() === 'X-SSO-APP');
             const _fp = await getFingerprint();
 
             const params = new URLSearchParams();
             params.append('_fingerprint', _fp);
+            if (xSsoAppHeader) {
+                params.append('_app', xSsoAppHeader[1]);
+            }
+            if (!xSsoFpHeader) {
+                throw new Error('Forbidden but without fingerprint request url');
+            }
 
             try {
-                const refreshResponse = await axios.post(err.response.headers.fp_request, params, {withCredentials:true});
+                const refreshResponse = await axios.post(xSsoFpHeader[1], params, {withCredentials:true});
                 const refreshObject = JSON.parse(refreshResponse.data.text);
                 await axios.get(`/?token=${refreshObject.token}&serverTime=${refreshObject.serverTime}`);
                 return await axios.request(err.response.config);

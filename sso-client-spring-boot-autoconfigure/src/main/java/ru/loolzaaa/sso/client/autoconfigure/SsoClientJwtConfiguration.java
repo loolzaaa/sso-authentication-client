@@ -41,6 +41,7 @@ public class SsoClientJwtConfiguration {
 
     private final DefaultAuthenticationEntryPoint authenticationEntryPoint;
     private final DefaultLogoutSuccessHandler logoutSuccessHandler;
+    private final AccessDeniedHandler accessDeniedHandler;
     private final QueryJwtTokenFilter queryJwtTokenFilter;
     private final JwtTokenFilter jwtTokenFilter;
 
@@ -55,11 +56,11 @@ public class SsoClientJwtConfiguration {
             throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
         }
         JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(
+                properties.getApplicationName(),
                 properties.getEntryPointAddress(),
                 properties.getRefreshTokenUri(),
                 jwtUtils,
-                userService,
-                accessDeniedHandler);
+                userService);
         jwtTokenFilter.addApplicationRegisters(ssoClientApplicationRegisters);
 
         QueryJwtTokenFilter queryJwtTokenFilter = new QueryJwtTokenFilter(jwtUtils);
@@ -67,6 +68,7 @@ public class SsoClientJwtConfiguration {
         this.properties = properties;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.logoutSuccessHandler = logoutSuccessHandler;
+        this.accessDeniedHandler = accessDeniedHandler;
         this.queryJwtTokenFilter = queryJwtTokenFilter;
         this.jwtTokenFilter = jwtTokenFilter;
     }
@@ -84,7 +86,8 @@ public class SsoClientJwtConfiguration {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint))
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/do_logout", "POST"))
                         .logoutSuccessHandler(logoutSuccessHandler)

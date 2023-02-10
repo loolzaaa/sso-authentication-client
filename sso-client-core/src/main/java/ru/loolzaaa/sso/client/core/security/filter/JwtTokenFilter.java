@@ -2,8 +2,6 @@ package ru.loolzaaa.sso.client.core.security.filter;
 
 import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -11,8 +9,8 @@ import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -20,6 +18,8 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.context.UserService;
+import ru.loolzaaa.sso.client.core.model.User;
+import ru.loolzaaa.sso.client.core.model.UserGrantedAuthority;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 import ru.loolzaaa.sso.client.core.security.CookieName;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
@@ -35,8 +35,11 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class JwtTokenFilter extends OncePerRequestFilter {
+
+    private final String applicationName;
 
     private final String entryPointAddress;
 
@@ -46,8 +49,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     private final UserService userService;
 
-    private final AccessDeniedHandler accessDeniedHandler;
-
     private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 
     private final List<SsoClientApplicationRegister> ssoClientApplicationRegisters = new ArrayList<>();
@@ -56,13 +57,13 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private final List<GrantedAuthority> anonymousAuthorities = AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS");
     private AuthorizationManager<HttpServletRequest> permitAllAuthorizationManager;
 
-    public JwtTokenFilter(String entryPointAddress, String refreshTokenURI, JWTUtils jwtUtils,
-                          UserService userService, AccessDeniedHandler accessDeniedHandler) {
+    public JwtTokenFilter(String applicationName, String entryPointAddress, String refreshTokenURI, JWTUtils jwtUtils,
+                          UserService userService) {
+        this.applicationName = applicationName;
         this.entryPointAddress = entryPointAddress;
         this.refreshTokenURI = refreshTokenURI;
         this.jwtUtils = jwtUtils;
         this.userService = userService;
-        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Override
@@ -82,31 +83,16 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             return;
         }
 
-        String login = validateAccessToken(accessToken);
+        Claims claims = validateAccessToken(accessToken);
 
-        if (login != null) {
-            logger.debug("Update security context");
-            UserPrincipal userDetails;
-            try {
-                userDetails = userService.getUserFromServerByUsername(login);
-            } catch (AccessDeniedException e) {
-                accessDeniedHandler.handle(req, resp, e);
-                return;
-            }
+        if (claims != null) {
+            UserPrincipal userPrincipal = processUserAuthorities(req, claims);
 
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities());
-            authentication.setDetails(authenticationDetailsSource.buildDetails(req));
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            userService.saveRequestUser(userDetails);
+            userService.saveRequestUser(userPrincipal);
 
             try {
                 for (SsoClientApplicationRegister applicationRegister : ssoClientApplicationRegisters) {
-                    applicationRegister.register(userDetails);
+                    applicationRegister.register(userPrincipal);
                 }
                 chain.doFilter(req, resp);
             } finally {
@@ -116,24 +102,21 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             logger.debug("Invalid access token, try to refresh it");
 
             logger.trace("Remove invalid access token cookie");
-            Cookie c = new Cookie(CookieName.ACCESS.getName(), null);
-            c.setHttpOnly(true);
-            c.setSecure(req.isSecure());
-            c.setPath(req.getContextPath().length() > 0 ? req.getContextPath() : "/");
-            c.setMaxAge(0);
-            resp.addCookie(c);
+            removeInvalidAccessTokenCookie(req, resp);
 
             if (isAjaxRequest(req)) {
                 logger.debug("Ajax request detected. Refresh via Auth Server API");
 
-                resp.setHeader("fp_request", entryPointAddress + "/api/refresh/ajax");
+                resp.setHeader("X-SSO-FP", entryPointAddress + "/api/refresh/ajax");
+                resp.setHeader("X-SSO-APP", applicationName);
                 resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
             } else {
-                logger.debug("Browser request detected. Refresh via redirect to " + refreshTokenURI);
+                logger.debug("Browser request detected. Refresh via redirect to SSO " + refreshTokenURI);
 
                 String continueParamValue = UrlUtils.buildFullRequestUrl(req);
                 String continueUrl = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
                 UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(entryPointAddress + refreshTokenURI)
+                        .queryParam("app", applicationName)
                         .queryParam("continue", continueUrl)
                         .build();
 
@@ -151,6 +134,40 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     public void setPermitAllAuthorizationManager(AuthorizationManager<HttpServletRequest> permitAllAuthorizationManager) {
         this.permitAllAuthorizationManager = permitAllAuthorizationManager;
+    }
+
+    private UserPrincipal processUserAuthorities(HttpServletRequest req, Claims claims) {
+        logger.debug("Application level authorization check");
+        String login = claims.get("login", String.class);
+        List<String> authorities;
+        try {
+            authorities = claims.get("authorities", List.class);
+            if (authorities == null) {
+                logger.debug("There is no authorities for " + login);
+                authorities = new ArrayList<>(0);
+            }
+        } catch (Exception e) {
+            logger.warn("Error while get authorities from access token claim: ", e);
+            authorities = new ArrayList<>(0);
+        }
+
+        logger.debug("User principal creation");
+        User user = new User();
+        user.setLogin(login);
+        UserPrincipal userPrincipal = new UserPrincipal(user);
+        List<UserGrantedAuthority> userGrantedAuthorities = authorities.stream()
+                .map(UserGrantedAuthority::new)
+                .collect(Collectors.toList());
+
+        UsernamePasswordAuthenticationToken authentication = UsernamePasswordAuthenticationToken
+                .authenticated(userPrincipal, null, userGrantedAuthorities);
+        authentication.setDetails(authenticationDetailsSource.buildDetails(req));
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
+        return userPrincipal;
     }
 
     private boolean isPermitAllRequest(HttpServletRequest req) {
@@ -175,20 +192,28 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private String validateAccessToken(String accessToken) {
-        String login = null;
+    private Claims validateAccessToken(String accessToken) {
         try {
-            Jws<Claims> claims = jwtUtils.parserEnforceAccessToken(accessToken);
-            login = (String) claims.getBody().get("login");
-
+            Claims claims = jwtUtils.parserEnforceAccessToken(accessToken).getBody();
+            String login = claims.get("login", String.class);
             logger.debug(String.format("Access token for user [%s] validated", login));
+            return claims;
         } catch (ClaimJwtException e) {
             logger.trace(String.format("Access token for user [%s] is expired", e.getClaims().get("login")));
         } catch (Exception e) {
             logger.warn("Parsed access token: " + accessToken);
             logger.warn("Undeclared exception while parse access token: " + e.getMessage());
         }
-        return login;
+        return null;
+    }
+
+    private void removeInvalidAccessTokenCookie(HttpServletRequest req, HttpServletResponse resp) {
+        Cookie c = new Cookie(CookieName.ACCESS.getName(), null);
+        c.setHttpOnly(true);
+        c.setSecure(req.isSecure());
+        c.setPath(req.getContextPath().length() > 0 ? req.getContextPath() : "/");
+        c.setMaxAge(0);
+        resp.addCookie(c);
     }
 
     private boolean isAjaxRequest(HttpServletRequest request) {

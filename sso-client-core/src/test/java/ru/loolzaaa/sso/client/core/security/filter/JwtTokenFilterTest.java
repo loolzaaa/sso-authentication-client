@@ -9,11 +9,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.util.UrlUtils;
 import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.context.UserService;
@@ -29,11 +27,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JwtTokenFilterTest {
+
+    String appName = "APP";
 
     String login = "login";
     String refreshTokenURI = "/trefresh";
@@ -44,8 +44,6 @@ class JwtTokenFilterTest {
     JWTUtils jwtUtils;
     @Mock
     UserService userService;
-    @Mock
-    AccessDeniedHandler accessDeniedHandler;
 
     @Mock
     HttpServletRequest req;
@@ -58,14 +56,12 @@ class JwtTokenFilterTest {
     Jws<Claims> claims;
     @Mock
     Claims body;
-    @Mock
-    UserPrincipal userDetails;
 
     JwtTokenFilter jwtTokenFilter;
 
     @BeforeEach
     void setUp() {
-        jwtTokenFilter = new JwtTokenFilter(entryPointAddress, refreshTokenURI, jwtUtils, userService, accessDeniedHandler);
+        jwtTokenFilter = new JwtTokenFilter(appName, entryPointAddress, refreshTokenURI, jwtUtils, userService);
     }
 
     @Test
@@ -105,16 +101,23 @@ class JwtTokenFilterTest {
         when(req.getCookies()).thenReturn(cookies);
         when(jwtUtils.parserEnforceAccessToken(accessToken)).thenReturn(claims);
         when(claims.getBody()).thenReturn(body);
-        when(body.get("login")).thenReturn(login);
-        when(userService.getUserFromServerByUsername(login)).thenReturn(userDetails);
+        when(body.get("login", String.class)).thenReturn(login);
+        when(body.get("authorities", List.class)).thenReturn(List.of(appName));
+        ArgumentCaptor<UserPrincipal> userPrincipalCaptor = ArgumentCaptor.forClass(UserPrincipal.class);
         SecurityContextHolder.setContext(SecurityContextHolder.createEmptyContext());
 
         jwtTokenFilter.doFilter(req, resp, chain);
 
-        verify(userService).saveRequestUser(userDetails);
+        verify(userService).saveRequestUser(userPrincipalCaptor.capture());
         verify(chain).doFilter(req, resp);
         verifyNoMoreInteractions(chain);
         verify(userService).clearRequestUser();
+        assertThat(userPrincipalCaptor.getValue()).isNotNull();
+        assertThat(userPrincipalCaptor.getValue())
+                .extracting("user")
+                .isNotNull()
+                .extracting("login")
+                .isEqualTo(login);
     }
 
     @Test
@@ -125,8 +128,9 @@ class JwtTokenFilterTest {
         when(req.getCookies()).thenReturn(cookies);
         when(jwtUtils.parserEnforceAccessToken(accessToken)).thenReturn(claims);
         when(claims.getBody()).thenReturn(body);
-        when(body.get("login")).thenReturn(login);
-        when(userService.getUserFromServerByUsername(login)).thenReturn(userDetails);
+        when(body.get("login", String.class)).thenReturn(login);
+        when(body.get("authorities", List.class)).thenReturn(List.of(appName));
+        ArgumentCaptor<UserPrincipal> userPrincipalCaptor = ArgumentCaptor.forClass(UserPrincipal.class);
         SecurityContextHolder.setContext(SecurityContextHolder.createEmptyContext());
 
         SsoClientApplicationRegister applicationRegister = mock(SsoClientApplicationRegister.class);
@@ -134,11 +138,19 @@ class JwtTokenFilterTest {
 
         jwtTokenFilter.doFilter(req, resp, chain);
 
-        verify(applicationRegister).register(userDetails);
+        verify(chain).doFilter(req, resp);
+        verifyNoMoreInteractions(chain);
+        verify(userService).clearRequestUser();
+        verify(applicationRegister).register(userPrincipalCaptor.capture());
+        assertThat(userPrincipalCaptor.getValue())
+                .extracting("user")
+                .isNotNull()
+                .extracting("login")
+                .isEqualTo(login);
     }
 
     @Test
-    void shouldReturn403IfLoginIsNotNullAndIncorrectUser() throws Exception {
+    void shouldContinueFilteringIfLoginIsNotNullButThereIsNoAuthorities() throws Exception {
         Cookie[] cookies = new Cookie[2];
         cookies[0] = new Cookie(CookieName.ACCESS.getName(), accessToken);
         cookies[1] = new Cookie("c2", "v2");
@@ -146,13 +158,13 @@ class JwtTokenFilterTest {
         when(req.getCookies()).thenReturn(cookies);
         when(jwtUtils.parserEnforceAccessToken(accessToken)).thenReturn(claims);
         when(claims.getBody()).thenReturn(body);
-        when(body.get("login")).thenReturn(login);
-        when(userService.getUserFromServerByUsername(login)).thenThrow(AccessDeniedException.class);
+        when(body.get("login", String.class)).thenReturn(login);
+        when(body.get("authorities", List.class)).thenReturn(List.of());
 
         jwtTokenFilter.doFilter(req, resp, chain);
 
-        verify(accessDeniedHandler).handle(eq(req), eq(resp), any());
-        verifyNoInteractions(chain);
+        verify(chain).doFilter(req, resp);
+        verifyNoMoreInteractions(chain);
     }
 
     @Test
@@ -175,7 +187,8 @@ class JwtTokenFilterTest {
         jwtTokenFilter.doFilter(req, resp, chain);
 
         verify(resp).addCookie(cookieCaptor.capture());
-        verify(resp).setHeader("fp_request", entryPointAddress + "/api/refresh/ajax");
+        verify(resp).setHeader("X-SSO-FP", entryPointAddress + "/api/refresh/ajax");
+        verify(resp).setHeader("X-SSO-APP", appName);
         verify(resp).setStatus(HttpServletResponse.SC_FORBIDDEN);
         assertThat(cookieCaptor.getValue().isHttpOnly()).isTrue();
         assertThat(cookieCaptor.getValue().getSecure()).isEqualTo(SECURE);
@@ -218,7 +231,8 @@ class JwtTokenFilterTest {
         assertThat(cookieCaptor.getValue().isHttpOnly()).isTrue();
         assertThat(cookieCaptor.getValue().getSecure()).isEqualTo(SECURE);
         assertThat(cookieCaptor.getValue().getPath()).isEqualTo("/");
-        assertThat(redirectCaptor.getValue()).isEqualTo(entryPointAddress + refreshTokenURI + "?continue=" + continueUrl);
+        assertThat(redirectCaptor.getValue()).isEqualTo(
+                entryPointAddress + refreshTokenURI + "?app=" + appName + "&continue=" + continueUrl);
         verifyNoInteractions(chain);
     }
 }
