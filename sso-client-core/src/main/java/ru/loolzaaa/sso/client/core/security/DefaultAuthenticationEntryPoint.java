@@ -8,13 +8,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class DefaultAuthenticationEntryPoint extends LoginUrlAuthenticationEntryPoint {
 
-    public DefaultAuthenticationEntryPoint(String loginFormUrl) {
+    private final String applicationName;
+
+    public DefaultAuthenticationEntryPoint(String loginFormUrl, String applicationName) {
         super(loginFormUrl);
+        this.applicationName = applicationName;
     }
 
     @Override
@@ -24,6 +28,7 @@ public class DefaultAuthenticationEntryPoint extends LoginUrlAuthenticationEntry
         String continueParamValue = UrlUtils.buildFullRequestUrl(request);
         String continueUrl = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
         UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(redirect)
+                .queryParam("app", URLEncoder.encode(applicationName, StandardCharsets.UTF_8))
                 .queryParam("continue", continueUrl)
                 .build();
 

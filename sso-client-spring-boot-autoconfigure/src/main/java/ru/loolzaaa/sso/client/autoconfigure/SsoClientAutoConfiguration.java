@@ -74,7 +74,7 @@ public class SsoClientAutoConfiguration {
             loginFormUrlBuilder.append("/");
         }
         loginFormUrlBuilder.append(properties.getEntryPointUri());
-        return new DefaultAuthenticationEntryPoint(loginFormUrlBuilder.toString());
+        return new DefaultAuthenticationEntryPoint(loginFormUrlBuilder.toString(), properties.getApplicationName());
     }
 
     @Bean
