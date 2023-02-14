@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -135,8 +136,8 @@ public class SsoClientAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    JWTUtils jwtUtils() {
-        return new JWTUtils();
+    JWTUtils jwtUtils(@Value("${sso.client.jwt.key-path:}") String keyPath) throws Exception {
+        return new JWTUtils(keyPath);
     }
 
     @Bean
@@ -161,7 +162,7 @@ public class SsoClientAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "sso.client.receiver", value = { "username", "password" })
-    TokenDataReceiver tokenDataReceiver() {
+    TokenDataReceiver tokenDataReceiver(@Value("${sso.client.jwt.key-path:}") String keyPath) throws Exception {
         if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
             throw new IllegalArgumentException(ENTRYPOINT_CHECK_MSG);
         }
@@ -173,7 +174,7 @@ public class SsoClientAutoConfiguration {
         if (!StringUtils.hasText(fingerprint)) {
             log.warn("For production purposes fingerprint must be non-blank/empty string. Current fingerprint: {}", fingerprint);
         }
-        return new TokenDataReceiver(jwtUtils(), entryPointAddress, applicationName, username, password, fingerprint);
+        return new TokenDataReceiver(jwtUtils(keyPath), entryPointAddress, applicationName, username, password, fingerprint);
     }
 
     private static class RestTemplateTokenInterceptor implements ClientHttpRequestInterceptor {

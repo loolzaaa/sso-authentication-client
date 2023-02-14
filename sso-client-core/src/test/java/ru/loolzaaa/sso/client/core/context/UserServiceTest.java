@@ -25,11 +25,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith({MockitoExtension.class})
 class UserServiceTest {
@@ -253,13 +251,12 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldReturnTokenClaimsWhenTokenCorrect() {
+    void shouldReturnTokenClaimsWhenTokenCorrect() throws Exception {
         final String signature = "TEST";
         /*
             Header:
             {
-              "alg": "HS256",
-              "typ": "JWT"
+              "alg": "RS256"
             }
             Payload:
             {
@@ -268,9 +265,8 @@ class UserServiceTest {
             }
             Signature: TEST
          */
-        final String correctToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiVEVTVCIsImlhdCI6MH0.jeRKzfp89OE_Qr56nwS6PqYQoHuvKgwhMJDH_FT70UU";
-        JWTUtils jwtUtils = new JWTUtils();
-        jwtUtils.setAccessSecretKey(signature);
+        final String correctToken = "eyJhbGciOiJSUzI1NiJ9.eyJpYXQiOjAsImRhdGEiOiJURVNUIn0.JW27LWutIMKR782_IU8cRp6kzIZut_T7Of7J_L4dNsEAwd_rwoYIs-g7fMFk-6AuzXN-bC5i4VxAE2iNS82GJTwHlizg--ksCNVa8JKikCgefxCICqHGyH8dM3Ve9qnwNIzzu71sfqKhopc-yw8CqnGQtkVpN7Efx8yTrRBMAAP4wAwn9y5Dq2WYua8Gmb1G8YIhp_yFtQSfZgXKL7rMVm36VVriapsA75rCn2cgL-0K5-k9eSQ9ePGFB-YFgSYvMoE5DkUOwJ3Vz0IPQxXuz8bRTFkOSciZkKQMCXo0goLm_zfvHYaaIo6r9PuiyJgR0URak_oTJoR9N8oQ_R-Gzw";
+        JWTUtils jwtUtils = new JWTUtils("");
         ReflectionTestUtils.setField(userService, "jwtUtils", jwtUtils);
 
         Map<String, String> tokenClaims = userService.getTokenClaims(correctToken);
@@ -281,13 +277,12 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldReturnTokenClaimsWhenTokenExpired() {
+    void shouldReturnTokenClaimsWhenTokenExpired() throws Exception {
         final String signature = "TEST";
         /*
             Header:
             {
-              "alg": "HS256",
-              "typ": "JWT"
+              "alg": "RS256"
             }
             Payload:
             {
@@ -297,9 +292,8 @@ class UserServiceTest {
             }
             Signature: TEST
          */
-        final String expiredToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiVEVTVCIsImlhdCI6MCwiZXhwIjowfQ.eDOcv6BoM-gwVB0nUIl0uZrvlXK19hY3SfCNVJEggbw";
-        JWTUtils jwtUtils = new JWTUtils();
-        jwtUtils.setAccessSecretKey(signature);
+        final String expiredToken = "eyJhbGciOiJSUzI1NiJ9.eyJpYXQiOjAsImV4cCI6MCwiZGF0YSI6IlRFU1QifQ.HfpbaHNvdncS5kiMzxURf7bI2sZaD_ztk-kCV4IANbb1V1gH3PIukGh3xohJbMHOI-m4netpxY8pNh8W-RCTZGyPlljwUuBeBr24xUxDGEJxs9FIWU-HARkjh9CIYvPfcXfizbL-QTxQ1_D4vguwEkCG9cE77lh4vOvayxXVjcHHzcuBwW49QlWnPw-Sn88KPdvavvL-NEIuU5QA80y1QWLr6_JYygU8Q7XUtX8LH000pAAulCbYNDpqtA8KKnZQHuUv-RsEJw4HjJqHwlrLIITQ_rT5DzO1cCoF8rzXWT8cCHmfuC8qjAuiJBc7rCsxhRVUyThccz4LjIfSQYcCmw";
+        JWTUtils jwtUtils = new JWTUtils("");
         ReflectionTestUtils.setField(userService, "jwtUtils", jwtUtils);
 
         Map<String, String> tokenClaims = userService.getTokenClaims(expiredToken);
