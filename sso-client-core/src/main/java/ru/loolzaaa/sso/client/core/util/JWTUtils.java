@@ -5,11 +5,13 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.impl.FixedClock;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -27,16 +29,19 @@ public class JWTUtils {
     public JWTUtils(@Value("${sso.client.jwt.key-path:}") String keyPath) throws Exception {
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
-        String publicKeyPath = "classpath:keystore/public.key";
+        String publicKeyPath = "keystore/public.key";
+        byte[] publicKeyBytes;
         if (StringUtils.hasText(keyPath)) {
-            if (keyPath.endsWith("/")) {
-                keyPath = keyPath.substring(0, keyPath.lastIndexOf("/"));
-            }
             publicKeyPath = keyPath + "/public.key";
-        }
 
-        File publicKeyFile = ResourceUtils.getFile(publicKeyPath);
-        byte[] publicKeyBytes = Files.readAllBytes(publicKeyFile.toPath());
+            File publicKeyFile = ResourceUtils.getFile(publicKeyPath);
+            publicKeyBytes = Files.readAllBytes(publicKeyFile.toPath());
+        } else {
+            InputStream publicKeyStream = new ClassPathResource(publicKeyPath).getInputStream();
+            try (publicKeyStream) {
+                publicKeyBytes = publicKeyStream.readAllBytes();
+            }
+        }
 
         EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
         this.publicKey = keyFactory.generatePublic(publicKeySpec);
