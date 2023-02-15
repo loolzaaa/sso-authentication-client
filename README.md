@@ -33,7 +33,7 @@ To use Github Packages, you need to authenticate to it, add an additional reposi
 <dependency>
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-spring-boot-starter</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.1</version>
 </dependency>
 ```
 
