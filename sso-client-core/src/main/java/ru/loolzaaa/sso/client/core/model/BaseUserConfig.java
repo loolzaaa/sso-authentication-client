@@ -9,6 +9,7 @@ public class BaseUserConfig implements Serializable {
 
     private List<String> roles;
     private List<String> privileges;
+    private Temporary temporary;
 
     public List<String> getRoles() {
         return roles;
@@ -24,5 +25,13 @@ public class BaseUserConfig implements Serializable {
 
     public void setPrivileges(List<String> privileges) {
         this.privileges = privileges;
+    }
+
+    public Temporary getTemporary() {
+        return temporary;
+    }
+
+    public void setTemporary(Temporary temporary) {
+        this.temporary = temporary;
     }
 }
