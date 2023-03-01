@@ -24,7 +24,9 @@ import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.security.CookieName;
 import ru.loolzaaa.sso.client.core.security.DefaultAuthenticationEntryPoint;
 import ru.loolzaaa.sso.client.core.security.DefaultLogoutSuccessHandler;
+import ru.loolzaaa.sso.client.core.security.filter.AbstractTokenFilter;
 import ru.loolzaaa.sso.client.core.security.filter.JwtTokenFilter;
+import ru.loolzaaa.sso.client.core.security.filter.NoopTokenFilter;
 import ru.loolzaaa.sso.client.core.security.filter.QueryJwtTokenFilter;
 import ru.loolzaaa.sso.client.core.security.permitall.PermitAllMatcher;
 import ru.loolzaaa.sso.client.core.security.permitall.PermitAllMatcherRegistry;
@@ -43,7 +45,7 @@ public class SsoClientJwtConfiguration {
     private final DefaultLogoutSuccessHandler logoutSuccessHandler;
     private final AccessDeniedHandler accessDeniedHandler;
     private final QueryJwtTokenFilter queryJwtTokenFilter;
-    private final JwtTokenFilter jwtTokenFilter;
+    private final AbstractTokenFilter<?> tokenFilter;
 
     public SsoClientJwtConfiguration(SsoClientProperties properties,
                                      DefaultAuthenticationEntryPoint authenticationEntryPoint,
@@ -55,13 +57,19 @@ public class SsoClientJwtConfiguration {
         if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
             throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
         }
-        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(
-                properties.getApplicationName(),
-                properties.getEntryPointAddress(),
-                properties.getRefreshTokenUri(),
-                jwtUtils,
-                userService);
-        jwtTokenFilter.addApplicationRegisters(ssoClientApplicationRegisters);
+        AbstractTokenFilter<?> tokenFilter;
+        if (properties.isUseNoopTokenFilter()) {
+            tokenFilter = new NoopTokenFilter(properties.getApplicationName(), userService);
+            log.warn("\n\n\t\t! ! ! You are using SSO Client with JWT filter turned off. This mode is not suitable for production ! ! !\n");
+        } else {
+            tokenFilter = new JwtTokenFilter(
+                    properties.getApplicationName(),
+                    properties.getEntryPointAddress(),
+                    properties.getRefreshTokenUri(),
+                    jwtUtils,
+                    userService);
+        }
+        tokenFilter.addApplicationRegisters(ssoClientApplicationRegisters);
 
         QueryJwtTokenFilter queryJwtTokenFilter = new QueryJwtTokenFilter(jwtUtils);
 
@@ -70,7 +78,7 @@ public class SsoClientJwtConfiguration {
         this.logoutSuccessHandler = logoutSuccessHandler;
         this.accessDeniedHandler = accessDeniedHandler;
         this.queryJwtTokenFilter = queryJwtTokenFilter;
-        this.jwtTokenFilter = jwtTokenFilter;
+        this.tokenFilter = tokenFilter;
     }
 
     @Order(10)
@@ -100,7 +108,7 @@ public class SsoClientJwtConfiguration {
                 .anonymous().disable()
                 // Filters order is important!
                 .addFilterBefore(queryJwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         if (!permitAllMatcherRegistry.getMatchers().isEmpty()) {
             final AuthorizationManager<RequestAuthorizationContext> permitAllAuthorizationManager =
@@ -116,7 +124,7 @@ public class SsoClientJwtConfiguration {
                     authorizationManagerBuilder.add(matcher.getRequestMatcher(), permitAllAuthorizationManager);
                 });
             }
-            jwtTokenFilter.setPermitAllAuthorizationManager(authorizationManagerBuilder.build());
+            tokenFilter.setPermitAllAuthorizationManager(authorizationManagerBuilder.build());
         }
 
         if (properties.getWebhook().isEnable()) {

@@ -18,6 +18,8 @@ public class SsoClientProperties {
     private String revokeUsername = "REVOKE_TOKEN_USER";
     private String revokePassword = "REVOKE_TOKEN_USER_PASSWORD";
 
+    private boolean useNoopTokenFilter = false;
+
     private final Receiver receiver = new Receiver();
 
     private final Webhook webhook = new Webhook();
@@ -84,6 +86,14 @@ public class SsoClientProperties {
 
     public void setRevokePassword(String revokePassword) {
         this.revokePassword = revokePassword;
+    }
+
+    public boolean isUseNoopTokenFilter() {
+        return useNoopTokenFilter;
+    }
+
+    public void setUseNoopTokenFilter(boolean useNoopTokenFilter) {
+        this.useNoopTokenFilter = useNoopTokenFilter;
     }
 
     public Receiver getReceiver() {

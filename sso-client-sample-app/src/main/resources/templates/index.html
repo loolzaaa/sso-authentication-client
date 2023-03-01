@@ -27,6 +27,8 @@
 
     const contextPath = /*[[@{/}]]*/ "/";
     axios.defaults.baseURL = contextPath;
+    // user data = {"login":"noop","authorities":["example","ROLE_ADMIN","privilege1"]}
+    axios.defaults.headers.common['X-SSO-USER'] = 'eyJsb2dpbiI6Im5vb3AiLCJhdXRob3JpdGllcyI6WyJleGFtcGxlIiwiUk9MRV9BRE1JTiIsInByaXZpbGVnZTEiXX0=';
     axios.interceptors.response.use(function (response) {
         const _csrf = document.cookie.match(new RegExp(`XSRF-TOKEN=([^;]+)`));
         if (_csrf !== undefined && _csrf !== null) {
