@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <script th:src="@{/webjars/axios/0.21.1/dist/axios.min.js}"></script>
     <script th:src="@{/js/fingerprint2.min.js}"></script>
+    <script th:src="@{/js/user-data.local.js}"></script>
     <link rel="icon" th:href="@{/favicon.ico}">
     <title>Application</title>
 </head>
@@ -23,6 +24,11 @@
     const CSRF_TOKEN = document.cookie.match(new RegExp(`XSRF-TOKEN=([^;]+)`));
     if (CSRF_TOKEN !== undefined && CSRF_TOKEN !== null ) {
         axios.defaults.headers.post['X-XSRF-TOKEN'] = CSRF_TOKEN[1];
+    }
+
+    if (Object.keys(userData).length > 0) {
+        const userDataHeader = window.btoa(JSON.stringify(userData));
+        axios.defaults.headers.common['X-SSO-USER'] = userDataHeader;
     }
 
     const contextPath = /*[[@{/}]]*/ "/";

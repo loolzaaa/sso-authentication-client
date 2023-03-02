@@ -373,3 +373,32 @@ public class SecurityConfig {
     }
 }
 ```
+
+# SSO Client Development mode
+
+During development, there is no need to constantly refresh tokens. Moreover, during the development process, additional roles and privileges may appear for the application, which will require changing the user configuration already on the SSO Server side.  
+To avoid such inconveniences, the SSO Client allows you to replace the standard procedure for checking/refreshing tokens with checking user data based on a special header in the request.
+
+## Activation
+
+To activate the development mode, you need to set `sso.client.useNoopTokenFilter` property to `true`. For example, you can do this by creating an `application-noop.properties` resource file:
+```
+# application-noop.properties
+sso.client.useNoopTokenFilter=true
+```
+and activating the `noop` profile for the app by running latter with `--spring.profiles.active=noop` argument or `-Dspring.profiles.active=noop` VM option.
+
+After activating the development mode, it is necessary to add a `X-SSO-USER` header with Base64 encoded user data to each request that passes through the SSO Client. The raw user data is a JSON object that contains the user's login and an array of authorities.  
+
+**User data raw view:**
+```json
+{
+    "login": "noop",
+    "authorities": [ "example", "ROLE_ADMIN", "privilege1" ]
+}
+```
+**User data encoded view:**  
+`ewogICAgImxvZ2luIjogIm5vb3AiLAogICAgImF1dGhvcml0aWVzIjogWyAiZXhhbXBsZSIsICJST0xFX0FETUlOIiwgInByaXZpbGVnZTEiIF0KfQ==`
+
+This approach allows you to develop a front-end part of the application with hot-swap modules without the need for constant rebuilding of the entire project.  
+An example implementation can be found in samplу-app.
