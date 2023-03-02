@@ -39,7 +39,7 @@ public abstract class AbstractTokenFilter<T> extends OncePerRequestFilter {
     private final List<GrantedAuthority> anonymousAuthorities = AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS");
     private AuthorizationManager<HttpServletRequest> permitAllAuthorizationManager;
 
-    public AbstractTokenFilter(UserService userService) {
+    protected AbstractTokenFilter(UserService userService) {
         this.userService = userService;
     }
 

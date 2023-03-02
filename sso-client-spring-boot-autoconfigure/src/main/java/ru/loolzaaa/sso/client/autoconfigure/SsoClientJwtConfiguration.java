@@ -57,19 +57,19 @@ public class SsoClientJwtConfiguration {
         if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
             throw new IllegalArgumentException("SSO Server entrypoint must be absolute url");
         }
-        AbstractTokenFilter<?> tokenFilter;
+        AbstractTokenFilter<?> abstractTokenFilter;
         if (properties.isUseNoopTokenFilter()) {
-            tokenFilter = new NoopTokenFilter(properties.getApplicationName(), userService);
+            abstractTokenFilter = new NoopTokenFilter(properties.getApplicationName(), userService);
             log.warn("\n\n\t\t! ! ! You are using SSO Client with JWT filter turned off. This mode is not suitable for production ! ! !\n");
         } else {
-            tokenFilter = new JwtTokenFilter(
+            abstractTokenFilter = new JwtTokenFilter(
                     properties.getApplicationName(),
                     properties.getEntryPointAddress(),
                     properties.getRefreshTokenUri(),
                     jwtUtils,
                     userService);
         }
-        tokenFilter.addApplicationRegisters(ssoClientApplicationRegisters);
+        abstractTokenFilter.addApplicationRegisters(ssoClientApplicationRegisters);
 
         QueryJwtTokenFilter queryJwtTokenFilter = new QueryJwtTokenFilter(jwtUtils);
 
@@ -78,7 +78,7 @@ public class SsoClientJwtConfiguration {
         this.logoutSuccessHandler = logoutSuccessHandler;
         this.accessDeniedHandler = accessDeniedHandler;
         this.queryJwtTokenFilter = queryJwtTokenFilter;
-        this.tokenFilter = tokenFilter;
+        this.tokenFilter = abstractTokenFilter;
     }
 
     @Order(10)

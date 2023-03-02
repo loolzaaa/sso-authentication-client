@@ -146,7 +146,7 @@ class JwtTokenFilterTest {
                 .extracting("authorities")
                 .isNotNull()
                 .asList()
-                .hasSize(0);
+                .isEmpty();
     }
 
     @Test
@@ -162,7 +162,7 @@ class JwtTokenFilterTest {
                 .extracting("authorities")
                 .isNotNull()
                 .asList()
-                .hasSize(0);
+                .isEmpty();
     }
 
     @Test

@@ -21,6 +21,8 @@ import java.util.List;
 
 public class JwtTokenFilter extends AbstractTokenFilter<Claims> {
 
+    private static final String LOGIN_PARAM_NAME = "login";
+
     private final String applicationName;
 
     private final String entryPointAddress;
@@ -51,7 +53,7 @@ public class JwtTokenFilter extends AbstractTokenFilter<Claims> {
     @Override
     protected UserData processTokenData(HttpServletRequest req, Claims tokenData) {
         logger.debug("Application level authorization check");
-        String login = tokenData.get("login", String.class);
+        String login = tokenData.get(LOGIN_PARAM_NAME, String.class);
         List<String> authorities;
         try {
             authorities = tokenData.get("authorities", List.class);
@@ -108,11 +110,11 @@ public class JwtTokenFilter extends AbstractTokenFilter<Claims> {
     private Claims validateAccessToken(String accessToken) {
         try {
             Claims claims = jwtUtils.parserEnforceAccessToken(accessToken).getBody();
-            String login = claims.get("login", String.class);
+            String login = claims.get(LOGIN_PARAM_NAME, String.class);
             logger.debug(String.format("Access token for user [%s] validated", login));
             return claims;
         } catch (ClaimJwtException e) {
-            logger.trace(String.format("Access token for user [%s] is expired", e.getClaims().get("login")));
+            logger.trace(String.format("Access token for user [%s] is expired", e.getClaims().get(LOGIN_PARAM_NAME)));
         } catch (Exception e) {
             logger.warn("Parsed access token: " + accessToken);
             logger.warn("Undeclared exception while parse access token: " + e.getMessage());

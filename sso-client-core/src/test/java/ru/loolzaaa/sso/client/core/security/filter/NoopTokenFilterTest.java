@@ -103,7 +103,7 @@ class NoopTokenFilterTest {
                 .extracting("authorities")
                 .isNotNull()
                 .asList()
-                .hasSize(0);
+                .isEmpty();
     }
 
     @Test
@@ -120,7 +120,7 @@ class NoopTokenFilterTest {
                 .extracting("authorities")
                 .isNotNull()
                 .asList()
-                .hasSize(0);
+                .isEmpty();
     }
 
     @Test
