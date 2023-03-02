@@ -2,20 +2,17 @@ package ru.loolzaaa.sso.client.core.security.filter;
 
 import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.impl.DefaultClaims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authorization.AuthorizationDecision;
-import org.springframework.security.authorization.AuthorizationManager;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.util.UrlUtils;
-import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.context.UserService;
-import ru.loolzaaa.sso.client.core.model.UserPrincipal;
 import ru.loolzaaa.sso.client.core.security.CookieName;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
@@ -26,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -65,35 +63,16 @@ class JwtTokenFilterTest {
     }
 
     @Test
-    void shouldContinueFilteringIfRequestUriIsIgnored() throws Exception {
-        AuthorizationManager authorizationManager = mock(AuthorizationManager.class);
-        AuthorizationDecision authorizationDecision = mock(AuthorizationDecision.class);
-        when(authorizationManager.check(any(), any())).thenReturn(authorizationDecision);
-        when(authorizationDecision.isGranted()).thenReturn(true);
-        when(req.getRequestURL()).thenReturn(new StringBuffer("/"));
-        jwtTokenFilter.setPermitAllAuthorizationManager(authorizationManager);
-
-        jwtTokenFilter.doFilter(req, resp, chain);
-
-        verify(chain).doFilter(req, resp);
-        verifyNoMoreInteractions(chain);
-        verifyNoInteractions(userService);
-    }
-
-    @Test
-    void shouldContinueFilteringIfAccessTokenIsNull() throws Exception {
+    void shouldThrowExceptionIfAccessTokenIsNull() throws Exception {
         Cookie[] cookies = new Cookie[0];
         when(req.getCookies()).thenReturn(cookies);
 
-        jwtTokenFilter.doFilter(req, resp, chain);
-
-        verify(chain).doFilter(req, resp);
-        verifyNoMoreInteractions(chain);
-        verifyNoInteractions(userService);
+        assertThatThrownBy(() -> jwtTokenFilter.extractTokenData(req, resp))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void shouldSaveUserInSystemIfLoginIsNotNullAndCorrectUser() throws Exception {
+    void shouldReturnTokenClaimsIfLoginIsNotNullAndCorrectUser() throws Exception {
         Cookie[] cookies = new Cookie[2];
         cookies[0] = new Cookie(CookieName.ACCESS.getName(), accessToken);
         cookies[1] = new Cookie("c2", "v2");
@@ -102,89 +81,99 @@ class JwtTokenFilterTest {
         when(jwtUtils.parserEnforceAccessToken(accessToken)).thenReturn(claims);
         when(claims.getBody()).thenReturn(body);
         when(body.get("login", String.class)).thenReturn(login);
-        when(body.get("authorities", List.class)).thenReturn(List.of(appName));
-        ArgumentCaptor<UserPrincipal> userPrincipalCaptor = ArgumentCaptor.forClass(UserPrincipal.class);
-        SecurityContextHolder.setContext(SecurityContextHolder.createEmptyContext());
 
-        jwtTokenFilter.doFilter(req, resp, chain);
+        Claims actualClaims = jwtTokenFilter.extractTokenData(req, resp);
 
-        verify(userService).saveRequestUser(userPrincipalCaptor.capture());
-        verify(chain).doFilter(req, resp);
-        verifyNoMoreInteractions(chain);
-        verify(userService).clearRequestUser();
-        assertThat(userPrincipalCaptor.getValue()).isNotNull();
-        assertThat(userPrincipalCaptor.getValue())
-                .extracting("user")
-                .isNotNull()
-                .extracting("login")
-                .isEqualTo(login);
+        assertThat(actualClaims).isNotNull();
     }
 
     @Test
-    void shouldUseApplicationRegisterHook() throws Exception {
-        Cookie[] cookies = new Cookie[1];
+    void shouldReturnNullIfParseExpiredClaimsError() throws Exception {
+        Cookie[] cookies = new Cookie[2];
         cookies[0] = new Cookie(CookieName.ACCESS.getName(), accessToken);
+        cookies[1] = new Cookie("c2", "v2");
+        DefaultClaims defaultClaims = new DefaultClaims(Map.of("login", "TEST"));
+        FakeClaimJwtException fakeClaimJwtException = new FakeClaimJwtException(null, defaultClaims, null);
 
         when(req.getCookies()).thenReturn(cookies);
-        when(jwtUtils.parserEnforceAccessToken(accessToken)).thenReturn(claims);
-        when(claims.getBody()).thenReturn(body);
-        when(body.get("login", String.class)).thenReturn(login);
-        when(body.get("authorities", List.class)).thenReturn(List.of(appName));
-        ArgumentCaptor<UserPrincipal> userPrincipalCaptor = ArgumentCaptor.forClass(UserPrincipal.class);
-        SecurityContextHolder.setContext(SecurityContextHolder.createEmptyContext());
+        when(jwtUtils.parserEnforceAccessToken(accessToken)).thenThrow(fakeClaimJwtException);
 
-        SsoClientApplicationRegister applicationRegister = mock(SsoClientApplicationRegister.class);
-        jwtTokenFilter.addApplicationRegisters(List.of(applicationRegister));
+        Claims actualClaims = jwtTokenFilter.extractTokenData(req, resp);
 
-        jwtTokenFilter.doFilter(req, resp, chain);
-
-        verify(chain).doFilter(req, resp);
-        verifyNoMoreInteractions(chain);
-        verify(userService).clearRequestUser();
-        verify(applicationRegister).register(userPrincipalCaptor.capture());
-        assertThat(userPrincipalCaptor.getValue())
-                .extracting("user")
-                .isNotNull()
-                .extracting("login")
-                .isEqualTo(login);
+        assertThat(actualClaims).isNull();
     }
 
     @Test
-    void shouldContinueFilteringIfLoginIsNotNullButThereIsNoAuthorities() throws Exception {
+    void shouldReturnNullIfParseInvalidClaimsError() throws Exception {
         Cookie[] cookies = new Cookie[2];
         cookies[0] = new Cookie(CookieName.ACCESS.getName(), accessToken);
         cookies[1] = new Cookie("c2", "v2");
 
         when(req.getCookies()).thenReturn(cookies);
-        when(jwtUtils.parserEnforceAccessToken(accessToken)).thenReturn(claims);
-        when(claims.getBody()).thenReturn(body);
-        when(body.get("login", String.class)).thenReturn(login);
-        when(body.get("authorities", List.class)).thenReturn(List.of());
+        when(jwtUtils.parserEnforceAccessToken(accessToken)).thenThrow(RuntimeException.class);
 
-        jwtTokenFilter.doFilter(req, resp, chain);
+        Claims actualClaims = jwtTokenFilter.extractTokenData(req, resp);
 
-        verify(chain).doFilter(req, resp);
-        verifyNoMoreInteractions(chain);
+        assertThat(actualClaims).isNull();
+    }
+
+    @Test
+    void shouldProcessTokenData() throws Exception {
+        DefaultClaims defaultClaims = new DefaultClaims(
+                Map.of("login", "TEST", "authorities", List.of("TEST1")));
+
+        AbstractTokenFilter.UserData userData = jwtTokenFilter.processTokenData(req, defaultClaims);
+
+        assertThat(userData)
+                .isNotNull()
+                .hasFieldOrPropertyWithValue("login", "TEST")
+                .extracting("authorities")
+                .isNotNull()
+                .asList()
+                .hasSize(1)
+                .contains("TEST1");
+    }
+
+    @Test
+    void shouldProcessTokenDataWithEmptyAuthorities() throws Exception {
+        DefaultClaims defaultClaims = new DefaultClaims(Map.of("login", "TEST"));
+
+        AbstractTokenFilter.UserData userData = jwtTokenFilter.processTokenData(req, defaultClaims);
+
+        assertThat(userData)
+                .isNotNull()
+                .hasFieldOrPropertyWithValue("login", "TEST")
+                .extracting("authorities")
+                .isNotNull()
+                .asList()
+                .hasSize(0);
+    }
+
+    @Test
+    void shouldProcessTokenWithInvalidAuthorities() throws Exception {
+        DefaultClaims defaultClaims = new DefaultClaims(
+                Map.of("login", "TEST", "authorities", Map.of("ERR", "TEST1")));
+
+        AbstractTokenFilter.UserData userData = jwtTokenFilter.processTokenData(req, defaultClaims);
+
+        assertThat(userData)
+                .isNotNull()
+                .hasFieldOrPropertyWithValue("login", "TEST")
+                .extracting("authorities")
+                .isNotNull()
+                .asList()
+                .hasSize(0);
     }
 
     @Test
     void shouldReturn403IfLoginIsNullAndRemoveAccessAndAjax() throws Exception {
         final boolean SECURE = true;
-        Cookie[] cookies = new Cookie[2];
-        cookies[0] = new Cookie(CookieName.ACCESS.getName(), accessToken);
-        cookies[1] = new Cookie("c2", "v2");
-        ClaimJwtException exception = mock(ClaimJwtException.class);
-
         when(req.getContextPath()).thenReturn("/");
         when(req.getHeader("Accept")).thenReturn("application/json");
-        when(req.getCookies()).thenReturn(cookies);
         when(req.isSecure()).thenReturn(SECURE);
-        when(jwtUtils.parserEnforceAccessToken(accessToken)).thenThrow(exception);
-        when(exception.getClaims()).thenReturn(body);
-        when(body.get("login")).thenReturn(login);
         ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
 
-        jwtTokenFilter.doFilter(req, resp, chain);
+        jwtTokenFilter.handleInvalidTokenData(req, resp, chain);
 
         verify(resp).addCookie(cookieCaptor.capture());
         verify(resp).setHeader("X-SSO-FP", entryPointAddress + "/api/refresh/ajax");
@@ -203,28 +192,20 @@ class JwtTokenFilterTest {
         final int SERVER_PORT = 8080;
         final String REQUEST_URI = "/test";
         final boolean SECURE = true;
-        Cookie[] cookies = new Cookie[2];
-        cookies[0] = new Cookie(CookieName.ACCESS.getName(), accessToken);
-        cookies[1] = new Cookie("c2", "v2");
-        ClaimJwtException exception = mock(ClaimJwtException.class);
 
         when(req.getContextPath()).thenReturn("/");
         when(req.getHeader("Accept")).thenReturn("test/html");
-        when(req.getCookies()).thenReturn(cookies);
         when(req.isSecure()).thenReturn(SECURE);
         when(req.getScheme()).thenReturn(SCHEME);
         when(req.getServerName()).thenReturn(SERVER_NAME);
         when(req.getServerPort()).thenReturn(SERVER_PORT);
         when(req.getRequestURI()).thenReturn(REQUEST_URI);
-        when(jwtUtils.parserEnforceAccessToken(accessToken)).thenThrow(exception);
-        when(exception.getClaims()).thenReturn(body);
-        when(body.get("login")).thenReturn(login);
         ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
         ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
         String continueParamValue = UrlUtils.buildFullRequestUrl(req);
         String continueUrl = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
 
-        jwtTokenFilter.doFilter(req, resp, chain);
+        jwtTokenFilter.handleInvalidTokenData(req, resp, chain);
 
         verify(resp).addCookie(cookieCaptor.capture());
         verify(resp).sendRedirect(redirectCaptor.capture());
@@ -234,5 +215,11 @@ class JwtTokenFilterTest {
         assertThat(redirectCaptor.getValue()).isEqualTo(
                 entryPointAddress + refreshTokenURI + "?app=" + appName + "&continue=" + continueUrl);
         verifyNoInteractions(chain);
+    }
+
+    static class FakeClaimJwtException extends ClaimJwtException {
+        protected FakeClaimJwtException(Header header, Claims claims, String message) {
+            super(header, claims, message);
+        }
     }
 }
