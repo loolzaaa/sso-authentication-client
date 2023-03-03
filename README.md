@@ -33,7 +33,7 @@ To use Github Packages, you need to authenticate to it, add an additional reposi
 <dependency>
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-spring-boot-starter</artifactId>
-    <version>0.8.0</version>
+    <version>0.8.1</version>
 </dependency>
 ```
 
@@ -376,15 +376,16 @@ public class SecurityConfig {
 
 # SSO Client Development mode
 
-During development, there is no need to constantly refresh tokens. Moreover, during the development process, additional roles and privileges may appear for the application, which will require changing the user configuration already on the SSO Server side.  
+During development, there is no need to constantly refresh tokens. Moreover, additional roles and privileges may appear for the application, which will require changing the user configuration already on the SSO Server side.  
 To avoid such inconveniences, the SSO Client allows you to replace the standard procedure for checking/refreshing tokens with checking user data based on a special header in the request.
 
 ## Activation
 
-To activate the development mode, you need to set `sso.client.useNoopTokenFilter` property to `true`. For example, you can do this by creating an `application-noop.properties` resource file:
+To activate the development mode, you need to set `sso.client.noop-mode.enable` property to `true` and define default user for access with `sso.client.noop-mode.default-user` property. For example, you can do this by creating an `application-noop.properties` resource file:
 ```
 # application-noop.properties
 sso.client.useNoopTokenFilter=true
+sso.client.noop-mode.default-user=user
 ```
 and activating the `noop` profile for the app by running latter with `--spring.profiles.active=noop` argument or `-Dspring.profiles.active=noop` VM option.
 
