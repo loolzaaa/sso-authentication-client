@@ -18,11 +18,11 @@ public class SsoClientProperties {
     private String revokeUsername = "REVOKE_TOKEN_USER";
     private String revokePassword = "REVOKE_TOKEN_USER_PASSWORD";
 
-    private boolean useNoopTokenFilter = false;
-
     private final Receiver receiver = new Receiver();
 
     private final Webhook webhook = new Webhook();
+
+    private final NoopMode noopMode = new NoopMode();
 
     public String getApplicationName() {
         return applicationName;
@@ -88,20 +88,16 @@ public class SsoClientProperties {
         this.revokePassword = revokePassword;
     }
 
-    public boolean isUseNoopTokenFilter() {
-        return useNoopTokenFilter;
-    }
-
-    public void setUseNoopTokenFilter(boolean useNoopTokenFilter) {
-        this.useNoopTokenFilter = useNoopTokenFilter;
-    }
-
     public Receiver getReceiver() {
         return receiver;
     }
 
     public Webhook getWebhook() {
         return webhook;
+    }
+
+    public NoopMode getNoopMode() {
+        return noopMode;
     }
 
     public static class Receiver {
@@ -143,6 +139,27 @@ public class SsoClientProperties {
 
         public void setEnable(boolean enable) {
             this.enable = enable;
+        }
+    }
+
+    public static class NoopMode {
+        private boolean enable;
+        private String defaultUser;
+
+        public boolean isEnable() {
+            return enable;
+        }
+
+        public void setEnable(boolean enable) {
+            this.enable = enable;
+        }
+
+        public String getDefaultUser() {
+            return defaultUser;
+        }
+
+        public void setDefaultUser(String defaultUser) {
+            this.defaultUser = defaultUser;
         }
     }
 }

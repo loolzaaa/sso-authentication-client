@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 class NoopTokenFilterTest {
 
     String appName = "APP";
+    String defaultUser = "USER";
 
     @Mock
     UserService userService;
@@ -39,7 +40,7 @@ class NoopTokenFilterTest {
 
     @BeforeEach
     void setUp() {
-        noopTokenFilter = new NoopTokenFilter(appName, userService);
+        noopTokenFilter = new NoopTokenFilter(appName, defaultUser, userService);
     }
 
     @Test
@@ -50,7 +51,7 @@ class NoopTokenFilterTest {
 
         assertThat(userDataNode.has("login")).isTrue();
         assertThat(userDataNode.has("authorities")).isTrue();
-        assertThat(userDataNode.get("login").asText()).isEqualTo("noop");
+        assertThat(userDataNode.get("login").asText()).isEqualTo(defaultUser);
         assertThat(userDataNode.get("authorities").size()).isEqualTo(1);
         assertThat(userDataNode.get("authorities")).isInstanceOf(ArrayNode.class);
         assertThat(userDataNode.get("authorities").get(0).asText()).isEqualTo(appName);

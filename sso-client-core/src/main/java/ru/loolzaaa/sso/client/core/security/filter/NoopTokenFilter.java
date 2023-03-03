@@ -22,9 +22,12 @@ public class NoopTokenFilter extends AbstractTokenFilter<JsonNode> {
 
     private final String applicationName;
 
-    public NoopTokenFilter(String applicationName, UserService userService) {
+    private final String defaultUser;
+
+    public NoopTokenFilter(String applicationName, String defaultUser, UserService userService) {
         super(userService);
         this.applicationName = applicationName;
+        this.defaultUser = defaultUser;
     }
 
     @Override
@@ -35,7 +38,7 @@ public class NoopTokenFilter extends AbstractTokenFilter<JsonNode> {
             return mapper.readTree(decodedUserDataHeader);
         } else {
             ObjectNode userDataNode = mapper.createObjectNode();
-            userDataNode.put("login", "noop");
+            userDataNode.put("login", defaultUser);
             userDataNode.putArray("authorities").add(applicationName);
             return userDataNode;
         }
