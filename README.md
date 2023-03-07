@@ -384,7 +384,7 @@ To avoid such inconveniences, the SSO Client allows you to replace the standard 
 To activate the development mode, you need to set `sso.client.noop-mode.enable` property to `true` and define default user for access with `sso.client.noop-mode.default-user` property. For example, you can do this by creating an `application-noop.properties` resource file:
 ```
 # application-noop.properties
-sso.client.useNoopTokenFilter=true
+sso.client.noop-mode.enable=true
 sso.client.noop-mode.default-user=user
 ```
 and activating the `noop` profile for the app by running latter with `--spring.profiles.active=noop` argument or `-Dspring.profiles.active=noop` VM option.
