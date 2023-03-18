@@ -6,6 +6,23 @@
 
 The client part for the [Single Sign-On (SSO) server](https://github.com/loolzaaa/sso-authentication-server). If any request under JWT security control does not have a JWT token, it is redirected to the server entry point with Base64 encoded `continue` parameter to return to the application. Further authentication occurs through Json Web Tokens (JWT), which are checked through a custom filter. All other components of the system are based on standard Spring Security beans with minor changes.
 
+### Contents
+- [Client Startup](https://github.com/loolzaaa/sso-authentication-client/edit/master/README.md#client-startup)
+  - [Install in the local repository](https://github.com/loolzaaa/sso-authentication-client/edit/master/README.md#install-in-the-local-repository)
+  - [Setting up the github maven repository](https://github.com/loolzaaa/sso-authentication-client/edit/master/README.md#setting-up-the-github-maven-repository)
+  - [Add the package dependencies to your project](https://github.com/loolzaaa/sso-authentication-client/edit/master/README.md#add-the-package-dependencies-to-your-project)
+- [Client Configuration](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#client-configuration)
+  - [Main configuration](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#main-configuration)
+  - [Additional configuration](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#additional-configuration)
+  - [Database User config scheme](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#database-user-config-scheme)
+- [Communication between multiple SSO Client Applications](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#communication-between-multiple-sso-client-applications)
+  - [User configuration](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#user-configuration)
+  - [Token receiver configuration](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#token-receiver-configuration)
+  - [Interception across application requests](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#interception-across-application-requests)
+- [SSO Client Development mode](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#sso-client-development-mode)
+  - [Activation](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#activation)
+- [SSO Client behind Spring Cloud Gateway](https://github.com/loolzaaa/sso-authentication-client/edit/master/README.md#sso-client-behind-spring-cloud-gateway)
+
 # Client Startup
 
 You can use this client as a dependency of your project in two ways: by installing the necessary packages in the local repository, or by setting up the Github Maven Package of this repository.
@@ -402,4 +419,8 @@ After activating the development mode, it is necessary to add a `X-SSO-USER` hea
 `ewogICAgImxvZ2luIjogIm5vb3AiLAogICAgImF1dGhvcml0aWVzIjogWyAiZXhhbXBsZSIsICJST0xFX0FETUlOIiwgInByaXZpbGVnZTEiIF0KfQ==`
 
 This approach allows you to develop a front-end part of the application with hot-swap modules without the need for constant rebuilding of the entire project.  
-An example implementation can be found in samplу-app.
+An example implementation can be found in sample-app.
+
+# SSO Client behind Spring Cloud Gateway
+
+This information is available in the corresponding [README](sso-client-spring-cloud-gateway).
