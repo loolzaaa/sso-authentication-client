@@ -21,7 +21,7 @@ The client part for the [Single Sign-On (SSO) server](https://github.com/loolzaa
   - [Interception across application requests](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#interception-across-application-requests)
 - [SSO Client Development mode](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#sso-client-development-mode)
   - [Activation](https://github.com/loolzaaa/sso-authentication-client/blob/master/README.md#activation)
-- [SSO Client behind Spring Cloud Gateway](https://github.com/loolzaaa/sso-authentication-client/edit/master/README.md#sso-client-behind-spring-cloud-gateway)
+- [SSO Client behind Spring Cloud Gateway](#sso-client-behind-spring-cloud-gateway)
 
 # Client Startup
 
