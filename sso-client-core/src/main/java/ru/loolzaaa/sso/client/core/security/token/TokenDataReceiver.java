@@ -79,7 +79,7 @@ public class TokenDataReceiver {
             updateTokenData(response.headers().map(), loginUri);
         } else {
             try {
-                jwtUtils.parserEnforceAccessToken(tokenData.getAccessToken());
+                jwtUtils.validateToken(tokenData.getAccessToken());
             } catch (ClaimJwtException ignored) {
                 refreshToken();
             } catch (Exception e) {

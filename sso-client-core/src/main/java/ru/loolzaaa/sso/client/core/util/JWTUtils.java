@@ -49,6 +49,14 @@ public class JWTUtils {
 
     public Jws<Claims> parserEnforceAccessToken(String jwt) {
         return Jwts.parser()
+                .setAllowedClockSkewSeconds(10)
+                .setClock(new FixedClock(new Date(System.currentTimeMillis() + serverSkew)))
+                .setSigningKey(publicKey)
+                .parseClaimsJws(jwt);
+    }
+
+    public void validateToken(String jwt) {
+        Jwts.parser()
                 .setClock(new FixedClock(new Date(System.currentTimeMillis() + serverSkew)))
                 .setSigningKey(publicKey)
                 .parseClaimsJws(jwt);
