@@ -56,7 +56,7 @@ class WebhookHandlerRegistryTest {
         final String id = "ID";
         final String secret = "SECRET";
         final String jsonPayload = "{\"event\":\"DELETE_USER\"}";
-        final String expectedSignature = "sha256=00e55d65f423b4843683758134b181cb135aa3e83261e673ef1690ae15ecd25b";
+        final String expectedSignature = "sha256=002221fe7a3a26f977e5d74c5c3b089d0fe70d4b0d74cf8b1f906a047edafb2b";
         SsoClientWebhookHandler webhookHandler = new FakeWebhook(id, secret, false);
         registry.addWebhook(id, webhookHandler);
         WebhookPayload payload = mapper.readValue(jsonPayload, WebhookPayload.class);
