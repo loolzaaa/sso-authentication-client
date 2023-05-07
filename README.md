@@ -50,7 +50,7 @@ To use Github Packages, you need to authenticate to it, add an additional reposi
 <dependency>
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-spring-boot-starter</artifactId>
-    <version>0.8.1</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -271,15 +271,15 @@ public class SecurityConfig implements SsoClientConfigurer {
 
 For an application that is protected by a SSO Client, it is possible to create any number of SSO Server webhook handlers.  
 To enable webhook processing, you must define `sso.client.webhook.enable` property to `true` value.  
-All webhook requests processed by `POST /sso/webhook/{id}` controller, where `{id}` - unique webhook identifier.  
-Content type of any webhook request must be `application/json`. Object must contain webhook **key** and, optionally, payload.  
+All webhook requests processed by `POST /sso/webhook/{id}` controller, where `{id}` - unique webhook identifier.   
+
 To create webhook handler you must implement `SsoClientWebhookHandler` or override `addWebhooks` of `SsoClientConfigurer`:
 ```java
 @Configuration
 public class SecurityConfig implements SsoClientConfigurer {
     @Override
     public void addWebhooks(WebhookHandlerRegistry registry) {
-        registry.addWebhook("WEBHOOK_VIA_CONFIG", "PASSWORD"::equals, System.err::println);
+        registry.addWebhook("WEBHOOK_VIA_CONFIG", "PASSWORD", System.err::println);
     }
 }
 ```
