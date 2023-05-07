@@ -19,31 +19,22 @@ class DefaultWebhookHandlerTest {
     }
 
     @Test
-    void shouldThrowExceptionIfKeyInvalid() {
-        final String id = "ID";
-        final String key = "KEY";
-        webhookHandler = new DefaultWebhookHandler(id, s -> false, null);
-
-        assertThrows(WebhookHandlerException.class,() -> webhookHandler.validateKey(key));
-    }
-
-    @Test
-    void shouldThrowExceptionIfHandleError() throws Exception {
+    void shouldThrowExceptionIfHandleError() {
         final String id = "ID";
         webhookHandler = new DefaultWebhookHandler(id, null, o -> {
             int i = o.hashCode() / 0;
         });
 
-        assertThrows(WebhookHandlerException.class,() -> webhookHandler.handle(new Object()));
+        assertThrows(WebhookHandlerException.class, () -> webhookHandler.handle(new WebhookPayload()));
     }
 
     @Test
     void shouldCorrectHandleWebhook() throws Exception {
         final String id = "ID";
         final AtomicBoolean flag = new AtomicBoolean(false);
-        webhookHandler = new DefaultWebhookHandler(id, null, o -> ((AtomicBoolean) o).set(true));
+        webhookHandler = new DefaultWebhookHandler(id, null, o -> flag.set(true));
 
-        webhookHandler.handle(flag);
+        webhookHandler.handle(new WebhookPayload());
 
         assertTrue(flag::get);
     }

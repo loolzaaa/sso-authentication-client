@@ -5,12 +5,12 @@ import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
 public class FakeWebhook implements SsoClientWebhookHandler {
 
     private final String id;
-    private final boolean validError;
+    private final String secret;
     private final boolean processError;
 
-    public FakeWebhook(String id, boolean validError, boolean processError) {
+    public FakeWebhook(String id, String secret, boolean processError) {
         this.id = id;
-        this.validError = validError;
+        this.secret = secret;
         this.processError = processError;
     }
 
@@ -20,12 +20,12 @@ public class FakeWebhook implements SsoClientWebhookHandler {
     }
 
     @Override
-    public void validateKey(String key) throws WebhookHandlerException {
-        if (validError) throw new WebhookHandlerException(HandleError.VALIDATE, "");
+    public String getSecret() {
+        return secret;
     }
 
     @Override
-    public void handle(Object payload) throws WebhookHandlerException {
+    public void handle(WebhookPayload payload) throws WebhookHandlerException {
         if (processError) throw new WebhookHandlerException(HandleError.PROCESS, "");
     }
 }

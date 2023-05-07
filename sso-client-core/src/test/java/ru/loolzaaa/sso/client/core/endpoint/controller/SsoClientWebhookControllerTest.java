@@ -17,7 +17,7 @@ import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerException;
 import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,19 +40,21 @@ class SsoClientWebhookControllerTest {
     @Test
     void shouldReturnBadRequestIfWebhookNotExists() throws Exception {
         final String id = "ID";
-        final String key = "KEY";
-        when(registry.validateWebhook(anyString(), anyString())).thenReturn(null);
+        final String signature = "sha256=123";
+        final String payload = "{\"event\":\"DELETE_USER\"}";
+        when(registry.validateWebhook(anyString(), anyString(), any())).thenReturn(null);
 
         MvcResult mvcResult = mockMvc.perform(post("/sso/webhook/{id}", id)
-                        .content(String.format("{\"key\":\"%s\"}", key))
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .content(payload)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-SSO-Signature", signature))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         JsonNode jsonNode = new ObjectMapper().readTree(contentAsString);
 
-        verify(registry).validateWebhook(id, key);
+        verify(registry).validateWebhook(eq(id), eq(signature), any());
         assertThat(jsonNode).isNotNull();
         assertThat(jsonNode.get("id")).isNotNull();
         assertThat(jsonNode.get("id").asText()).isEqualTo(id);
@@ -61,19 +63,21 @@ class SsoClientWebhookControllerTest {
     @Test
     void shouldReturnOkIfWebhookHandled() throws Exception {
         final String id = "ID";
-        final String key = "KEY";
-        when(registry.validateWebhook(anyString(), anyString())).thenReturn(new FakeWebhook(id, false, false));
+        final String signature = "sha256=123";
+        final String payload = "{\"event\":\"DELETE_USER\"}";
+        when(registry.validateWebhook(anyString(), anyString(), any())).thenReturn(new FakeWebhook(id, null, false));
 
         MvcResult mvcResult = mockMvc.perform(post("/sso/webhook/{id}", id)
-                        .content(String.format("{\"key\":\"%s\"}", key))
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .content(payload)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-SSO-Signature", signature))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         JsonNode jsonNode = new ObjectMapper().readTree(contentAsString);
 
-        verify(registry).validateWebhook(id, key);
+        verify(registry).validateWebhook(eq(id), eq(signature), any());
         assertThat(jsonNode).isNotNull();
         assertThat(jsonNode.get("id")).isNotNull();
         assertThat(jsonNode.get("id").asText()).isEqualTo(id);
@@ -82,20 +86,22 @@ class SsoClientWebhookControllerTest {
     @Test
     void shouldReturnForbiddenWhenWebhookHandled() throws Exception {
         final String id = "ID";
-        final String key = "KEY";
+        final String signature = "sha256=123";
+        final String payload = "{\"event\":\"DELETE_USER\"}";
         WebhookHandlerException exception = new WebhookHandlerException(HandleError.VALIDATE, "");
-        when(registry.validateWebhook(anyString(), anyString())).thenThrow(exception);
+        when(registry.validateWebhook(anyString(), anyString(), any())).thenThrow(exception);
 
         MvcResult mvcResult = mockMvc.perform(post("/sso/webhook/{id}", id)
-                        .content(String.format("{\"key\":\"%s\"}", key))
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .content(payload)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-SSO-Signature", signature))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         JsonNode jsonNode = new ObjectMapper().readTree(contentAsString);
 
-        verify(registry).validateWebhook(id, key);
+        verify(registry).validateWebhook(eq(id), eq(signature), any());
         assertThat(jsonNode).isNotNull();
         assertThat(jsonNode.get("id")).isNotNull();
         assertThat(jsonNode.get("id").asText()).isEqualTo(id);
@@ -104,19 +110,21 @@ class SsoClientWebhookControllerTest {
     @Test
     void shouldReturnInternalErrorWhenWebhookHandled() throws Exception {
         final String id = "ID";
-        final String key = "KEY";
-        when(registry.validateWebhook(anyString(), anyString())).thenReturn(new FakeWebhook(id, false, true));
+        final String signature = "sha256=123";
+        final String payload = "{\"event\":\"DELETE_USER\"}";
+        when(registry.validateWebhook(anyString(), anyString(), any())).thenReturn(new FakeWebhook(id, null, true));
 
         MvcResult mvcResult = mockMvc.perform(post("/sso/webhook/{id}", id)
-                        .content(String.format("{\"key\":\"%s\"}", key))
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .content(payload)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-SSO-Signature", signature))
                 .andExpect(status().is5xxServerError())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
         JsonNode jsonNode = new ObjectMapper().readTree(contentAsString);
 
-        verify(registry).validateWebhook(id, key);
+        verify(registry).validateWebhook(eq(id), eq(signature), any());
         assertThat(jsonNode).isNotNull();
         assertThat(jsonNode.get("id")).isNotNull();
         assertThat(jsonNode.get("id").asText()).isEqualTo(id);

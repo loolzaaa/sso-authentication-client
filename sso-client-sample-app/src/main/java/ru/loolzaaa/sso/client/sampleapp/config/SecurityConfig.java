@@ -57,7 +57,7 @@ public class SecurityConfig implements WebSecurityCustomizer, SsoClientConfigure
 
     @Override
     public void addWebhooks(WebhookHandlerRegistry registry) {
-        registry.addWebhook("WEBHOOK_VIA_CONFIG", "PASSWORD"::equals, System.err::println);
+        registry.addWebhook("WEBHOOK_VIA_CONFIG", "PASSWORD", System.err::println);
     }
 
     @Component

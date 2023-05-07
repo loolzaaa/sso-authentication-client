@@ -9,6 +9,7 @@ import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
 import ru.loolzaaa.sso.client.core.webhook.HandleError;
 import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerException;
 import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerRegistry;
+import ru.loolzaaa.sso.client.core.webhook.WebhookPayload;
 
 @RestController
 @RequestMapping("/sso/webhook")
@@ -24,17 +25,18 @@ public class SsoClientWebhookController {
 
     @PostMapping(path = "/{id}", consumes = "application/json", produces = "application/json")
     ResponseEntity<WebhookResult> processWebhook(@PathVariable("id") String id,
-                                                 @RequestBody WebhookRequest webhookRequest) {
+                                                 @RequestHeader("X-SSO-Signature") String signature,
+                                                 @RequestBody WebhookPayload payload) {
         log.debug("Incoming webhook request for id: {}", id);
         WebhookResult webhookResult;
         try {
-            SsoClientWebhookHandler webhook = webhookHandlerRegistry.validateWebhook(id, webhookRequest.getKey());
+            SsoClientWebhookHandler webhook = webhookHandlerRegistry.validateWebhook(id, signature, payload);
             if (webhook == null) {
                 log.warn("Webhook not exists: {}", id);
                 webhookResult = new WebhookResult(id, "Webhook not exists");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(webhookResult);
             }
-            webhook.handle(webhookRequest.getPayload());
+            webhook.handle(payload);
             log.info("Webhook handle success: {}", id);
             webhookResult = new WebhookResult(id, "Webhook successfully handled");
             return ResponseEntity.ok(webhookResult);
@@ -48,19 +50,6 @@ public class SsoClientWebhookController {
                 webhookResult = new WebhookResult(id, "Webhook process error: " + e.getMessage());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(webhookResult);
             }
-        }
-    }
-
-    private static class WebhookRequest {
-        private String key;
-        private Object payload;
-
-        public String getKey() {
-            return key;
-        }
-
-        public Object getPayload() {
-            return payload;
         }
     }
 

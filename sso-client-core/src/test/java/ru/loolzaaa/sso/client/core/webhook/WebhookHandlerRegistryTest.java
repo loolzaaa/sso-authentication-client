@@ -1,11 +1,11 @@
 package ru.loolzaaa.sso.client.core.webhook;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.loolzaaa.sso.client.core.application.SsoClientWebhookHandler;
 
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,7 +21,8 @@ class WebhookHandlerRegistryTest {
     @Test
     void shouldAddNewWebhookAndAfterThrowException() {
         final String id = "ID";
-        SsoClientWebhookHandler webhookHandler = new FakeWebhook(id, false, false);
+        final String secret = "SECRET";
+        SsoClientWebhookHandler webhookHandler = new FakeWebhook(id, secret, false);
 
         registry.addWebhook(id, webhookHandler);
 
@@ -31,12 +32,12 @@ class WebhookHandlerRegistryTest {
     @Test
     void shouldAddNewWebhook2AndAfterThrowException() {
         final String id = "ID";
-        Predicate<String> keyValidator = "TEST"::equals;
-        Consumer<Object> handler = System.out::println;
+        final String secret = "SECRET";
+        Consumer<WebhookPayload> handler = System.out::println;
 
-        registry.addWebhook(id, keyValidator, handler);
+        registry.addWebhook(id, secret, handler);
 
-        assertThrows(IllegalArgumentException.class, () -> registry.addWebhook(id, keyValidator, handler));
+        assertThrows(IllegalArgumentException.class, () -> registry.addWebhook(id, secret, handler));
     }
 
     @Test
@@ -44,19 +45,23 @@ class WebhookHandlerRegistryTest {
         final String id = "ID";
         final String key = "KEY";
 
-        SsoClientWebhookHandler actualWebhook = registry.validateWebhook(id, key);
+        SsoClientWebhookHandler actualWebhook = registry.validateWebhook(id, key, null);
 
         assertNull(actualWebhook);
     }
 
     @Test
     void shouldReturnWebhookIfWebhookExistsAndValidKey() throws Exception {
+        final ObjectMapper mapper = new ObjectMapper();
         final String id = "ID";
-        final String key = "KEY";
-        SsoClientWebhookHandler webhookHandler = new FakeWebhook(id, false, false);
+        final String secret = "SECRET";
+        final String jsonPayload = "{\"event\":\"DELETE_USER\"}";
+        final String expectedSignature = "sha256=00e55d65f423b4843683758134b181cb135aa3e83261e673ef1690ae15ecd25b";
+        SsoClientWebhookHandler webhookHandler = new FakeWebhook(id, secret, false);
         registry.addWebhook(id, webhookHandler);
+        WebhookPayload payload = mapper.readValue(jsonPayload, WebhookPayload.class);
 
-        SsoClientWebhookHandler actualWebhook = registry.validateWebhook(id, key);
+        SsoClientWebhookHandler actualWebhook = registry.validateWebhook(id, expectedSignature, payload);
 
         assertNotNull(actualWebhook);
         assertEquals(id, actualWebhook.getId());
