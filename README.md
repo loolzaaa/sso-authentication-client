@@ -56,13 +56,6 @@ To use Github Packages, you need to authenticate to it, add an additional reposi
 
 # Client Configuration
 
-Some properties can be defined to prevent other dependencies from changing the required values.
-```
-# Expose JMX endpoint for JWT secret key update endpoint
-# Default: false
-spring.jmx.enabled=true
-```
-
 ## Main configuration
 
 ### To enable SSO Client must define: `applicationName`, `entryPointAddress`, `entryPointUri`
