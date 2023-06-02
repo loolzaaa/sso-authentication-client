@@ -50,7 +50,7 @@ To use Github Packages, you need to authenticate to it, add an additional reposi
 <dependency>
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-spring-boot-starter</artifactId>
-    <version>0.9.0</version>
+    <version>0.10.0</version>
 </dependency>
 ```
 
