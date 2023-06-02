@@ -2,6 +2,7 @@ package ru.loolzaaa.sso.client.core.endpoint.service;
 
 import org.springframework.stereotype.Service;
 import ru.loolzaaa.sso.client.core.context.UserService;
+import ru.loolzaaa.sso.client.core.dto.RequestStatusDTO;
 import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
@@ -32,17 +33,29 @@ public class SsoClientServiceImpl implements SsoClientService {
     }
 
     @Override
-    public int updateUserConfigOnServer(String username, BaseUserConfig config) {
-        return userService.updateUserConfigOnServer(username, config);
+    public RequestStatusDTO updateUserConfigOnServer(String username, BaseUserConfig config) {
+        try {
+            return userService.updateUserConfigOnServer(username, config);
+        } catch (Exception e) {
+            return new RequestStatusDTO("ERROR", e.getMessage());
+        }
     }
 
     @Override
-    public int deleteUserConfigOnServer(String username) {
-        return userService.deleteUserConfigOnServer(username);
+    public RequestStatusDTO deleteUserConfigOnServer(String username) {
+        try {
+            return userService.deleteUserConfigOnServer(username);
+        } catch (Exception e) {
+            return new RequestStatusDTO("ERROR", e.getMessage());
+        }
     }
 
     @Override
-    public int createUserConfigOnServer(String username, String name, BaseUserConfig config) {
-        return userService.createUserConfigOnServer(username, name, config);
+    public RequestStatusDTO createUserConfigOnServer(String username, String name, BaseUserConfig config) {
+        try {
+            return userService.createUserConfigOnServer(username, name, config);
+        } catch (Exception e) {
+            return new RequestStatusDTO("ERROR", e.getMessage());
+        }
     }
 }

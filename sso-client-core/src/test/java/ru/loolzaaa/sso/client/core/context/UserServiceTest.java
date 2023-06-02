@@ -15,6 +15,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import ru.loolzaaa.sso.client.core.dto.RequestStatusDTO;
 import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserGrantedAuthority;
@@ -45,6 +46,8 @@ class UserServiceTest {
     ResponseEntity<UserPrincipal> userEntity;
     @Mock
     ResponseEntity<UserPrincipal[]> usersEntity;
+    @Mock
+    ResponseEntity<RequestStatusDTO> statusEntity;
 
     UserPrincipal userPrincipal;
 
@@ -157,147 +160,148 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldSendUserConfigRequestAndReturn0() {
-        int code = userService.updateUserConfigOnServer("username", null);
+    void shouldSendUserConfigRequestAndReturnOK() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(RequestStatusDTO.class), anyString(), anyString()))
+                .thenReturn(statusEntity);
+        when(statusEntity.getBody()).thenReturn(new RequestStatusDTO("OK", ""));
 
-        verify(restTemplate).exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString());
-        assertThat(code).isZero();
+        RequestStatusDTO response = userService.updateUserConfigOnServer("username", null);
+
+        verify(restTemplate).exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(RequestStatusDTO.class), anyString(), anyString());
+        assertThat(response.getStatus()).isEqualTo("OK");
     }
 
     @Test
-    void shouldReturnMinus1IfBadRequestForUserConfigChange() {
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString()))
+    void shouldThrowExceptionIfBadRequestForUserConfigChange() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(RequestStatusDTO.class), anyString(), anyString()))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
-        int code = userService.updateUserConfigOnServer("username", null);
-
-        assertThat(code).isEqualTo(-1);
+        assertThatThrownBy(() -> userService.updateUserConfigOnServer("username", null))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
-    void shouldReturnMinus2IfErrorRequestForUserConfigChange() {
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString()))
+    void shouldThrowExceptionIfErrorRequestForUserConfigChange() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(RequestStatusDTO.class), anyString(), anyString()))
                 .thenThrow(new HttpClientErrorException(HttpStatus.CONFLICT));
 
-        int code = userService.updateUserConfigOnServer("username", null);
-
-        assertThat(code).isEqualTo(-2);
+        assertThatThrownBy(() -> userService.updateUserConfigOnServer("username", null))
+                .isInstanceOf(HttpClientErrorException.class);
     }
 
     @Test
-    void shouldReturnMinus2IfErrorForUserConfigChange() {
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString()))
+    void shouldThrowExceptionIfErrorForUserConfigChange() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(RequestStatusDTO.class), anyString(), anyString()))
                 .thenThrow(new RuntimeException("ERROR"));
 
-        int code = userService.updateUserConfigOnServer("username", null);
-
-        assertThat(code).isEqualTo(-2);
+        assertThatThrownBy(() -> userService.updateUserConfigOnServer("username", null))
+                .isInstanceOf(RuntimeException.class);
     }
 
     @Test
-    void shouldReturn1IfTokenApiNotUseWhenUserConfigDelete() {
-        int code = userService.deleteUserConfigOnServer("username");
+    void shouldReturnERRORIfTokenApiNotUseWhenUserConfigDelete() {
+        RequestStatusDTO requestStatusDTO = userService.deleteUserConfigOnServer("username");
 
-        assertThat(code).isEqualTo(1);
+        assertThat(requestStatusDTO.getStatus()).isEqualTo("ERROR");
     }
 
     @Test
-    void shouldDeleteUserConfigRequestAndReturn0() {
+    void shouldDeleteUserConfigRequestAndReturnOK() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.DELETE), any(), eq(RequestStatusDTO.class), anyString(), anyString()))
+                .thenReturn(statusEntity);
+        when(statusEntity.getBody()).thenReturn(new RequestStatusDTO("OK", ""));
         ReflectionTestUtils.setField(userService, "tokenApiUse", true);
 
-        int code = userService.deleteUserConfigOnServer("username");
+        RequestStatusDTO requestStatusDTO = userService.deleteUserConfigOnServer("username");
 
-        verify(restTemplate).delete(anyString(), anyString(), anyString());
-        assertThat(code).isZero();
+        verify(restTemplate).exchange(anyString(), eq(HttpMethod.DELETE), any(), eq(RequestStatusDTO.class), anyString(), anyString());
+        assertThat(requestStatusDTO.getStatus()).isEqualTo("OK");
     }
 
     @Test
-    void shouldReturnMinus1IfBadRequestForUserConfigDelete() {
-        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
-        doThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST))
-                .when(restTemplate)
-                .delete(anyString(), anyString(), anyString());
-
-        int code = userService.deleteUserConfigOnServer("username");
-
-        assertThat(code).isEqualTo(-1);
-    }
-
-    @Test
-    void shouldReturnMinus2IfErrorRequestForUserConfigDelete() {
-        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
-        doThrow(new HttpClientErrorException(HttpStatus.CONFLICT))
-                .when(restTemplate)
-                .delete(anyString(), anyString(), anyString());
-
-        int code = userService.deleteUserConfigOnServer("username");
-
-        assertThat(code).isEqualTo(-2);
-    }
-
-    @Test
-    void shouldReturnMinus2IfErrorForUserConfigDelete() {
-        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
-        doThrow(new RuntimeException("ERROR"))
-                .when(restTemplate)
-                .delete(anyString(), anyString(), anyString());
-
-        int code = userService.deleteUserConfigOnServer("username");
-
-        assertThat(code).isEqualTo(-2);
-    }
-
-    @Test
-    void shouldReturn1IfTokenApiNotUseWhenUserConfigCreate() {
-        int code = userService.createUserConfigOnServer("username", "name", null);
-
-        assertThat(code).isEqualTo(1);
-    }
-
-    @Test
-    void shouldCreateUserConfigRequestAndReturn0() {
-        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
-
-        int code = userService.createUserConfigOnServer("username", "name", null);
-
-        verify(restTemplate).put(anyString(), any());
-        assertThat(code).isZero();
-    }
-
-    @Test
-    void shouldReturnMinus1IfBadRequestForUserConfigCreate() {
+    void shouldThrowExceptionIfBadRequestForUserConfigDelete() {
         ReflectionTestUtils.setField(userService, "tokenApiUse", true);
         doThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST))
                 .when(restTemplate)
-                .put(anyString(), any());
+                .exchange(anyString(), eq(HttpMethod.DELETE), any(), eq(RequestStatusDTO.class), anyString(), anyString());
 
-        int code = userService.createUserConfigOnServer("username", "name", null);
-
-        assertThat(code).isEqualTo(-1);
+        assertThatThrownBy(() -> userService.deleteUserConfigOnServer("username"))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
-    void shouldReturnMinus2IfErrorRequestForUserConfigCreate() {
+    void shouldThrowExceptionIfErrorRequestForUserConfigDelete() {
         ReflectionTestUtils.setField(userService, "tokenApiUse", true);
         doThrow(new HttpClientErrorException(HttpStatus.CONFLICT))
                 .when(restTemplate)
-                .put(anyString(), any());
+                .exchange(anyString(), eq(HttpMethod.DELETE), any(), eq(RequestStatusDTO.class), anyString(), anyString());
 
-        int code = userService.createUserConfigOnServer("username", "name", null);
-
-        assertThat(code).isEqualTo(-2);
+        assertThatThrownBy(() -> userService.deleteUserConfigOnServer("username"))
+                .isInstanceOf(HttpClientErrorException.class);
     }
 
     @Test
-    void shouldReturnMinus2IfErrorForUserConfigCreate() {
+    void shouldThrowExceptionIfErrorForUserConfigDelete() {
         ReflectionTestUtils.setField(userService, "tokenApiUse", true);
         doThrow(new RuntimeException("ERROR"))
                 .when(restTemplate)
-                .put(anyString(), any());
+                .exchange(anyString(), eq(HttpMethod.DELETE), any(), eq(RequestStatusDTO.class), anyString(), anyString());
 
-        int code = userService.createUserConfigOnServer("username", "name", null);
+        assertThatThrownBy(() -> userService.deleteUserConfigOnServer("username"))
+                .isInstanceOf(RuntimeException.class);
+    }
 
-        assertThat(code).isEqualTo(-2);
+    @Test
+    void shouldReturnERRORIfTokenApiNotUseWhenUserConfigCreate() {
+        RequestStatusDTO requestStatusDTO = userService.createUserConfigOnServer("username", "name", null);
+
+        assertThat(requestStatusDTO.getStatus()).isEqualTo("ERROR");
+    }
+
+    @Test
+    void shouldCreateUserConfigRequestAndReturnOK() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.PUT), any(), eq(RequestStatusDTO.class)))
+                .thenReturn(statusEntity);
+        when(statusEntity.getBody()).thenReturn(new RequestStatusDTO("OK", ""));
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+
+        RequestStatusDTO requestStatusDTO = userService.createUserConfigOnServer("username", "name", null);
+
+        verify(restTemplate).exchange(anyString(), eq(HttpMethod.PUT), any(), eq(RequestStatusDTO.class));
+        assertThat(requestStatusDTO.getStatus()).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldThrowExceptionIfBadRequestForUserConfigCreate() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+        doThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST))
+                .when(restTemplate)
+                .exchange(anyString(), eq(HttpMethod.PUT), any(), eq(RequestStatusDTO.class));
+
+        assertThatThrownBy(() -> userService.createUserConfigOnServer("username", "name", null))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void shouldThrowExceptionIfErrorRequestForUserConfigCreate() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+        doThrow(new HttpClientErrorException(HttpStatus.CONFLICT))
+                .when(restTemplate)
+                .exchange(anyString(), eq(HttpMethod.PUT), any(), eq(RequestStatusDTO.class));
+
+        assertThatThrownBy(() -> userService.createUserConfigOnServer("username", "name", null))
+                .isInstanceOf(HttpClientErrorException.class);
+    }
+
+    @Test
+    void shouldThrowExceptionIfErrorForUserConfigCreate() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+        doThrow(new RuntimeException("ERROR"))
+                .when(restTemplate)
+                .exchange(anyString(), eq(HttpMethod.PUT), any(), eq(RequestStatusDTO.class));
+
+        assertThatThrownBy(() -> userService.createUserConfigOnServer("username", "name", null))
+                .isInstanceOf(RuntimeException.class);
     }
 
     @Test

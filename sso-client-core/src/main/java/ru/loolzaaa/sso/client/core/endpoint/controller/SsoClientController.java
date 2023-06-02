@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.*;
 import ru.loolzaaa.sso.client.core.application.UserConfigTypeSupplier;
+import ru.loolzaaa.sso.client.core.dto.RequestStatusDTO;
 import ru.loolzaaa.sso.client.core.endpoint.service.SsoClientService;
 import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
@@ -50,48 +51,27 @@ public class SsoClientController {
     }
 
     @PatchMapping(path = "/config", produces = "application/json", consumes = "application/json")
-    String updateUserConfig(@RequestParam("username") String username,
-                            @RequestBody JsonNode config) {
+    RequestStatusDTO updateUserConfig(@RequestParam("username") String username,
+                                      @RequestBody JsonNode config) {
         Class<? extends BaseUserConfig> configClass = configTypeSupplier == null ?
                 BaseUserConfig.class :
                 configTypeSupplier.get();
         BaseUserConfig userConfig = mapper.convertValue(config, configClass);
-        String answer = "{\"code\":%d,\"message\":\"%s\"}";
-        int code = ssoClientService.updateUserConfigOnServer(username, userConfig);
-        switch (code) {
-            case 0:
-                return String.format(answer, code, "Success");
-            case -1:
-                return String.format(answer, code, "Bad request format");
-            default:
-                return String.format(answer, code, "Error while communicating with SSO server");
-        }
+        return ssoClientService.updateUserConfigOnServer(username, userConfig);
     }
 
     @DeleteMapping(path = "/config", produces = "application/json")
-    String deleteUserConfig(@RequestParam("username") String username) {
-        String answer = "{\"code\":%d,\"message\":\"%s\"}";
-        int code = ssoClientService.deleteUserConfigOnServer(username);
-        switch (code) {
-            case 0:
-                return String.format(answer, code, "Success");
-            case 1:
-                return String.format(answer, code, "SSO Client without tokens cannot delete configs");
-            case -1:
-                return String.format(answer, code, "Bad request format");
-            default:
-                return String.format(answer, code, "Error while communicating with SSO server");
-        }
+    RequestStatusDTO deleteUserConfig(@RequestParam("username") String username) {
+        return ssoClientService.deleteUserConfigOnServer(username);
     }
 
     @PutMapping(path = "/user", produces = "application/json", consumes = "application/json")
-    String createUserConfig(@RequestBody JsonNode newUserData) {
-        String answer = "{\"code\":%d,\"message\":\"%s\"}";
+    RequestStatusDTO createUserConfig(@RequestBody JsonNode newUserData) {
         boolean correctFields = newUserData.has("username") &&
                 newUserData.has("name") &&
                 newUserData.has("config");
         if (!correctFields) {
-            return String.format(answer, 2, "Request body must contain 'username', 'name' and 'config' fields");
+            return new RequestStatusDTO("ERROR", "Request body must contain 'username', 'name' and 'config' fields");
         }
         Class<? extends BaseUserConfig> configClass = configTypeSupplier == null ?
                 BaseUserConfig.class :
@@ -99,16 +79,6 @@ public class SsoClientController {
         String username = newUserData.get("username").asText();
         String name = newUserData.get("name").asText();
         BaseUserConfig userConfig = mapper.convertValue(newUserData.get("config"), configClass);
-        int code = ssoClientService.createUserConfigOnServer(username, name, userConfig);
-        switch (code) {
-            case 0:
-                return String.format(answer, code, "Success");
-            case 1:
-                return String.format(answer, code, "SSO Client without tokens cannot create configs");
-            case -1:
-                return String.format(answer, code, "Bad request format");
-            default:
-                return String.format(answer, code, "Error while communicating with SSO server");
-        }
+        return ssoClientService.createUserConfigOnServer(username, name, userConfig);
     }
 }

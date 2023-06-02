@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.loolzaaa.sso.client.core.context.UserService;
+import ru.loolzaaa.sso.client.core.dto.RequestStatusDTO;
 import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
@@ -100,7 +101,7 @@ class SsoClientServiceImplTest {
     }
 
     @Test
-    void shouldReturn0BecauseOfSuccessUpdateUserConfig() {
+    void shouldReturnOKBecauseOfSuccessUpdateUserConfig() {
         //given
         final String USERNAME = "USERNAME";
 
@@ -115,10 +116,10 @@ class SsoClientServiceImplTest {
         ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<BaseUserConfig> configCaptor = ArgumentCaptor.forClass(BaseUserConfig.class);
 
-        given(userService.updateUserConfigOnServer(anyString(), any())).willReturn(0);
+        given(userService.updateUserConfigOnServer(anyString(), any())).willReturn(new RequestStatusDTO("OK", ""));
 
         //when
-        int code = ssoClientService.updateUserConfigOnServer(USERNAME, config);
+        RequestStatusDTO requestStatusDTO = ssoClientService.updateUserConfigOnServer(USERNAME, config);
 
         //then
         assertThat(config.getPrivileges())
@@ -127,27 +128,27 @@ class SsoClientServiceImplTest {
         verify(userService).updateUserConfigOnServer(usernameCaptor.capture(), configCaptor.capture());
         assertThat(usernameCaptor.getValue()).startsWith(USERNAME);
         assertThat(configCaptor.getValue()).isEqualTo(config);
-        assertThat(code).isZero();
+        assertThat(requestStatusDTO.getStatus()).isEqualTo("OK");
     }
 
     @Test
-    void shouldReturn0BecauseOfSuccessDeleteUserConfig() {
+    void shouldReturnOKBecauseOfSuccessDeleteUserConfig() {
         //given
         final String USERNAME = "USERNAME";
         ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
-        given(userService.deleteUserConfigOnServer(anyString())).willReturn(0);
+        given(userService.deleteUserConfigOnServer(anyString())).willReturn(new RequestStatusDTO("OK", ""));
 
         //when
-        int code = ssoClientService.deleteUserConfigOnServer(USERNAME);
+        RequestStatusDTO requestStatusDTO = ssoClientService.deleteUserConfigOnServer(USERNAME);
 
         //then
         verify(userService).deleteUserConfigOnServer(usernameCaptor.capture());
         assertThat(usernameCaptor.getValue()).startsWith(USERNAME);
-        assertThat(code).isZero();
+        assertThat(requestStatusDTO.getStatus()).isEqualTo("OK");
     }
 
     @Test
-    void shouldReturn0BecauseOfSuccessCreateUserConfig() {
+    void shouldReturnOKBecauseOfSuccessCreateUserConfig() {
         //given
         final String USERNAME = "USERNAME";
         final String NAME = "NAME";
@@ -164,10 +165,10 @@ class SsoClientServiceImplTest {
         ArgumentCaptor<String> nameCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<BaseUserConfig> configCaptor = ArgumentCaptor.forClass(BaseUserConfig.class);
 
-        given(userService.createUserConfigOnServer(anyString(), anyString(), any())).willReturn(0);
+        given(userService.createUserConfigOnServer(anyString(), anyString(), any())).willReturn(new RequestStatusDTO("OK", ""));
 
         //when
-        int code = ssoClientService.createUserConfigOnServer(USERNAME, NAME, config);
+        RequestStatusDTO requestStatusDTO = ssoClientService.createUserConfigOnServer(USERNAME, NAME, config);
 
         //then
         assertThat(config.getPrivileges())
@@ -177,6 +178,6 @@ class SsoClientServiceImplTest {
         assertThat(usernameCaptor.getValue()).startsWith(USERNAME);
         assertThat(nameCaptor.getValue()).startsWith(NAME);
         assertThat(configCaptor.getValue()).isEqualTo(config);
-        assertThat(code).isZero();
+        assertThat(requestStatusDTO.getStatus()).isEqualTo("OK");
     }
 }

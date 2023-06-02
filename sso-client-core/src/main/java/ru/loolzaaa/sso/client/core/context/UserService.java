@@ -13,6 +13,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import ru.loolzaaa.sso.client.core.dto.CreateUserRequestDTO;
+import ru.loolzaaa.sso.client.core.dto.RequestStatusDTO;
 import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
@@ -60,7 +61,7 @@ public class UserService {
                     username,
                     applicationName);
             userPrincipal = userEntity.getBody();
-        } catch (HttpClientErrorException e) {
+        } catch (Exception e) {
             handleSecurityException(e);
         }
         if (userPrincipal == null) {
@@ -80,7 +81,7 @@ public class UserService {
                     applicationName,
                     authority);
             userPrincipalArray = userEntity.getBody();
-        } catch (HttpClientErrorException e) {
+        } catch (Exception e) {
             handleSecurityException(e);
         }
         if (userPrincipalArray == null) {
@@ -94,67 +95,73 @@ public class UserService {
         return userPrincipals;
     }
 
-    public int updateUserConfigOnServer(String username, BaseUserConfig config) {
+    public RequestStatusDTO updateUserConfigOnServer(String username, BaseUserConfig config) {
         final String API_URI = tokenApiUse ? "/api/user/{username}/config/{app}" : "/api/fast/user/{username}/config/{app}";
         HttpEntity<BaseUserConfig> request = new HttpEntity<>(config);
+        RequestStatusDTO requestStatus = null;
         try {
-            restTemplate.exchange(
+            ResponseEntity<RequestStatusDTO> response = restTemplate.exchange(
                     entryPointAddress + API_URI,
                     HttpMethod.PATCH,
                     request,
-                    Void.class,
+                    RequestStatusDTO.class,
                     username,
                     applicationName);
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
-                return -1;
-            } else {
-                return -2;
-            }
+            requestStatus = response.getBody();
         } catch (Exception e) {
-            return -2;
+            handleSecurityException(e);
         }
-        return 0;
+        if (requestStatus == null) {
+            return new RequestStatusDTO("ERROR", "Response body is null");
+        }
+        return requestStatus;
     }
 
-    public int deleteUserConfigOnServer(String username) {
+    public RequestStatusDTO deleteUserConfigOnServer(String username) {
         if (!tokenApiUse) {
-            return 1;
+            return new RequestStatusDTO("ERROR", "SSO Client without tokens cannot delete configs");
         }
         final String API_URI = "/api/user/{username}/config/{app}";
+        RequestStatusDTO requestStatus = null;
         try {
-            restTemplate.delete(entryPointAddress + API_URI, username, applicationName);
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
-                return -1;
-            } else {
-                return -2;
-            }
+            ResponseEntity<RequestStatusDTO> response = restTemplate.exchange(
+                    entryPointAddress + API_URI,
+                    HttpMethod.DELETE,
+                    null,
+                    RequestStatusDTO.class,
+                    username,
+                    applicationName);
+            requestStatus = response.getBody();
         } catch (Exception e) {
-            return -2;
+            handleSecurityException(e);
         }
-        return 0;
+        if (requestStatus == null) {
+            return new RequestStatusDTO("ERROR", "Response body is null");
+        }
+        return requestStatus;
     }
 
-    public int createUserConfigOnServer(String username, String name, BaseUserConfig config) {
+    public RequestStatusDTO createUserConfigOnServer(String username, String name, BaseUserConfig config) {
         if (!tokenApiUse) {
-            return 1;
+            return new RequestStatusDTO("ERROR", "SSO Client without tokens cannot create configs");
         }
         final String API_URI = "/api/user?app=" + applicationName;
         CreateUserRequestDTO requestDTO = new CreateUserRequestDTO(username, name, config);
         HttpEntity<CreateUserRequestDTO> request = new HttpEntity<>(requestDTO);
+        RequestStatusDTO requestStatus = null;
         try {
-            restTemplate.put(entryPointAddress + API_URI, request);
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
-                return -1;
-            } else {
-                return -2;
-            }
+            ResponseEntity<RequestStatusDTO> response = restTemplate.exchange(entryPointAddress + API_URI,
+                    HttpMethod.PUT,
+                    request,
+                    RequestStatusDTO.class);
+            requestStatus = response.getBody();
         } catch (Exception e) {
-            return -2;
+            handleSecurityException(e);
         }
-        return 0;
+        if (requestStatus == null) {
+            return new RequestStatusDTO("ERROR", "Response body is null");
+        }
+        return requestStatus;
     }
 
     public void saveRequestUser(UserPrincipal userPrincipal) {
@@ -214,21 +221,26 @@ public class UserService {
         }
     }
 
-    private void handleSecurityException(HttpClientErrorException e) {
-        if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
-            JsonNode errorResponse;
-            try {
-                errorResponse = mapper.readTree(e.getResponseBodyAsByteArray());
-            } catch (Exception ex) {
-                throw new AccessDeniedException(e.getMessage());
-            }
-            if (errorResponse.has("text")) {
-                throw new AccessDeniedException(errorResponse.get("text").asText());
+    private void handleSecurityException(Exception e) {
+        if (e instanceof HttpClientErrorException) {
+            HttpClientErrorException clientError = (HttpClientErrorException) e;
+            if (clientError.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                JsonNode errorResponse;
+                try {
+                    errorResponse = mapper.readTree(clientError.getResponseBodyAsByteArray());
+                } catch (Exception ex) {
+                    throw new AccessDeniedException(e.getMessage());
+                }
+                if (errorResponse.has("text")) {
+                    throw new AccessDeniedException(errorResponse.get("text").asText());
+                } else {
+                    throw new AccessDeniedException(e.getMessage());
+                }
             } else {
-                throw new AccessDeniedException(e.getMessage());
+                throw clientError;
             }
         } else {
-            throw e;
+            throw new RuntimeException(e);
         }
     }
 }

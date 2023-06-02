@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.loolzaaa.sso.client.core.application.UserConfigTypeSupplier;
+import ru.loolzaaa.sso.client.core.dto.RequestStatusDTO;
 import ru.loolzaaa.sso.client.core.endpoint.service.SsoClientService;
 import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
@@ -99,11 +100,11 @@ class SsoClientControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, 1, -1, 100})
-    void shouldReturnDefinedCodeWhenUpdateConfig(int code) throws Exception {
+    @ValueSource(strings = {"OK", "ERROR"})
+    void shouldReturnDefinedStatusWhenUpdateConfig(String status) throws Exception {
         final String username = "USER";
         final String app = "APP";
-        when(ssoClientService.updateUserConfigOnServer(anyString(), any())).thenReturn(code);
+        when(ssoClientService.updateUserConfigOnServer(anyString(), any())).thenReturn(new RequestStatusDTO(status, ""));
 
         MvcResult mvcResult = mockMvc.perform(patch("/sso/client/config")
                         .param("username", username)
@@ -114,12 +115,13 @@ class SsoClientControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
-        JsonNode jsonNode = new ObjectMapper().readTree(contentAsString);
+        RequestStatusDTO requestStatusDTO = new ObjectMapper().readValue(contentAsString, RequestStatusDTO.class);
 
         verify(ssoClientService).updateUserConfigOnServer(anyString(), any());
-        assertThat(jsonNode).isNotNull();
-        assertThat(jsonNode.get("code")).isNotNull();
-        assertThat(jsonNode.get("code").asInt()).isEqualTo(code);
+        assertThat(requestStatusDTO).isNotNull();
+        assertThat(requestStatusDTO.getStatus())
+                .isNotNull()
+                .isEqualTo(status);
     }
 
     @Test
@@ -129,7 +131,7 @@ class SsoClientControllerTest {
         final int code = 0;
         UserConfigTypeSupplier configTypeSupplier = () -> TestConfig.class;
         ReflectionTestUtils.setField(controller, "configTypeSupplier", configTypeSupplier);
-        when(ssoClientService.updateUserConfigOnServer(anyString(), any())).thenReturn(code);
+        when(ssoClientService.updateUserConfigOnServer(anyString(), any())).thenReturn(new RequestStatusDTO("OK", ""));
         ArgumentCaptor<BaseUserConfig> configCaptor = ArgumentCaptor.forClass(BaseUserConfig.class);
 
         mockMvc.perform(patch("/sso/client/config")
@@ -158,10 +160,10 @@ class SsoClientControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, 1, -1, 100})
-    void shouldReturnDefinedCodeWhenDeleteConfig(int code) throws Exception {
+    @ValueSource(strings = {"OK", "ERROR"})
+    void shouldReturnDefinedStatusWhenDeleteConfig(String status) throws Exception {
         final String username = "USER";
-        when(ssoClientService.deleteUserConfigOnServer(anyString())).thenReturn(code);
+        when(ssoClientService.deleteUserConfigOnServer(anyString())).thenReturn(new RequestStatusDTO(status, ""));
 
         MvcResult mvcResult = mockMvc.perform(delete("/sso/client/config")
                         .param("username", username))
@@ -169,23 +171,24 @@ class SsoClientControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
-        JsonNode jsonNode = new ObjectMapper().readTree(contentAsString);
+        RequestStatusDTO requestStatusDTO = new ObjectMapper().readValue(contentAsString, RequestStatusDTO.class);
 
         verify(ssoClientService).deleteUserConfigOnServer(anyString());
-        assertThat(jsonNode).isNotNull();
-        assertThat(jsonNode.get("code")).isNotNull();
-        assertThat(jsonNode.get("code").asInt()).isEqualTo(code);
+        assertThat(requestStatusDTO).isNotNull();
+        assertThat(requestStatusDTO.getStatus())
+                .isNotNull()
+                .isEqualTo(status);
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, 1, -1, 100})
-    void shouldReturnDefinedCodeWhenCreateConfig(int code) throws Exception {
+    @ValueSource(strings = {"OK", "ERROR"})
+    void shouldReturnDefinedStatusWhenCreateConfig(String status) throws Exception {
         ObjectNode newUserData = new ObjectMapper().createObjectNode();
         newUserData.put("username", "username");
         newUserData.put("name", "name");
         newUserData.putObject("config");
 
-        when(ssoClientService.createUserConfigOnServer(anyString(), anyString(), any())).thenReturn(code);
+        when(ssoClientService.createUserConfigOnServer(anyString(), anyString(), any())).thenReturn(new RequestStatusDTO(status, ""));
 
         MvcResult mvcResult = mockMvc.perform(put("/sso/client/user")
                         .content(new ObjectMapper().writeValueAsString(newUserData))
@@ -194,16 +197,17 @@ class SsoClientControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
-        JsonNode jsonNode = new ObjectMapper().readTree(contentAsString);
+        RequestStatusDTO requestStatusDTO = new ObjectMapper().readValue(contentAsString, RequestStatusDTO.class);
 
         verify(ssoClientService).createUserConfigOnServer(anyString(), anyString(), any());
-        assertThat(jsonNode).isNotNull();
-        assertThat(jsonNode.get("code")).isNotNull();
-        assertThat(jsonNode.get("code").asInt()).isEqualTo(code);
+        assertThat(requestStatusDTO).isNotNull();
+        assertThat(requestStatusDTO.getStatus())
+                .isNotNull()
+                .isEqualTo(status);
     }
 
     @Test
-    void shouldReturnCode2WhenIncorrectRequestBodyForCreateConfig() throws Exception {
+    void shouldReturnERRORWhenIncorrectRequestBodyForCreateConfig() throws Exception {
         MvcResult mvcResult = mockMvc.perform(put("/sso/client/user")
                         .content("{}")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -211,11 +215,12 @@ class SsoClientControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String contentAsString = mvcResult.getResponse().getContentAsString();
-        JsonNode jsonNode = new ObjectMapper().readTree(contentAsString);
+        RequestStatusDTO requestStatusDTO = new ObjectMapper().readValue(contentAsString, RequestStatusDTO.class);
 
-        assertThat(jsonNode).isNotNull();
-        assertThat(jsonNode.get("code")).isNotNull();
-        assertThat(jsonNode.get("code").asInt()).isEqualTo(2);
+        assertThat(requestStatusDTO).isNotNull();
+        assertThat(requestStatusDTO.getStatus())
+                .isNotNull()
+                .isEqualTo("ERROR");
     }
 
     @Test
@@ -225,10 +230,9 @@ class SsoClientControllerTest {
         newUserData.put("name", "name");
         newUserData.putObject("config");
 
-        final int code = 0;
         UserConfigTypeSupplier configTypeSupplier = () -> TestConfig.class;
         ReflectionTestUtils.setField(controller, "configTypeSupplier", configTypeSupplier);
-        when(ssoClientService.createUserConfigOnServer(anyString(), anyString(), any())).thenReturn(code);
+        when(ssoClientService.createUserConfigOnServer(anyString(), anyString(), any())).thenReturn(new RequestStatusDTO("OK", ""));
         ArgumentCaptor<BaseUserConfig> configCaptor = ArgumentCaptor.forClass(BaseUserConfig.class);
 
         mockMvc.perform(put("/sso/client/user")
