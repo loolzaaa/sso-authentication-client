@@ -12,6 +12,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import ru.loolzaaa.sso.client.core.dto.CreateUserRequestDTO;
 import ru.loolzaaa.sso.client.core.model.BaseUserConfig;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.model.UserPrincipal;
@@ -93,7 +94,7 @@ public class UserService {
         return userPrincipals;
     }
 
-    public int updateUserConfigOnServer(String username, String app, BaseUserConfig config) {
+    public int updateUserConfigOnServer(String username, BaseUserConfig config) {
         final String API_URI = tokenApiUse ? "/api/user/{username}/config/{app}" : "/api/fast/user/{username}/config/{app}";
         HttpEntity<BaseUserConfig> request = new HttpEntity<>(config);
         try {
@@ -103,7 +104,47 @@ public class UserService {
                     request,
                     Void.class,
                     username,
-                    app);
+                    applicationName);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                return -1;
+            } else {
+                return -2;
+            }
+        } catch (Exception e) {
+            return -2;
+        }
+        return 0;
+    }
+
+    public int deleteUserConfigOnServer(String username) {
+        if (!tokenApiUse) {
+            return 1;
+        }
+        final String API_URI = "/api/user/{username}/config/{app}";
+        try {
+            restTemplate.delete(entryPointAddress + API_URI, username, applicationName);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                return -1;
+            } else {
+                return -2;
+            }
+        } catch (Exception e) {
+            return -2;
+        }
+        return 0;
+    }
+
+    public int createUserConfigOnServer(String username, String name, BaseUserConfig config) {
+        if (!tokenApiUse) {
+            return 1;
+        }
+        final String API_URI = "/api/user?app=" + applicationName;
+        CreateUserRequestDTO requestDTO = new CreateUserRequestDTO(username, name, config);
+        HttpEntity<CreateUserRequestDTO> request = new HttpEntity<>(requestDTO);
+        try {
+            restTemplate.put(entryPointAddress + API_URI, request);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
                 return -1;

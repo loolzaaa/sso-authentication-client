@@ -158,7 +158,7 @@ class UserServiceTest {
 
     @Test
     void shouldSendUserConfigRequestAndReturn0() {
-        int code = userService.updateUserConfigOnServer("username", "app", null);
+        int code = userService.updateUserConfigOnServer("username", null);
 
         verify(restTemplate).exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString());
         assertThat(code).isZero();
@@ -169,7 +169,7 @@ class UserServiceTest {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString()))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
-        int code = userService.updateUserConfigOnServer("username", "app", null);
+        int code = userService.updateUserConfigOnServer("username", null);
 
         assertThat(code).isEqualTo(-1);
     }
@@ -179,7 +179,7 @@ class UserServiceTest {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString()))
                 .thenThrow(new HttpClientErrorException(HttpStatus.CONFLICT));
 
-        int code = userService.updateUserConfigOnServer("username", "app", null);
+        int code = userService.updateUserConfigOnServer("username", null);
 
         assertThat(code).isEqualTo(-2);
     }
@@ -189,7 +189,113 @@ class UserServiceTest {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.PATCH), any(), eq(Void.class), anyString(), anyString()))
                 .thenThrow(new RuntimeException("ERROR"));
 
-        int code = userService.updateUserConfigOnServer("username", "app", null);
+        int code = userService.updateUserConfigOnServer("username", null);
+
+        assertThat(code).isEqualTo(-2);
+    }
+
+    @Test
+    void shouldReturn1IfTokenApiNotUseWhenUserConfigDelete() {
+        int code = userService.deleteUserConfigOnServer("username");
+
+        assertThat(code).isEqualTo(1);
+    }
+
+    @Test
+    void shouldDeleteUserConfigRequestAndReturn0() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+
+        int code = userService.deleteUserConfigOnServer("username");
+
+        verify(restTemplate).delete(anyString(), anyString(), anyString());
+        assertThat(code).isZero();
+    }
+
+    @Test
+    void shouldReturnMinus1IfBadRequestForUserConfigDelete() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+        doThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST))
+                .when(restTemplate)
+                .delete(anyString(), anyString(), anyString());
+
+        int code = userService.deleteUserConfigOnServer("username");
+
+        assertThat(code).isEqualTo(-1);
+    }
+
+    @Test
+    void shouldReturnMinus2IfErrorRequestForUserConfigDelete() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+        doThrow(new HttpClientErrorException(HttpStatus.CONFLICT))
+                .when(restTemplate)
+                .delete(anyString(), anyString(), anyString());
+
+        int code = userService.deleteUserConfigOnServer("username");
+
+        assertThat(code).isEqualTo(-2);
+    }
+
+    @Test
+    void shouldReturnMinus2IfErrorForUserConfigDelete() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+        doThrow(new RuntimeException("ERROR"))
+                .when(restTemplate)
+                .delete(anyString(), anyString(), anyString());
+
+        int code = userService.deleteUserConfigOnServer("username");
+
+        assertThat(code).isEqualTo(-2);
+    }
+
+    @Test
+    void shouldReturn1IfTokenApiNotUseWhenUserConfigCreate() {
+        int code = userService.createUserConfigOnServer("username", "name", null);
+
+        assertThat(code).isEqualTo(1);
+    }
+
+    @Test
+    void shouldCreateUserConfigRequestAndReturn0() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+
+        int code = userService.createUserConfigOnServer("username", "name", null);
+
+        verify(restTemplate).put(anyString(), any());
+        assertThat(code).isZero();
+    }
+
+    @Test
+    void shouldReturnMinus1IfBadRequestForUserConfigCreate() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+        doThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST))
+                .when(restTemplate)
+                .put(anyString(), any());
+
+        int code = userService.createUserConfigOnServer("username", "name", null);
+
+        assertThat(code).isEqualTo(-1);
+    }
+
+    @Test
+    void shouldReturnMinus2IfErrorRequestForUserConfigCreate() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+        doThrow(new HttpClientErrorException(HttpStatus.CONFLICT))
+                .when(restTemplate)
+                .put(anyString(), any());
+
+        int code = userService.createUserConfigOnServer("username", "name", null);
+
+        assertThat(code).isEqualTo(-2);
+    }
+
+    @Test
+    void shouldReturnMinus2IfErrorForUserConfigCreate() {
+        ReflectionTestUtils.setField(userService, "tokenApiUse", true);
+        doThrow(new RuntimeException("ERROR"))
+                .when(restTemplate)
+                .put(anyString(), any());
+
+        int code = userService.createUserConfigOnServer("username", "name", null);
 
         assertThat(code).isEqualTo(-2);
     }

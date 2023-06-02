@@ -51,19 +51,60 @@ public class SsoClientController {
 
     @PatchMapping(path = "/config", produces = "application/json", consumes = "application/json")
     String updateUserConfig(@RequestParam("username") String username,
-                            @RequestParam("app") String app,
                             @RequestBody JsonNode config) {
         Class<? extends BaseUserConfig> configClass = configTypeSupplier == null ?
                 BaseUserConfig.class :
                 configTypeSupplier.get();
         BaseUserConfig userConfig = mapper.convertValue(config, configClass);
         String answer = "{\"code\":%d,\"message\":\"%s\"}";
-        int code = ssoClientService.updateUserConfigOnServer(username, app, userConfig);
+        int code = ssoClientService.updateUserConfigOnServer(username, userConfig);
+        switch (code) {
+            case 0:
+                return String.format(answer, code, "Success");
+            case -1:
+                return String.format(answer, code, "Bad request format");
+            default:
+                return String.format(answer, code, "Error while communicating with SSO server");
+        }
+    }
+
+    @DeleteMapping(path = "/config", produces = "application/json")
+    String deleteUserConfig(@RequestParam("username") String username) {
+        String answer = "{\"code\":%d,\"message\":\"%s\"}";
+        int code = ssoClientService.deleteUserConfigOnServer(username);
         switch (code) {
             case 0:
                 return String.format(answer, code, "Success");
             case 1:
-                return String.format(answer, code, "Config doesn't contain privileges");
+                return String.format(answer, code, "SSO Client without tokens cannot delete configs");
+            case -1:
+                return String.format(answer, code, "Bad request format");
+            default:
+                return String.format(answer, code, "Error while communicating with SSO server");
+        }
+    }
+
+    @PutMapping(path = "/user", produces = "application/json", consumes = "application/json")
+    String createUserConfig(@RequestBody JsonNode newUserData) {
+        String answer = "{\"code\":%d,\"message\":\"%s\"}";
+        boolean correctFields = newUserData.has("username") &&
+                newUserData.has("name") &&
+                newUserData.has("config");
+        if (!correctFields) {
+            return String.format(answer, 2, "Request body must contain 'username', 'name' and 'config' fields");
+        }
+        Class<? extends BaseUserConfig> configClass = configTypeSupplier == null ?
+                BaseUserConfig.class :
+                configTypeSupplier.get();
+        String username = newUserData.get("username").asText();
+        String name = newUserData.get("name").asText();
+        BaseUserConfig userConfig = mapper.convertValue(newUserData.get("config"), configClass);
+        int code = ssoClientService.createUserConfigOnServer(username, name, userConfig);
+        switch (code) {
+            case 0:
+                return String.format(answer, code, "Success");
+            case 1:
+                return String.format(answer, code, "SSO Client without tokens cannot create configs");
             case -1:
                 return String.format(answer, code, "Bad request format");
             default:

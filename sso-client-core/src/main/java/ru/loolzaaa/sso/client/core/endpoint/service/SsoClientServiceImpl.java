@@ -32,7 +32,17 @@ public class SsoClientServiceImpl implements SsoClientService {
     }
 
     @Override
-    public int updateUserConfigOnServer(String username, String app, BaseUserConfig config) {
-        return userService.updateUserConfigOnServer(username, app, config);
+    public int updateUserConfigOnServer(String username, BaseUserConfig config) {
+        return userService.updateUserConfigOnServer(username, config);
+    }
+
+    @Override
+    public int deleteUserConfigOnServer(String username) {
+        return userService.deleteUserConfigOnServer(username);
+    }
+
+    @Override
+    public int createUserConfigOnServer(String username, String name, BaseUserConfig config) {
+        return userService.createUserConfigOnServer(username, name, config);
     }
 }

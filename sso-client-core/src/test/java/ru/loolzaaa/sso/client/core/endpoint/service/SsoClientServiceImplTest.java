@@ -20,10 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.verify;
+import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SsoClientServiceImplTest {
@@ -101,7 +100,7 @@ class SsoClientServiceImplTest {
     }
 
     @Test
-    void shouldReturn0BecauseOfSuccess() {
+    void shouldReturn0BecauseOfSuccessUpdateUserConfig() {
         //given
         final String USERNAME = "USERNAME";
 
@@ -114,34 +113,70 @@ class SsoClientServiceImplTest {
         config.getRoles().add("r2");
 
         ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> appCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<BaseUserConfig> configCaptor = ArgumentCaptor.forClass(BaseUserConfig.class);
 
-        given(userService.updateUserConfigOnServer(anyString(), anyString(), any())).willReturn(0);
+        given(userService.updateUserConfigOnServer(anyString(), any())).willReturn(0);
 
         //when
-        int code = ssoClientService.updateUserConfigOnServer(USERNAME, APP_NAME, config);
+        int code = ssoClientService.updateUserConfigOnServer(USERNAME, config);
 
         //then
         assertThat(config.getPrivileges())
                 .isNotNull()
                 .containsOnly("p1", "p2");
-        verify(userService).updateUserConfigOnServer(usernameCaptor.capture(), appCaptor.capture(), configCaptor.capture());
+        verify(userService).updateUserConfigOnServer(usernameCaptor.capture(), configCaptor.capture());
         assertThat(usernameCaptor.getValue()).startsWith(USERNAME);
-        assertThat(appCaptor.getValue()).isEqualTo(APP_NAME);
         assertThat(configCaptor.getValue()).isEqualTo(config);
         assertThat(code).isZero();
     }
 
     @Test
-    void shouldReturn1BecausePrivilegesInvalid() {
+    void shouldReturn0BecauseOfSuccessDeleteUserConfig() {
         //given
         final String USERNAME = "USERNAME";
+        ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+        given(userService.deleteUserConfigOnServer(anyString())).willReturn(0);
 
         //when
-        int code = ssoClientService.updateUserConfigOnServer(USERNAME, APP_NAME, new BaseUserConfig());
+        int code = ssoClientService.deleteUserConfigOnServer(USERNAME);
 
         //then
-        verify(userService).updateUserConfigOnServer(eq(USERNAME), eq(APP_NAME), any());
+        verify(userService).deleteUserConfigOnServer(usernameCaptor.capture());
+        assertThat(usernameCaptor.getValue()).startsWith(USERNAME);
+        assertThat(code).isZero();
+    }
+
+    @Test
+    void shouldReturn0BecauseOfSuccessCreateUserConfig() {
+        //given
+        final String USERNAME = "USERNAME";
+        final String NAME = "NAME";
+
+        BaseUserConfig config = new BaseUserConfig();
+        config.setPrivileges(new ArrayList<>());
+        config.getPrivileges().add("p1");
+        config.getPrivileges().add("p2");
+        config.setRoles(new ArrayList<>());
+        config.getRoles().add("r2");
+        config.getRoles().add("r2");
+
+        ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> nameCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<BaseUserConfig> configCaptor = ArgumentCaptor.forClass(BaseUserConfig.class);
+
+        given(userService.createUserConfigOnServer(anyString(), anyString(), any())).willReturn(0);
+
+        //when
+        int code = ssoClientService.createUserConfigOnServer(USERNAME, NAME, config);
+
+        //then
+        assertThat(config.getPrivileges())
+                .isNotNull()
+                .containsOnly("p1", "p2");
+        verify(userService).createUserConfigOnServer(usernameCaptor.capture(), nameCaptor.capture(), configCaptor.capture());
+        assertThat(usernameCaptor.getValue()).startsWith(USERNAME);
+        assertThat(nameCaptor.getValue()).startsWith(NAME);
+        assertThat(configCaptor.getValue()).isEqualTo(config);
+        assertThat(code).isZero();
     }
 }
