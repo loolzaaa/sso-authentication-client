@@ -1,5 +1,7 @@
 package ru.loolzaaa.sso.client.sampleapp.config;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +21,6 @@ import ru.loolzaaa.sso.client.core.security.basic.BasicAuthenticationConfigurer;
 import ru.loolzaaa.sso.client.core.security.permitall.PermitAllMatcherRegistry;
 import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerRegistry;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.Set;
 
 @Configuration

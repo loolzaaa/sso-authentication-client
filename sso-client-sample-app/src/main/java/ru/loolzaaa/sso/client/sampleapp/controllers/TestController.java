@@ -1,5 +1,6 @@
 package ru.loolzaaa.sso.client.sampleapp.controllers;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
@@ -13,7 +14,6 @@ import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.model.User;
 import ru.loolzaaa.sso.client.core.security.token.TokenDataReceiver;
 
-import javax.annotation.PostConstruct;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
