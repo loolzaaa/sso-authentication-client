@@ -108,8 +108,7 @@ public class SsoClientAutoConfiguration {
 
         restTemplateBuilder = restTemplateBuilder
                 .setConnectTimeout(Duration.ofSeconds(4L))
-                .setReadTimeout(Duration.ofSeconds(4L))
-                .requestFactory(HttpComponentsClientHttpRequestFactory::new);
+                .requestFactory(() -> new HttpComponentsClientHttpRequestFactory());
         if (tokenDataReceiver != null) {
             log.info("SSO Client User service configured with TokenDataReceiver");
             restTemplateBuilder = restTemplateBuilder.additionalInterceptors(new RestTemplateTokenInterceptor(tokenDataReceiver));

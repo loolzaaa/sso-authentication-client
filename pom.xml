@@ -18,11 +18,10 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<java.version>11</java.version>
-		<spring.boot.version>2.7.3</spring.boot.version>
-		<httpclient.version>4.5.13</httpclient.version>
-		<jjwt.version>0.9.1</jjwt.version>
-		<jakarta.xml.bind-api.version>2.3.3</jakarta.xml.bind-api.version>
+		<java.version>17</java.version>
+		<spring.boot.version>3.1.1</spring.boot.version>
+		<httpclient.version>5.2.1</httpclient.version>
+		<jjwt.version>0.11.5</jjwt.version>
 		<sonar.organization>loolzaaa</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>

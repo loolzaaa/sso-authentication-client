@@ -1,9 +1,9 @@
 package ru.loolzaaa.sso.client.core.util;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Clock;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.impl.FixedClock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -48,21 +48,25 @@ public class JWTUtils {
     }
 
     public Jws<Claims> parserEnforceAccessToken(String jwt) {
-        return Jwts.parser()
+        return Jwts.parserBuilder()
                 .setAllowedClockSkewSeconds(10)
                 .setClock(new FixedClock(new Date(System.currentTimeMillis() + serverSkew)))
                 .setSigningKey(publicKey)
+                .build()
                 .parseClaimsJws(jwt);
     }
 
     public void validateToken(String jwt) {
-        Jwts.parser()
+        Jwts.parserBuilder()
                 .setClock(new FixedClock(new Date(System.currentTimeMillis() + serverSkew)))
                 .setSigningKey(publicKey)
+                .build()
                 .parseClaimsJws(jwt);
     }
 
     public void setServerSkew(long serverSkew) {
         this.serverSkew = serverSkew;
     }
+
+    private record FixedClock(Date now) implements Clock {}
 }
