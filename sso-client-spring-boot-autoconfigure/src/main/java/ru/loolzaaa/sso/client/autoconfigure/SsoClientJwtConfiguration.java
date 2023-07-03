@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -16,6 +17,7 @@ import org.springframework.security.web.access.intercept.RequestAuthorizationCon
 import org.springframework.security.web.access.intercept.RequestMatcherDelegatingAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
@@ -24,15 +26,14 @@ import ru.loolzaaa.sso.client.core.context.UserService;
 import ru.loolzaaa.sso.client.core.security.CookieName;
 import ru.loolzaaa.sso.client.core.security.DefaultAuthenticationEntryPoint;
 import ru.loolzaaa.sso.client.core.security.DefaultLogoutSuccessHandler;
-import ru.loolzaaa.sso.client.core.security.filter.AbstractTokenFilter;
-import ru.loolzaaa.sso.client.core.security.filter.JwtTokenFilter;
-import ru.loolzaaa.sso.client.core.security.filter.NoopTokenFilter;
-import ru.loolzaaa.sso.client.core.security.filter.QueryJwtTokenFilter;
+import ru.loolzaaa.sso.client.core.security.filter.*;
 import ru.loolzaaa.sso.client.core.security.permitall.PermitAllMatcher;
 import ru.loolzaaa.sso.client.core.security.permitall.PermitAllMatcherRegistry;
 import ru.loolzaaa.sso.client.core.util.JWTUtils;
 
 import java.util.List;
+
+import static org.springframework.security.config.Customizer.*;
 
 @Configuration
 public class SsoClientJwtConfiguration {
@@ -46,6 +47,7 @@ public class SsoClientJwtConfiguration {
     private final AccessDeniedHandler accessDeniedHandler;
     private final QueryJwtTokenFilter queryJwtTokenFilter;
     private final AbstractTokenFilter<?> tokenFilter;
+    private final EagerCsrfCookieFilter eagerCsrfCookieFilter;
 
     public SsoClientJwtConfiguration(SsoClientProperties properties,
                                      DefaultAuthenticationEntryPoint authenticationEntryPoint,
@@ -76,12 +78,15 @@ public class SsoClientJwtConfiguration {
 
         QueryJwtTokenFilter queryJwtTokenFilter = new QueryJwtTokenFilter(jwtUtils);
 
+        EagerCsrfCookieFilter eagerCsrfCookieFilter = new EagerCsrfCookieFilter();
+
         this.properties = properties;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.logoutSuccessHandler = logoutSuccessHandler;
         this.accessDeniedHandler = accessDeniedHandler;
         this.queryJwtTokenFilter = queryJwtTokenFilter;
         this.tokenFilter = abstractTokenFilter;
+        this.eagerCsrfCookieFilter = eagerCsrfCookieFilter;
     }
 
     @Order(10)
@@ -92,8 +97,7 @@ public class SsoClientJwtConfiguration {
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
-                .cors()
-                .and()
+                .cors(withDefaults())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
@@ -106,12 +110,13 @@ public class SsoClientJwtConfiguration {
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .permitAll())
-                .httpBasic().disable()
-                .formLogin().disable()
-                .anonymous().disable()
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .anonymous(AbstractHttpConfigurer::disable)
                 // Filters order is important!
                 .addFilterBefore(queryJwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(eagerCsrfCookieFilter, SessionManagementFilter.class);
 
         if (!permitAllMatcherRegistry.getMatchers().isEmpty()) {
             final AuthorizationManager<RequestAuthorizationContext> permitAllAuthorizationManager =
@@ -133,9 +138,9 @@ public class SsoClientJwtConfiguration {
         if (properties.getWebhook().isEnable()) {
             http
                     .csrf(csrf -> csrf
-                            .ignoringAntMatchers("/sso/webhook/**"))
+                            .ignoringRequestMatchers("/sso/webhook/**"))
                     .authorizeHttpRequests(authorize -> authorize
-                            .antMatchers(HttpMethod.POST, "/sso/webhook/**").permitAll());
+                            .requestMatchers(HttpMethod.POST, "/sso/webhook/**").permitAll());
         }
 
         http.authorizeHttpRequests(authorize -> authorize
