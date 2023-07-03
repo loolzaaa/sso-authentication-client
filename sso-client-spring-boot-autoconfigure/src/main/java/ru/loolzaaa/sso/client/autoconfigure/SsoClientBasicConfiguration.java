@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -70,12 +71,12 @@ public class SsoClientBasicConfiguration {
             throw new InstantiationException("Basic authentication was enabled, but there is no request matchers for it!");
         }
         for (AntPathRequestMatcher requestMatcher : requestMatchers) {
-            http.requestMatchers(configurer -> configurer.requestMatchers(requestMatcher));
+            http.securityMatchers(configurer -> configurer.requestMatchers(requestMatcher));
         }
         log.info("Basic authentication configured for: {}", requestMatchers);
         http
                 .userDetailsService(inMemoryUserDetailsManager())
-                .csrf().disable()
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         for (AntPathRequestMatcher requestMatcher : requestMatchers) {
@@ -87,7 +88,7 @@ public class SsoClientBasicConfiguration {
         http
                 .httpBasic(httpBasic -> httpBasic
                         .realmName(basicAuthenticationProperties.getRealmName()))
-                .anonymous().disable()
+                .anonymous(AbstractHttpConfigurer::disable)
                 .addFilterAfter(saveRequestUserAfterBasicAuthenticationFilter, BasicAuthenticationFilter.class);
         log.info("Basic configuration completed");
         return http.build();
