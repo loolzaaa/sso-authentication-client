@@ -38,7 +38,7 @@
 
         <dependency>
             <groupId>ru.loolzaaa</groupId>
-            <artifactId>sso-client-spring-boot-starter</artifactId>
+            <artifactId>sso-client-jdk17-spring-boot-starter</artifactId>
             <version>0.11.0</version>
         </dependency>
 

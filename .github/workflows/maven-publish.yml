@@ -2,7 +2,7 @@ name: GH Publish
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*.*.*-jdk17'
 jobs:
   publish:
     runs-on: ubuntu-latest

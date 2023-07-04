@@ -7,18 +7,18 @@
 
     <parent>
         <groupId>ru.loolzaaa</groupId>
-        <artifactId>sso-client</artifactId>
+        <artifactId>sso-client-jdk17</artifactId>
         <version>0.11.0</version>
     </parent>
 
     <name>Single Sign-On Authentication Server Client :: SSO Client AutoConfiguration</name>
 
-    <artifactId>sso-client-spring-boot-autoconfigure</artifactId>
+    <artifactId>sso-client-jdk17-spring-boot-autoconfigure</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>ru.loolzaaa</groupId>
-            <artifactId>sso-client-core</artifactId>
+            <artifactId>sso-client-jdk17-core</artifactId>
             <version>${project.version}</version>
         </dependency>
 

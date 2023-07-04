@@ -5,7 +5,7 @@
 	<packaging>pom</packaging>
 
 	<groupId>ru.loolzaaa</groupId>
-	<artifactId>sso-client</artifactId>
+	<artifactId>sso-client-jdk17</artifactId>
 	<version>0.11.0</version>
 
 	<name>Single Sign-On Authentication Server Client</name>
@@ -27,6 +27,7 @@
 	</properties>
 
 	<build>
+		<finalName>${project.artifactId}-${project.version}-jdk17</finalName>
 		<pluginManagement>
 			<plugins>
 				<plugin>
