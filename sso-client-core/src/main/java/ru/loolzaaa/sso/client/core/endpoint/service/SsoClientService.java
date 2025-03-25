@@ -8,8 +8,12 @@ import java.util.List;
 
 public interface SsoClientService {
     String getApplicationName();
+
     List<User> getUsersForApplicationFromServer();
+
     RequestStatusDTO updateUserConfigOnServer(String username, BaseUserConfig config);
+
     RequestStatusDTO deleteUserConfigOnServer(String username);
+
     RequestStatusDTO createUserConfigOnServer(String username, String name, BaseUserConfig config);
 }

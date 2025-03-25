@@ -18,8 +18,8 @@ import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerRegistry;
 
 import java.util.List;
 
-@Configuration(proxyBeanMethods =  false)
-@Import({ SsoClientBasicConfiguration.class, SsoClientJwtConfiguration.class })
+@Configuration(proxyBeanMethods = false)
+@Import({SsoClientBasicConfiguration.class, SsoClientJwtConfiguration.class})
 public class SsoClientConfiguration {
 
     private static final Logger log = LogManager.getLogger(SsoClientConfiguration.class.getName());

@@ -48,7 +48,7 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
             } else {
                 logger.debug("Browser request detected. Need to redirect for param clean");
 
-                UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(request.getRequestURL().toString());
+                UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(request.getRequestURL().toString());
                 request.getParameterNames().asIterator().forEachRemaining(param -> {
                     if (!isParamNeedToClear(param)) {
                         uriBuilder.queryParam(param, req.getParameter(param));
@@ -91,7 +91,7 @@ public class QueryJwtTokenFilter extends GenericFilterBean {
         Cookie cookie = new Cookie(cookieName, cookieValue);
         cookie.setHttpOnly(httpOnly);
         cookie.setSecure(request.isSecure());
-        cookie.setPath(request.getContextPath().length() > 0 ? request.getContextPath() : "/");
+        cookie.setPath(!request.getContextPath().isEmpty() ? request.getContextPath() : "/");
         response.addCookie(cookie);
     }
 

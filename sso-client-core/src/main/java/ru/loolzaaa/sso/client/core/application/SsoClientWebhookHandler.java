@@ -5,6 +5,8 @@ import ru.loolzaaa.sso.client.core.webhook.WebhookPayload;
 
 public interface SsoClientWebhookHandler {
     String getId();
+
     String getSecret();
+
     void handle(WebhookPayload payload) throws WebhookHandlerException;
 }

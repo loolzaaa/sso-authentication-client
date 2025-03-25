@@ -63,7 +63,7 @@ public class DefaultLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
                 } else {
                     String continueParamValue = UrlUtils.buildFullRequestUrl(req).replace("/do_logout", "");
                     String encodedParam = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
-                    UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(entryPointAddress + "/api/logout")
+                    UriComponents continueUri = UriComponentsBuilder.fromUriString(entryPointAddress + "/api/logout")
                             .queryParam("token", accessToken)
                             .queryParam("continue", encodedParam)
                             .build();

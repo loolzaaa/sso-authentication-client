@@ -7,8 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.authorization.AuthorizationResult;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
@@ -102,8 +102,8 @@ public abstract class AbstractTokenFilter<T> extends OncePerRequestFilter {
             AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(anonymousKey, "anonymousUser", anonymousAuthorities);
             anonymousToken.setDetails(authenticationDetailsSource.buildDetails(req));
 
-            AuthorizationDecision decision = permitAllAuthorizationManager.check(() -> anonymousToken, req);
-            return decision != null && decision.isGranted();
+            AuthorizationResult result = permitAllAuthorizationManager.authorize(() -> anonymousToken, req);
+            return result != null && result.isGranted();
         }
         return false;
     }

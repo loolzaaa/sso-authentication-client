@@ -13,8 +13,8 @@ import org.springframework.util.StringUtils;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.security.Key;
 import java.security.KeyFactory;
+import java.security.PublicKey;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Date;
@@ -22,7 +22,7 @@ import java.util.Date;
 @Component
 public class JWTUtils {
 
-    private final Key publicKey;
+    private final PublicKey publicKey;
 
     private long serverSkew;
 
@@ -48,25 +48,26 @@ public class JWTUtils {
     }
 
     public Jws<Claims> parserEnforceAccessToken(String jwt) {
-        return Jwts.parserBuilder()
-                .setAllowedClockSkewSeconds(10)
-                .setClock(new FixedClock(new Date(System.currentTimeMillis() + serverSkew)))
-                .setSigningKey(publicKey)
+        return Jwts.parser()
+                .clockSkewSeconds(10)
+                .clock(new FixedClock(new Date(System.currentTimeMillis() + serverSkew)))
+                .verifyWith(publicKey)
                 .build()
-                .parseClaimsJws(jwt);
+                .parseSignedClaims(jwt);
     }
 
     public void validateToken(String jwt) {
-        Jwts.parserBuilder()
-                .setClock(new FixedClock(new Date(System.currentTimeMillis() + serverSkew)))
-                .setSigningKey(publicKey)
+        Jwts.parser()
+                .clock(new FixedClock(new Date(System.currentTimeMillis() + serverSkew)))
+                .verifyWith(publicKey)
                 .build()
-                .parseClaimsJws(jwt);
+                .parseSignedClaims(jwt);
     }
 
     public void setServerSkew(long serverSkew) {
         this.serverSkew = serverSkew;
     }
 
-    private record FixedClock(Date now) implements Clock {}
+    private record FixedClock(Date now) implements Clock {
+    }
 }

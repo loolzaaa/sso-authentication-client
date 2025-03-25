@@ -41,13 +41,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 @AutoConfiguration(
-        before = { SecurityAutoConfiguration.class },
+        before = {SecurityAutoConfiguration.class},
         beforeName = "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"
 )
-@EnableConfigurationProperties({ SsoClientProperties.class, BasicAuthenticationProperties.class })
+@EnableConfigurationProperties({SsoClientProperties.class, BasicAuthenticationProperties.class})
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-@ConditionalOnProperty(prefix = "sso.client", value = { "applicationName", "entryPointAddress", "entryPointUri" })
-@Import({ SsoClientConfiguration.class })
+@ConditionalOnProperty(prefix = "sso.client", value = {"applicationName", "entryPointAddress", "entryPointUri"})
+@Import({SsoClientConfiguration.class})
 public class SsoClientAutoConfiguration {
 
     private static final Logger log = LogManager.getLogger(SsoClientAutoConfiguration.class.getName());
@@ -90,8 +90,8 @@ public class SsoClientAutoConfiguration {
 
         final RestTemplate restTemplate = restTemplateBuilder
                 .basicAuthentication(login, password, StandardCharsets.US_ASCII)
-                .setConnectTimeout(Duration.ofSeconds(4L))
-                .setReadTimeout(Duration.ofSeconds(4L))
+                .connectTimeout(Duration.ofSeconds(4L))
+                .readTimeout(Duration.ofSeconds(4L))
                 .build();
 
         return new DefaultLogoutSuccessHandler(entryPointAddress, restTemplate);
@@ -107,7 +107,7 @@ public class SsoClientAutoConfiguration {
         String basicPassword = properties.getBasicPassword();
 
         restTemplateBuilder = restTemplateBuilder
-                .setConnectTimeout(Duration.ofSeconds(4L))
+                .connectTimeout(Duration.ofSeconds(4L))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory());
         if (tokenDataReceiver != null) {
             log.info("SSO Client User service configured with TokenDataReceiver");
@@ -160,7 +160,7 @@ public class SsoClientAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnProperty(prefix = "sso.client.receiver", value = { "username", "password" })
+    @ConditionalOnProperty(prefix = "sso.client.receiver", value = {"username", "password"})
     TokenDataReceiver tokenDataReceiver(@Value("${sso.client.jwt.key-path:}") String keyPath) throws Exception {
         if (!UrlUtils.isAbsoluteUrl(properties.getEntryPointAddress())) {
             throw new IllegalArgumentException(ENTRYPOINT_CHECK_MSG);

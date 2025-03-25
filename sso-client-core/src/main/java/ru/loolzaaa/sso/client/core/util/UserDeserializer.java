@@ -11,7 +11,7 @@ import ru.loolzaaa.sso.client.core.model.User;
 
 import java.io.IOException;
 
-public class UserDeserializer  extends StdDeserializer<User> {
+public class UserDeserializer extends StdDeserializer<User> {
 
     private static final String CONFIG_NODE_NAME = "config";
 

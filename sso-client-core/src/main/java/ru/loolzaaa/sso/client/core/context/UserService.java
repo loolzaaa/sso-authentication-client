@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class UserService {
 
@@ -191,7 +190,7 @@ public class UserService {
 
         Claims claims;
         try {
-            claims = jwtUtils.parserEnforceAccessToken(token).getBody();
+            claims = jwtUtils.parserEnforceAccessToken(token).getPayload();
         } catch (ClaimJwtException e) {
             claims = e.getClaims();
         }
@@ -204,7 +203,7 @@ public class UserService {
         List<String> authorities = userPrincipal.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(authority -> !applicationName.equals(authority))
-                .collect(Collectors.toList());
+                .toList();
         BaseUserConfig config = userPrincipal.getUser().getConfig();
         if (config.getRoles() == null) {
             config.setRoles(new ArrayList<>(4));
@@ -222,8 +221,7 @@ public class UserService {
     }
 
     private void handleSecurityException(Exception e) {
-        if (e instanceof HttpClientErrorException) {
-            HttpClientErrorException clientError = (HttpClientErrorException) e;
+        if (e instanceof HttpClientErrorException clientError) {
             if (clientError.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
                 JsonNode errorResponse;
                 try {

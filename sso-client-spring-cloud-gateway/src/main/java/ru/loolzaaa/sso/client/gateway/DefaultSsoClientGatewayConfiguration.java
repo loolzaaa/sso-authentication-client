@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConditionalOnProperty(prefix = "sso.client", value = { "applicationName", "entryPointAddress", "entryPointUri" })
+@ConditionalOnProperty(prefix = "sso.client", value = {"applicationName", "entryPointAddress", "entryPointUri"})
 public class DefaultSsoClientGatewayConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "sso.client.noop-mode", name = "enabled", havingValue = "false")

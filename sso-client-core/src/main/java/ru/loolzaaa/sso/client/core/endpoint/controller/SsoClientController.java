@@ -34,9 +34,9 @@ public class SsoClientController {
         return "[{\"/app\":\"Get application name for SSO Server\"}," +
                 "{\"/users\":\"Get user list for this application from SSO Server\"}," +
                 "{\"/config\":{" +
-                    "\"description\":\"Update user config for this application on SSO Server\"," +
-                    "\"params\":[\"username\", \"app\"]," +
-                    "\"body\":\"user config as JSON\"" +
+                "\"description\":\"Update user config for this application on SSO Server\"," +
+                "\"params\":[\"username\", \"app\"]," +
+                "\"body\":\"user config as JSON\"" +
                 "}}]";
     }
 

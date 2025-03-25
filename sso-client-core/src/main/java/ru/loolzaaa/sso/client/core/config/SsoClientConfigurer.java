@@ -7,8 +7,10 @@ import ru.loolzaaa.sso.client.core.webhook.WebhookHandlerRegistry;
 public interface SsoClientConfigurer {
     default void addPermitAllMatcher(PermitAllMatcherRegistry registry) {
     }
+
     default void configureBasicAuthentication(BasicAuthenticationConfigurer configurer) {
     }
+
     default void addWebhooks(WebhookHandlerRegistry registry) {
     }
 }

@@ -27,7 +27,7 @@ public class DefaultAuthenticationEntryPoint extends LoginUrlAuthenticationEntry
 
         String continueParamValue = UrlUtils.buildFullRequestUrl(request);
         String continueUrl = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
-        UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(redirect)
+        UriComponents continueUri = UriComponentsBuilder.fromUriString(redirect)
                 .queryParam("app", URLEncoder.encode(applicationName, StandardCharsets.UTF_8))
                 .queryParam("continue", continueUrl)
                 .build();

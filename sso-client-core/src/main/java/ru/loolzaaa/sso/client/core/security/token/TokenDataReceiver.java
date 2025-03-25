@@ -130,7 +130,7 @@ public class TokenDataReceiver {
             }
         }
         for (String s : locations) {
-            UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(s).build();
+            UriComponents uriComponents = UriComponentsBuilder.fromUriString(s).build();
             String token = uriComponents.getQueryParams().getFirst("token");
             if (token != null) {
                 accessToken = token;
