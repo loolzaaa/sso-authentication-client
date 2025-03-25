@@ -87,7 +87,7 @@ public class JwtTokenFilter extends AbstractTokenFilter<Claims> {
 
             String continueParamValue = UrlUtils.buildFullRequestUrl(req);
             String continueUrl = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
-            UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(entryPointAddress + refreshTokenURI)
+            UriComponents continueUri = UriComponentsBuilder.fromUriString(entryPointAddress + refreshTokenURI)
                     .queryParam("app", applicationName)
                     .queryParam("continue", continueUrl)
                     .build();
@@ -109,7 +109,7 @@ public class JwtTokenFilter extends AbstractTokenFilter<Claims> {
 
     private Claims validateAccessToken(String accessToken) {
         try {
-            Claims claims = jwtUtils.parserEnforceAccessToken(accessToken).getBody();
+            Claims claims = jwtUtils.parserEnforceAccessToken(accessToken).getPayload();
             String login = claims.get(LOGIN_PARAM_NAME, String.class);
             logger.debug(String.format("Access token for user [%s] validated", login));
             return claims;
@@ -126,7 +126,7 @@ public class JwtTokenFilter extends AbstractTokenFilter<Claims> {
         Cookie c = new Cookie(CookieName.ACCESS.getName(), null);
         c.setHttpOnly(true);
         c.setSecure(req.isSecure());
-        c.setPath(req.getContextPath().length() > 0 ? req.getContextPath() : "/");
+        c.setPath(!req.getContextPath().isEmpty() ? req.getContextPath() : "/");
         c.setMaxAge(0);
         resp.addCookie(c);
     }

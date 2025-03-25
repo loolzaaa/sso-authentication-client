@@ -33,8 +33,8 @@ class JWTUtilsTest {
 
         jwtUtils.validateToken(token);
         Jws<Claims> claimsJws = jwtUtils.parserEnforceAccessToken(token);
-        Date issuedAt = claimsJws.getBody().getIssuedAt();
-        String actualData = claimsJws.getBody().get("data", String.class);
+        Date issuedAt = claimsJws.getPayload().getIssuedAt();
+        String actualData = claimsJws.getPayload().get("data", String.class);
 
         assertNotNull(issuedAt);
         assertNotNull(actualData);
@@ -65,7 +65,7 @@ class JWTUtilsTest {
 
         jwtUtils.validateToken(token);
         Jws<Claims> claimsJws = jwtUtils.parserEnforceAccessToken(token);
-        Date expiration = claimsJws.getBody().getExpiration();
+        Date expiration = claimsJws.getPayload().getExpiration();
 
         assertNotNull(expiration);
         assertEquals(0, expiration.getTime());

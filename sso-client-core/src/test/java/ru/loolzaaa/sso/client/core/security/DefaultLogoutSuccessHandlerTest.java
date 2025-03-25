@@ -118,7 +118,7 @@ class DefaultLogoutSuccessHandlerTest {
 
         String continueParamValue = UrlUtils.buildFullRequestUrl(request).replace("/do_logout", "");
         String encodedParam = Base64.getUrlEncoder().encodeToString(continueParamValue.getBytes(StandardCharsets.UTF_8));
-        UriComponents continueUri = UriComponentsBuilder.fromHttpUrl(entryPoint + "/api/logout")
+        UriComponents continueUri = UriComponentsBuilder.fromUriString(entryPoint + "/api/logout")
                 .queryParam("token", TOKEN)
                 .queryParam("continue", encodedParam)
                 .build();

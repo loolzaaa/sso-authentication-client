@@ -79,7 +79,7 @@ class JwtTokenFilterTest {
 
         when(req.getCookies()).thenReturn(cookies);
         when(jwtUtils.parserEnforceAccessToken(accessToken)).thenReturn(claims);
-        when(claims.getBody()).thenReturn(body);
+        when(claims.getPayload()).thenReturn(body);
         when(body.get("login", String.class)).thenReturn(login);
 
         Claims actualClaims = jwtTokenFilter.extractTokenData(req, resp);

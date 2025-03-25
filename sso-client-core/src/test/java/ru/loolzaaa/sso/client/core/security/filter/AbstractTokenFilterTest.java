@@ -9,8 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.authorization.AuthorizationResult;
 import org.springframework.security.core.context.SecurityContextHolder;
 import ru.loolzaaa.sso.client.core.application.SsoClientApplicationRegister;
 import ru.loolzaaa.sso.client.core.context.UserService;
@@ -46,9 +46,9 @@ class AbstractTokenFilterTest {
     @Test
     void shouldContinueFilteringIfRequestUriIsIgnored() throws Exception {
         AuthorizationManager authorizationManager = mock(AuthorizationManager.class);
-        AuthorizationDecision authorizationDecision = mock(AuthorizationDecision.class);
-        when(authorizationManager.check(any(), any())).thenReturn(authorizationDecision);
-        when(authorizationDecision.isGranted()).thenReturn(true);
+        AuthorizationResult authorizationResult = mock(AuthorizationResult.class);
+        when(authorizationManager.authorize(any(), any())).thenReturn(authorizationResult);
+        when(authorizationResult.isGranted()).thenReturn(true);
         when(req.getRequestURL()).thenReturn(new StringBuffer("/"));
         tokenFilter.setPermitAllAuthorizationManager(authorizationManager);
 
