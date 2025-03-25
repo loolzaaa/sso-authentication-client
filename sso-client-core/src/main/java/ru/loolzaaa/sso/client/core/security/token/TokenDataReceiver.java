@@ -59,7 +59,7 @@ public class TokenDataReceiver {
         if (tokenData.getAccessToken() == null) {
             final String loginUri = "/do_login";
             String continueUrl = Base64.getUrlEncoder().encodeToString(entryPointAddress.getBytes(StandardCharsets.UTF_8));
-            String jwtTokenRequestBody = String.format("_app=%s&_continue=%s&username=%s&password=%s&_csrf=%s&_fingerprint=%s",
+            String jwtTokenRequestBody = String.format("_app=%s&_continue=%s&username=%s&password=%s&_csrf=%s&_fingerprint=%s&_authenticationMode=sso",
                     applicationName, continueUrl, username, password, csrfToken, fingerprint);
             HttpRequest request = HttpRequest.newBuilder()
                     .POST(HttpRequest.BodyPublishers.ofString(jwtTokenRequestBody))
