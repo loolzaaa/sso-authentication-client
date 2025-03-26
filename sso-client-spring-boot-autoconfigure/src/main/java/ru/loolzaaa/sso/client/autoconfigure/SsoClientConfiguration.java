@@ -66,16 +66,7 @@ public class SsoClientConfiguration {
             String pattern = requestMatcher.getPattern();
             String httpMethod = requestMatcher.getHttpMethod();
             Boolean caseSensitive = requestMatcher.getCaseSensitive();
-            List<String> authorities = requestMatcher.getAuthorities();
-            if (pattern == null) {
-                throw new NullPointerException("Pattern for basic request matcher cannot be null");
-            }
-            if (httpMethod == null) {
-                throw new NullPointerException("Http method for basic request matcher cannot be null");
-            }
-            if (authorities.isEmpty()) {
-                throw new IllegalArgumentException("At least one authority needs for request matcher");
-            }
+            List<String> authorities = getAndCheckAuthorities(requestMatcher, pattern, httpMethod);
             if (caseSensitive == null) {
                 caseSensitive = true;
                 log.warn("Force case sensitive for {}", requestMatcher);
@@ -102,5 +93,19 @@ public class SsoClientConfiguration {
             ssoClientConfigurer.addWebhooks(registry);
         }
         return registry;
+    }
+
+    private static List<String> getAndCheckAuthorities(BasicAuthenticationProperties.Matcher requestMatcher, String pattern, String httpMethod) {
+        List<String> authorities = requestMatcher.getAuthorities();
+        if (pattern == null) {
+            throw new NullPointerException("Pattern for basic request matcher cannot be null");
+        }
+        if (httpMethod == null) {
+            throw new NullPointerException("Http method for basic request matcher cannot be null");
+        }
+        if (authorities.isEmpty()) {
+            throw new IllegalArgumentException("At least one authority needs for request matcher");
+        }
+        return authorities;
     }
 }
