@@ -4,7 +4,13 @@
 
 # Single Sign-On authentication client
 
-The client part for the [Single Sign-On (SSO) server](https://github.com/loolzaaa/sso-authentication-server). If any request under JWT security control does not have a JWT token, it is redirected to the server entry point with Base64 encoded `continue` parameter to return to the application. Further authentication occurs through Json Web Tokens (JWT), which are checked through a custom filter. All other components of the system are based on standard Spring Security beans with minor changes.
+The client part for the [Single Sign-On (SSO) server](https://github.com/loolzaaa/sso-authentication-server).
+If any request under JWT security control does not have a JWT token,
+it is redirected to the server entry point with Base64 encoded `continue`
+parameter to return to the application. Further authentication occurs
+through Json Web Tokens (JWT), which are checked through a custom filter.
+All other components of the system are based on standard Spring Security
+beans with minor changes.
 
 ### Contents
 - [Client Startup](#client-startup)
@@ -25,23 +31,28 @@ The client part for the [Single Sign-On (SSO) server](https://github.com/loolzaa
 
 # Client Startup
 
-You can use this client as a dependency of your project in two ways: by installing the necessary packages in the local repository, or by setting up the Github Maven Package of this repository.
+You can use this client as a dependency of your project in two ways:
+by installing the necessary packages in the local repository,
+or by setting up the GitHub Maven Package of this repository.
 
 ## Install in the local repository
 
 Clone this repository, navigate to the project folder and install it via Maven:
 ```shell
-> cd ~
-> git clone https://github.com/loolzaaa/sso-authentication-client.git
-> cd sso-authentication-client
-> ./mvnw clean install
+cd ~
+git clone https://github.com/loolzaaa/sso-authentication-client.git
+cd sso-authentication-client
+./mvnw clean install
 ```
 
-## Setting up the github maven repository
+## Setting up the GitHub maven repository
 
-To use Github Packages, you need to authenticate to it, add an additional repository in the Maven settings, and then use the required package as a dependency in your project.
+To use GitHub Packages, you need to authenticate to it,
+add a repository in the Maven settings, and then use the required
+package as a dependency in your project.
 
-1. Create personal access token (PAT) to authenticate to GitHub Packages with at least `packages:read` scope to install packages
+1. Create personal access token (PAT) to authenticate to GitHub Packages
+with at least `packages:read` scope to install packages
 2. Update a *~/.m2/settings.xml* file as [shown in the official documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry#authenticating-with-a-personal-access-token)
 
 ## Add the package dependencies to your project
@@ -50,7 +61,7 @@ To use Github Packages, you need to authenticate to it, add an additional reposi
 <dependency>
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-spring-boot-starter</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -105,11 +116,15 @@ sso.client.receiver.password=pass
 # Better define not empty for production purposes
 sso.client.receiver.fingerprint=ru.loolzaaa.sso.client.sampleapp
 ```
-**Note:** If you do not specify a username and password for the token receiver, SSO Client will fallback to use basic authentication between the SSO Client and SSO Server.
+**Note:** If you do not specify a username and password for the token receiver,
+SSO Client will fall back to use basic authentication between the SSO Client
+and SSO Server.
 
 ## Additional configuration
 
-The vast majority of SSO Client settings work out of the box, however, the user may wish to fine-tune `WebSecurity`, define custom user configuration class, add custom logout handlers, etc.
+The vast majority of SSO Client settings work out of the box, however,
+the user may wish to fine-tune `WebSecurity`, define custom user
+configuration class, add custom logout handlers, etc.
 
 ### WebSecurity customization
 
@@ -125,7 +140,9 @@ public class SecurityConfig implements WebSecurityCustomizer {
 
 ### Define custom user configuration class
 
-To define the custom user configuration class itself, it is necessary to extend it from the `BaseUserConfig` class, and then create a bean `UserConfigTypeSupplier` that provides the custom class instance.
+To define the custom user configuration class itself, it is necessary
+to extend it from the `BaseUserConfig` class, and then create
+a bean `UserConfigTypeSupplier` that provides the custom class instance.
 ```java
 public class UserConfig extends BaseUserConfig {
     private String someSetting;
@@ -140,12 +157,17 @@ public class SecurityConfig {
     }
 }
 ```
-**Note:** `BaseUserConfig` saves roles and privileges for any application, your custom class saves any other config properties.
+**Note:** `BaseUserConfig` saves roles and privileges for any application,
+your custom class saves any other config properties.
 
 ### Define access denied page view
 
-By default, if SSO Client can't get user from SSO Server while check authentication, it sends error with 403 status code and empty body, so browser shows default page with reload button.  
-To define some view as forbidden (access denied) page, it is necessary to create a bean of type `AccessDeniedHandler`.
+By default, if SSO Client can't get user from SSO Server while
+check authentication, it sends error with 403 status code and empty body,
+so browser shows default page with reload button.
+
+To define some view as forbidden (access denied) page,
+it is necessary to create a bean of type `AccessDeniedHandler`.
 ```java
 @Configuration
 public class SecurityConfig {
@@ -169,7 +191,8 @@ public class WebConfig implements WebMvcConfigurer {
 
 ### Add custom logout handlers
 
-All custom logout handlers **must be beans** and implement interface `SsoClientLogoutHandler`
+All custom logout handlers **must be beans** and implement
+interface `SsoClientLogoutHandler`.
 ```java
 @Component
 public class CustomLogoutHandler implements SsoClientLogoutHandler {
@@ -186,7 +209,9 @@ public class CustomLogoutHandler implements SsoClientLogoutHandler {
 
 ### Add custom application register hooks
 
-All custom application register hooks (use every time after successful authentication check) **must be beans** and implement interface `SsoClientApplicationRegister`
+All custom application register hooks (use every time after successful
+authentication check) **must be beans** and implement
+interface `SsoClientApplicationRegister`.
 ```java
 @Component
 public class ApplicationRegister implements SsoClientApplicationRegister {
@@ -203,9 +228,15 @@ public class ApplicationRegister implements SsoClientApplicationRegister {
 
 ### Add additional *permit all* request matchers
 
-By default, all application resources require the user to be authenticated and have an authority equal to the application name in their user configuration.  
-To allow access to certain resources **without** authentication and (*optional*) ignoring CSRF protection, you must implement `SsoClientConfigurer` and override `addPermitAllMatcher`.  
+By default, all application resources require the user to be authenticated
+and have an authority equal to the application name in their user configuration.
+
+To allow access to certain resources **without** authentication
+and (*optional*) ignoring CSRF protection, you must implement `SsoClientConfigurer`
+and override `addPermitAllMatcher`.
+
 **Anonymous access is not allowed.**
+
 ```java
 @Configuration
 public class SecurityConfig implements SsoClientConfigurer {
@@ -218,7 +249,9 @@ public class SecurityConfig implements SsoClientConfigurer {
 
 ### Add basic authentication endpoints
 
-By default, all application resources secured by JWT. In addition to the permit all matcher, it is possible to configure access to certain endpoints for certain users through basic authentication.  
+By default, all application resources secured by JWT. In addition
+to the permit all matcher, it is possible to configure access
+to certain endpoints for certain users through basic authentication.  
 
 #### Enable basic authentication
 
@@ -227,7 +260,8 @@ sso.client.basic.enable=true
 sso.client.basic.realmName=Example realm
 ```
 
-Access is achieved by matching the path's authorities with the user's authorities. There are two ways to do this:
+Access is achieved by matching the path's authorities
+with the user's authorities. There are two ways to do this:
 
 #### Application properties
 
@@ -258,15 +292,22 @@ public class SecurityConfig implements SsoClientConfigurer {
     }
 }
 ```
-**WARNING! If you enable basic authentication, you must define at least one request matcher for it!**
+**WARNING! If you enable basic authentication, you must define
+at least one request matcher for it!**
 
 ### Add SSO Server Webhook handlers
 
-For an application that is protected by a SSO Client, it is possible to create any number of SSO Server webhook handlers.  
-To enable webhook processing, you must define `sso.client.webhook.enable` property to `true` value.  
-All webhook requests processed by `POST /sso/webhook/{id}` controller, where `{id}` - unique webhook identifier.   
+For an application that is protected by an SSO Client, it is possible
+to create any number of SSO Server webhook handlers.
 
-To create webhook handler you must implement `SsoClientWebhookHandler` or override `addWebhooks` of `SsoClientConfigurer`:
+To enable webhook processing, you must define `sso.client.webhook.enable`
+property to `true` value.
+
+All webhook requests processed by `POST /sso/webhook/{id}` controller,
+where `{id}` - unique webhook identifier.
+
+To create webhook handler you must implement `SsoClientWebhookHandler`
+or override `addWebhooks` of `SsoClientConfigurer`:
 ```java
 @Configuration
 public class SecurityConfig implements SsoClientConfigurer {
@@ -285,7 +326,10 @@ The user configuration schema can be viewed on the [wiki page](https://github.co
 
 ## User configuration
 
-In order to communicate between two or more applications that are connected to the SSO Server, it is necessary that these applications in their user/application configuration account have the authority to access each other.  
+In order to communicate between two or more applications
+that are connected to the SSO Server, it is necessary that these
+applications in their user/application configuration account have
+the authority to access each other.  
 
 An example of user configurations for some `app_a` access to some `app_b`:
 ```
@@ -297,7 +341,11 @@ An example of user configurations for some `app_a` access to some `app_b`:
 
 ## Token receiver configuration
 
-In order to successfully request one application to another, it must be authenticated on the SSO Server. To do this, you need to configure the Token Receiver in the application by specifying the login/password for the application account, which corresponds to the configuration example above:
+In order to successfully request one application to another,
+it must be authenticated on the SSO Server. To do this, you need
+to configure the Token Receiver in the application by specifying
+the login/password for the application account, which corresponds
+to the configuration example above:
 ```
 sso.client.receiver.username=app_a   <--- app_a Token Receiver configuration
 sso.client.receiver.password=pass_a
@@ -311,7 +359,8 @@ sso.client.receiver.fingerprint=com.example.app_b
 
 ## Interception across application requests
 
-Each request between applications must be intercepted, the required headers are added to it, after which it is sent.  
+Each request between applications must be intercepted,
+the required headers are added to it, after which it is sent.  
 
 ### Creating an interceptor for `RestTemplate` requests:
 ```java
@@ -344,9 +393,9 @@ public class SecurityConfig {
             tokenDataReceiver.getTokenDataLock().lock();
             try {
                 tokenDataReceiver.updateData();
-                request.getHeaders().add("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfToken());
+                request.getHeaders().add("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfCookie());
                 request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + tokenDataReceiver.getAccessToken());
-                request.getHeaders().add("X-XSRF-TOKEN", tokenDataReceiver.getCsrfToken().toString());
+                request.getHeaders().add("X-XSRF-TOKEN", tokenDataReceiver.getEncodedCsrfCookie());
                 return execution.execute(request, body);
             } finally {
                 tokenDataReceiver.getTokenDataLock().unlock();
@@ -373,9 +422,9 @@ public class SecurityConfig {
             tokenDataReceiver.getTokenDataLock().lock();
             try {
                 tokenDataReceiver.updateData();
-                requestTemplate.header("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfToken());
+                requestTemplate.header("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfCookie());
                 requestTemplate.header("Cookie", "_t_access=" + tokenDataReceiver.getAccessToken());
-                requestTemplate.header("X-XSRF-TOKEN", tokenDataReceiver.getCsrfToken().toString());
+                requestTemplate.header("X-XSRF-TOKEN", tokenDataReceiver.getEncodedCsrfCookie());
             } finally {
                 tokenDataReceiver.getTokenDataLock().unlock();
             }
@@ -386,20 +435,34 @@ public class SecurityConfig {
 
 # SSO Client Development mode
 
-During development, there is no need to constantly refresh tokens. Moreover, additional roles and privileges may appear for the application, which will require changing the user configuration already on the SSO Server side.  
-To avoid such inconveniences, the SSO Client allows you to replace the standard procedure for checking/refreshing tokens with checking user data based on a special header in the request.
+During development, there is no need to constantly refresh tokens.
+Moreover, additional roles and privileges may appear for the application,
+which will require changing the user configuration already
+on the SSO Server side.
+
+To avoid such inconveniences, the SSO Client allows you to replace
+the standard procedure for checking/refreshing tokens with checking
+user data based on a special header in the request.
 
 ## Activation
 
-To activate the development mode, you need to set `sso.client.noop-mode.enable` property to `true` and define default user for access with `sso.client.noop-mode.default-user` property. For example, you can do this by creating an `application-noop.properties` resource file:
+To activate the development mode, you need to set `sso.client.noop-mode.enable`
+property to `true` and define default user for access
+with `sso.client.noop-mode.default-user` property. For example, you can do 
+this by creating an `application-noop.properties` resource file:
 ```
 # application-noop.properties
 sso.client.noop-mode.enable=true
 sso.client.noop-mode.default-user=user
 ```
-and activating the `noop` profile for the app by running latter with `--spring.profiles.active=noop` argument or `-Dspring.profiles.active=noop` VM option.
+and activating the `noop` profile for the app by running it
+with `--spring.profiles.active=noop` argument or `-Dspring.profiles.active=noop`
+VM option.
 
-After activating the development mode, it is necessary to add a `X-SSO-USER` header with Base64 encoded user data to each request that passes through the SSO Client. The raw user data is a JSON object that contains the user's login and an array of authorities.  
+After activating the development mode, it is necessary to
+add a `X-SSO-USER` header with Base64 encoded user data to
+each request that passes through the SSO Client. The raw user data
+is a JSON object that contains the user's login and an array of authorities.  
 
 **User data raw view:**
 ```json
@@ -411,7 +474,10 @@ After activating the development mode, it is necessary to add a `X-SSO-USER` hea
 **User data encoded view:**  
 `ewogICAgImxvZ2luIjogIm5vb3AiLAogICAgImF1dGhvcml0aWVzIjogWyAiZXhhbXBsZSIsICJST0xFX0FETUlOIiwgInByaXZpbGVnZTEiIF0KfQ==`
 
-This approach allows you to develop a front-end part of the application with hot-swap modules without the need for constant rebuilding of the entire project.  
+This approach allows you to develop a front-end part of the application
+with hot-swap modules without the need for constant rebuilding
+of the entire project.
+
 An example implementation can be found in sample-app.
 
 # SSO Client behind Spring Cloud Gateway
