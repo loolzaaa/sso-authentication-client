@@ -189,9 +189,9 @@ public class SsoClientAutoConfiguration {
             tokenDataReceiver.getTokenDataLock().lock();
             try {
                 tokenDataReceiver.updateData();
-                request.getHeaders().add("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfToken());
+                request.getHeaders().add("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfCookie());
                 request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + tokenDataReceiver.getAccessToken());
-                request.getHeaders().add("X-XSRF-TOKEN", tokenDataReceiver.getCsrfToken().toString());
+                request.getHeaders().add("X-XSRF-TOKEN", tokenDataReceiver.getEncodedCsrfCookie());
             } finally {
                 tokenDataReceiver.getTokenDataLock().unlock();
             }

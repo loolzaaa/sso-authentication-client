@@ -3,7 +3,9 @@ package ru.loolzaaa.sso.client.core.security;
 public enum CookieName {
     ACCESS("_t_access"),
     REFRESH("_t_refresh"),
-    RFID("_t_rfid");
+    RFID("_t_rfid"),
+    XSRF("XSRF-TOKEN"),
+    XSRF_ENC("XSRF-TOKEN-ENC");
 
     private final String name;
 

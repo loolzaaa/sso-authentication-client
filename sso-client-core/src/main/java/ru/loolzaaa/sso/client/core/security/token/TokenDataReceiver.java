@@ -18,7 +18,6 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,8 +25,6 @@ import java.util.regex.Pattern;
 public class TokenDataReceiver {
 
     private static final Logger log = LogManager.getLogger(TokenDataReceiver.class.getName());
-
-    private final UUID csrfToken = UUID.randomUUID();
 
     private final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(4))
@@ -44,6 +41,9 @@ public class TokenDataReceiver {
     private final String password;
     private final String fingerprint;
 
+    private String csrfCookie;
+    private String encodedCsrfCookie;
+
     public TokenDataReceiver(JWTUtils jwtUtils, String entryPointAddress, String applicationName,
                              String username, String password, String fingerprint) {
         this.jwtUtils = jwtUtils;
@@ -52,7 +52,42 @@ public class TokenDataReceiver {
         this.username = username;
         this.password = password;
         this.fingerprint = fingerprint;
-        log.info("Token data receiver created with CSRF token: {}", csrfToken);
+        initReceiver();
+        log.info("Token data receiver created with CSRF tokens: {}/{}", csrfCookie, encodedCsrfCookie);
+    }
+
+    public void initReceiver() {
+        HttpRequest request = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(entryPointAddress))
+                .build();
+        try {
+            HttpResponse<Void> response = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.ALWAYS)
+                    .build()
+                    .send(request, HttpResponse.BodyHandlers.discarding());
+
+            Pattern csrfCookiePattern = Pattern.compile(".*" + CookieName.XSRF.getName() + "=(.+?);.*");
+            Pattern csrfEncodedCookiePattern = Pattern.compile(".*" + CookieName.XSRF_ENC.getName() + "=(.+?);.*");
+
+            List<String> cookies = response.headers().allValues(HttpHeaders.SET_COOKIE);
+            for (String cookie : cookies) {
+                Matcher csrfCookieMatcher = csrfCookiePattern.matcher(cookie);
+                Matcher csrfEncodedCookiMatcher = csrfEncodedCookiePattern.matcher(cookie);
+                if (csrfCookieMatcher.find()) {
+                    csrfCookie = csrfCookieMatcher.group(1);
+                    log.debug("Found CSRF cookie: {}", csrfCookie);
+                }
+                if (csrfEncodedCookiMatcher.find()) {
+                    encodedCsrfCookie = csrfEncodedCookiMatcher.group(1);
+                    log.debug("Found CSRF encoded cookie: {}", encodedCsrfCookie);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Exception while token data receiver initialization of SSO: ", e);
+            tokenData.resetValues();
+            throw new IllegalArgumentException(e);
+        }
     }
 
     public void updateData() {
@@ -60,12 +95,12 @@ public class TokenDataReceiver {
             final String loginUri = "/do_login";
             String continueUrl = Base64.getUrlEncoder().encodeToString(entryPointAddress.getBytes(StandardCharsets.UTF_8));
             String jwtTokenRequestBody = String.format("_app=%s&_continue=%s&username=%s&password=%s&_csrf=%s&_fingerprint=%s&_authenticationMode=sso",
-                    applicationName, continueUrl, username, password, csrfToken, fingerprint);
+                    applicationName, continueUrl, username, password, encodedCsrfCookie, fingerprint);
             HttpRequest request = HttpRequest.newBuilder()
                     .POST(HttpRequest.BodyPublishers.ofString(jwtTokenRequestBody))
                     .uri(URI.create(String.format("%s%s", entryPointAddress, loginUri)))
                     .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
-                    .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + csrfToken)
+                    .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + csrfCookie)
                     .build();
 
             HttpResponse<String> response;
@@ -97,8 +132,8 @@ public class TokenDataReceiver {
                 .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
                 .header(HttpHeaders.COOKIE, CookieName.ACCESS.getName() + "=" + tokenData.getAccessToken())
                 .header(HttpHeaders.COOKIE, CookieName.REFRESH.getName() + "=" + tokenData.getRefreshToken())
-                .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + csrfToken)
-                .header("X-XSRF-TOKEN", csrfToken.toString())
+                .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + csrfCookie)
+                .header("X-XSRF-TOKEN", encodedCsrfCookie)
                 .build();
 
         HttpResponse<String> response;
@@ -147,8 +182,12 @@ public class TokenDataReceiver {
         }
     }
 
-    public UUID getCsrfToken() {
-        return csrfToken;
+    public String getCsrfCookie() {
+        return csrfCookie;
+    }
+
+    public String getEncodedCsrfCookie() {
+        return encodedCsrfCookie;
     }
 
     public String getAccessToken() {
