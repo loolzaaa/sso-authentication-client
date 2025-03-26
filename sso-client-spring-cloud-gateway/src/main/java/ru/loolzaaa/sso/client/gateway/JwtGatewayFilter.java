@@ -7,6 +7,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
+import org.springframework.web.util.ForwardedHeaderUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
@@ -90,8 +91,8 @@ public class JwtGatewayFilter implements WebFilter {
         }
 
         URI uri = exchange.getRequest().getURI();
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder
-                .fromHttpRequest(exchange.getRequest())
+        UriComponentsBuilder uriBuilder = ForwardedHeaderUtils
+                .adaptFromForwardedHeaders(exchange.getRequest().getURI(), exchange.getRequest().getHeaders())
                 .replacePath(prefixPath)
                 .path(uri.getPath());
         if (cookieAccessToken == null && queryAccessToken == null) {

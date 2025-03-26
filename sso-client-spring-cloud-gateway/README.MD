@@ -7,7 +7,7 @@ Add dependency to project:
 <dependency>
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-spring-cloud-gateway</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -33,16 +33,34 @@ public class GatewayApplication {
 
 ### Additional options
 
-#### Set prefix path behind reverse proxy
+#### Remove duplicate headers
 
 ```yaml
 spring:
   cloud:
     gateway:
       default-filters:
+        - name: DedupeResponseHeader
+          args:
+            name: Access-Control-Allow-Credentials Access-Control-Allow-Origin
+            strategy: RETAIN_UNIQUE
+```
+
+#### Set prefix path behind reverse proxy
+
+```yaml
+sso:
+  client:
+    gateway:
+      prefix-path: /context
+
+spring:
+  cloud:
+    gateway:
+      default-filters:
         - name: PrefixPath
           args:
-            prefix: /proxy/app
+            prefix: ${sso.client.gateway.prefix-path}
 ```
 
 #### Exclude JWT filter for some APIs
