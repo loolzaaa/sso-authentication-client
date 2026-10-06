@@ -61,7 +61,7 @@ with at least `packages:read` scope to install packages
 <dependency>
     <groupId>ru.loolzaaa</groupId>
     <artifactId>sso-client-spring-boot-starter</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -80,9 +80,9 @@ sso.client.applicationName=app1
 sso.client.entryPointAddress=http://localhost:9999
 # SSO Server authentication URI
 sso.client.entryPointUri=/login
-# SSO Server refresh token URI (must match the SSO Server URI)
+# SSO Server refresh page URI (must match the SSO Server URI)
 # Default: /trefresh
-sso.client.entryPointUri=/trefresh
+sso.client.refreshTokenUri=/trefresh
 
 # SSO Client endpoint
 # Description can be accessed via GET /sso/client
@@ -115,6 +115,26 @@ sso.client.receiver.password=pass
 # Fingerprint of application for SSO Server
 # Better define not empty for production purposes
 sso.client.receiver.fingerprint=ru.loolzaaa.sso.client.sampleapp
+
+# Token receiver network timeouts
+# Default: 4s
+sso.client.receiver.connect-timeout=4s
+# Default: 4s
+sso.client.receiver.request-timeout=4s
+
+# Obtain token on application startup, before any outgoing request
+# Default: true
+sso.client.receiver.init-on-startup=true
+
+# Proactive token refresh before expiration
+# Default: true
+sso.client.receiver.refresh.enabled=true
+# Refresh when the access token expires within this window
+# Default: 1m
+sso.client.receiver.refresh.before-expiry=1m
+# How often the expiration is checked
+# Default: 30s
+sso.client.receiver.refresh.check-interval=30s
 ```
 **Note:** If you do not specify a username and password for the token receiver,
 SSO Client will fall back to use basic authentication between the SSO Client
@@ -357,10 +377,43 @@ sso.client.receiver.password=pass_b
 sso.client.receiver.fingerprint=com.example.app_b
 ```
 
+## Token lifecycle
+
+The token is acquired and kept fresh by `TokenDataReceiver`; an application only
+needs to call `updateData()` before an outgoing request (or use the interceptors below).
+
+### Startup acquisition
+
+If `sso.client.receiver.init-on-startup` is `true` (default), the token is requested
+once at application startup, outside of any outgoing request. A failed attempt does
+not fail the application start: the receiver stays without a token and retries later.
+
+### Proactive refresh
+
+When `sso.client.receiver.refresh.enabled` is `true` (default), a background task
+checks the access token expiration every `sso.client.receiver.refresh.check-interval`
+(default `30s`) and refreshes it when it expires within
+`sso.client.receiver.refresh.before-expiry` (default `1m`). The refresh happens
+outside of any outgoing request, so it is not affected by the caller's timeouts
+or circuit breaker.
+
+### On-demand acquisition
+
+`updateData()` is idempotent and thread-safe. It uses a fair lock, so concurrent
+callers are queued and, while the SSO Server is available, all of them get a fresh
+token. All network operations are bounded by `sso.client.receiver.connect-timeout`
+and `sso.client.receiver.request-timeout`. If the token cannot be obtained, the
+receiver keeps the last known token and backs off for a short time instead of
+hanging or retrying on every call.
+
 ## Interception across application requests
 
 Each request between applications must be intercepted,
-the required headers are added to it, after which it is sent.  
+the required headers are added to it, after which it is sent.
+
+**Note:** `TokenDataReceiver.updateData()` manages its own locking and network
+timeouts internally, and `getTokenSnapshot()` returns a consistent set of
+cookies. Do not lock `TokenDataReceiver` manually around outgoing requests.
 
 ### Creating an interceptor for `RestTemplate` requests:
 ```java
@@ -390,16 +443,12 @@ public class SecurityConfig {
 
         @Override
         public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-            tokenDataReceiver.getTokenDataLock().lock();
-            try {
-                tokenDataReceiver.updateData();
-                request.getHeaders().add("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfCookie());
-                request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + tokenDataReceiver.getAccessToken());
-                request.getHeaders().add("X-XSRF-TOKEN", tokenDataReceiver.getEncodedCsrfCookie());
-                return execution.execute(request, body);
-            } finally {
-                tokenDataReceiver.getTokenDataLock().unlock();
-            }
+            tokenDataReceiver.updateData();
+            TokenDataReceiver.TokenSnapshot tokenSnapshot = tokenDataReceiver.getTokenSnapshot();
+            request.getHeaders().add("Cookie", "XSRF-TOKEN=" + tokenSnapshot.csrfCookie());
+            request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + tokenSnapshot.accessToken());
+            request.getHeaders().add("X-XSRF-TOKEN", tokenSnapshot.encodedCsrfCookie());
+            return execution.execute(request, body);
         }
     }
 }
@@ -419,15 +468,11 @@ public class SecurityConfig {
     @Bean
     RequestInterceptor ssoRequestInterceptor() {
         return requestTemplate -> {
-            tokenDataReceiver.getTokenDataLock().lock();
-            try {
-                tokenDataReceiver.updateData();
-                requestTemplate.header("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfCookie());
-                requestTemplate.header("Cookie", "_t_access=" + tokenDataReceiver.getAccessToken());
-                requestTemplate.header("X-XSRF-TOKEN", tokenDataReceiver.getEncodedCsrfCookie());
-            } finally {
-                tokenDataReceiver.getTokenDataLock().unlock();
-            }
+            tokenDataReceiver.updateData();
+            TokenDataReceiver.TokenSnapshot tokenSnapshot = tokenDataReceiver.getTokenSnapshot();
+            requestTemplate.header("Cookie", "XSRF-TOKEN=" + tokenSnapshot.csrfCookie());
+            requestTemplate.header("Cookie", "_t_access=" + tokenSnapshot.accessToken());
+            requestTemplate.header("X-XSRF-TOKEN", tokenSnapshot.encodedCsrfCookie());
         };
     }
 }

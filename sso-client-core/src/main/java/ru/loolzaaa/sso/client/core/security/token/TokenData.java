@@ -2,17 +2,12 @@ package ru.loolzaaa.sso.client.core.security.token;
 
 public class TokenData {
 
-    private String accessToken;
-    private String refreshToken;
+    private volatile String accessToken;
+    private volatile String refreshToken;
 
     public TokenData(String accessToken, String refreshToken) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
-    }
-
-    public synchronized void resetValues() {
-        this.accessToken = null;
-        this.refreshToken = null;
     }
 
     public String getAccessToken() {

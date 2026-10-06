@@ -2,6 +2,8 @@ package ru.loolzaaa.sso.client.autoconfigure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.time.Duration;
+
 @ConfigurationProperties(prefix = "sso.client")
 public class SsoClientProperties {
 
@@ -105,6 +107,14 @@ public class SsoClientProperties {
         private String password;
         private String fingerprint;
 
+        private Duration connectTimeout = Duration.ofSeconds(4);
+
+        private Duration requestTimeout = Duration.ofSeconds(4);
+
+        private boolean initOnStartup = true;
+
+        private final Refresh refresh = new Refresh();
+
         public String getUsername() {
             return username;
         }
@@ -127,6 +137,66 @@ public class SsoClientProperties {
 
         public void setFingerprint(String fingerprint) {
             this.fingerprint = fingerprint;
+        }
+
+        public Duration getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        public void setConnectTimeout(Duration connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        public Duration getRequestTimeout() {
+            return requestTimeout;
+        }
+
+        public void setRequestTimeout(Duration requestTimeout) {
+            this.requestTimeout = requestTimeout;
+        }
+
+        public boolean isInitOnStartup() {
+            return initOnStartup;
+        }
+
+        public void setInitOnStartup(boolean initOnStartup) {
+            this.initOnStartup = initOnStartup;
+        }
+
+        public Refresh getRefresh() {
+            return refresh;
+        }
+    }
+
+    public static class Refresh {
+        private boolean enabled = true;
+
+        private Duration beforeExpiry = Duration.ofMinutes(1);
+
+        private Duration checkInterval = Duration.ofSeconds(30);
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public Duration getBeforeExpiry() {
+            return beforeExpiry;
+        }
+
+        public void setBeforeExpiry(Duration beforeExpiry) {
+            this.beforeExpiry = beforeExpiry;
+        }
+
+        public Duration getCheckInterval() {
+            return checkInterval;
+        }
+
+        public void setCheckInterval(Duration checkInterval) {
+            this.checkInterval = checkInterval;
         }
     }
 

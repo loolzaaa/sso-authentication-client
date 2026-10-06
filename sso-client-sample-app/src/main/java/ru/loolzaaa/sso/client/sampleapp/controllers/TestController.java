@@ -86,14 +86,9 @@ public class TestController {
     @Scheduled(initialDelay = 2, fixedDelay = 60, timeUnit = TimeUnit.SECONDS)
     public void tokenDataReceiverRefreshTest() {
         if (tokenDataReceiver != null) {
-            tokenDataReceiver.getTokenDataLock().lock();
-            try {
-                tokenDataReceiver.updateData();
-                log.info("Requested access token from SSO: {}", tokenDataReceiver.getAccessToken());
-                log.info("Requested refresh token from SSO: {}", tokenDataReceiver.getRefreshToken());
-            } finally {
-                tokenDataReceiver.getTokenDataLock().unlock();
-            }
+            tokenDataReceiver.updateData();
+            log.info("Requested access token from SSO: {}", tokenDataReceiver.getAccessToken());
+            log.info("Requested refresh token from SSO: {}", tokenDataReceiver.getRefreshToken());
         } else {
             log.info("There is no TokenDataReceiver instance");
         }

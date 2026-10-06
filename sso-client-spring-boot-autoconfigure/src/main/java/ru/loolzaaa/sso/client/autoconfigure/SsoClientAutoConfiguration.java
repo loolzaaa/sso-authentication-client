@@ -3,8 +3,10 @@ package ru.loolzaaa.sso.client.autoconfigure;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -173,7 +175,34 @@ public class SsoClientAutoConfiguration {
         if (!StringUtils.hasText(fingerprint)) {
             log.warn("For production purposes fingerprint must be non-blank/empty string. Current fingerprint: {}", fingerprint);
         }
-        return new TokenDataReceiver(jwtUtils(keyPath), entryPointAddress, applicationName, username, password, fingerprint);
+        return new TokenDataReceiver(
+                jwtUtils(keyPath),
+                entryPointAddress,
+                applicationName,
+                username,
+                password,
+                fingerprint,
+                properties.getReceiver().getConnectTimeout(),
+                properties.getReceiver().getRequestTimeout());
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "sso.client.receiver", name = "init-on-startup", havingValue = "true", matchIfMissing = true)
+    ApplicationRunner ssoTokenPrewarmRunner(ObjectProvider<TokenDataReceiver> tokenDataReceiverProvider) {
+        return args -> tokenDataReceiverProvider.ifAvailable(tokenDataReceiver -> {
+            try {
+                tokenDataReceiver.updateData();
+                log.info("SSO token prewarm completed");
+            } catch (Exception e) {
+                log.warn("SSO token prewarm failed: ", e);
+            }
+        });
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "sso.client.receiver", value = {"username", "password"})
+    SsoTokenRefresher ssoTokenRefresher(TokenDataReceiver tokenDataReceiver, SsoClientProperties properties) {
+        return new SsoTokenRefresher(tokenDataReceiver, properties.getReceiver().getRefresh());
     }
 
     private static class RestTemplateTokenInterceptor implements ClientHttpRequestInterceptor {
@@ -186,15 +215,11 @@ public class SsoClientAutoConfiguration {
 
         @Override
         public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-            tokenDataReceiver.getTokenDataLock().lock();
-            try {
-                tokenDataReceiver.updateData();
-                request.getHeaders().add("Cookie", "XSRF-TOKEN=" + tokenDataReceiver.getCsrfCookie());
-                request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + tokenDataReceiver.getAccessToken());
-                request.getHeaders().add("X-XSRF-TOKEN", tokenDataReceiver.getEncodedCsrfCookie());
-            } finally {
-                tokenDataReceiver.getTokenDataLock().unlock();
-            }
+            tokenDataReceiver.updateData();
+            TokenDataReceiver.TokenSnapshot tokenSnapshot = tokenDataReceiver.getTokenSnapshot();
+            request.getHeaders().add("Cookie", "XSRF-TOKEN=" + tokenSnapshot.csrfCookie());
+            request.getHeaders().add("Cookie", CookieName.ACCESS.getName() + "=" + tokenSnapshot.accessToken());
+            request.getHeaders().add("X-XSRF-TOKEN", tokenSnapshot.encodedCsrfCookie());
             return execution.execute(request, body);
         }
     }
